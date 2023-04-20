@@ -4,15 +4,21 @@
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]))
 
-(def sns (aws/client {:api :sns
-                      :region (env :aws-region)
-                      :credentials-provider (credentials/basic-credentials-provider {:access-key-id (env :aws-access-key)
-                                                                                     :secret-access-key (env :aws-secret-key)
-                                                                                     })}))
+(def shared-client-params {:region (env :aws-region)
+                           :credentials-provider (credentials/basic-credentials-provider {:access-key-id (env :aws-access-key)
+                                                                                          :secret-access-key (env :aws-secret-key)})})
+
+(def sns (aws/client (merge {:api :sns} shared-client-params)))
+
+(def lambda (aws/client (merge {:api :lambda} shared-client-params)))
 
 (defn list-sns-actions
   []
   (aws/ops sns))
+
+(defn list-lambda-actions
+  []
+  (aws/ops lambda))
 
 (defn send-sns
   "Sends a SNS notification"
