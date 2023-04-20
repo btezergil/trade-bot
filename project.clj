@@ -12,6 +12,8 @@
                  [com.cognitect.aws/endpoints "1.1.12.437"]
                  [com.cognitect.aws/sns "836.2.1323.0"]
                  [com.cognitect.aws/lambda "845.2.1359.0"]
+                 [com.cognitect.aws/dynamodb "845.2.1345.0"]
+                 [danlentz/clj-uuid "0.1.9"]
                  [org.clojure/core.match "1.0.1"]]
   :plugins [[lein-environ "1.2.0"]]
   :repl-options {:init-ns clojure-scraps.core}
