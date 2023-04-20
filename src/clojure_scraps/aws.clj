@@ -43,3 +43,12 @@
                    :request {:TableName table-name
                              :Item data}})
   (log/info "write is completed"))
+
+(defn read-from-table
+  "Reads the item with id from given table"
+  [table-name table-key id]
+
+  (log/info (format "reading from table %s" table-name))
+  (aws/invoke ddb {:op :GetItem
+                   :request {:TableName table-name
+                             :Key {table-key {:S id}}}}))
