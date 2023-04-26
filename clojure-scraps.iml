@@ -24,6 +24,7 @@
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/dynamodb:845.2.1345.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/endpoints:1.1.12.437" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/lambda:845.2.1359.0" level="project" />
+    <orderEntry type="library" name="Leiningen: com.cognitect.aws/secretsmanager:845.2.1345.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/sns:836.2.1323.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect/http-client:1.0.115" level="project" />
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.core/jackson-annotations:2.12.4" level="project" />
@@ -63,6 +64,8 @@
     <orderEntry type="library" name="Leiningen: org.eclipse.jetty/jetty-util:9.4.48.v20220622" level="project" />
     <orderEntry type="library" name="Leiningen: org.nrepl/incomplete:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.ow2.asm/asm:9.2" level="project" />
+    <orderEntry type="library" name="Leiningen: org.slf4j/slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" name="Leiningen: org.ta4j/ta4j-core:0.15" level="project" />
     <orderEntry type="library" name="Leiningen: potemkin:0.4.6" level="project" />
     <orderEntry type="library" name="Leiningen: primitive-math:0.1.6" level="project" />
     <orderEntry type="library" name="Leiningen: riddley:0.1.12" level="project" />
