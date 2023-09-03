@@ -3,21 +3,23 @@
             [clj-uuid :as uuid]
             [clojure-scraps.aws :as aws-helper]
             [clojure-scraps.datagetter :as datagetter])
-  (:import (java.time Duration ZoneId ZonedDateTime)
+  (:import (java.time ZoneId ZonedDateTime)
            (java.time.format DateTimeFormatter)
-           [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType]))
+           [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType TradingRecord BaseTradingRecord]))
 
 (def table-name "strategy-v1")
 (def table-key "strategyId")
 
 (defn datetime-parser
-  "Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
+  "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
   [dt]
   (ZonedDateTime/parse dt (.withZone (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (ZoneId/of "UTC"))))
+
 (defn get-data
-  "Gets data for one step for dummy strategy signal generation"
+  "HELPER: Gets data for one step for dummy strategy signal generation"
   [size]
   (reverse (datagetter/get-time-series size)))
+
 (defn series
   "Bars should be a sequence of maps containing :datetime/:open/:high/:low/:close/:volume"
   ([] (series (get-data 1000)))
@@ -55,11 +57,20 @@
   "Generates a strategy based on RSI indicator"
   [series period oversold-thresh overbought-thresh]
   (let [rsi (rsi-indicator series period)
-        entry ((rule :CrossedDownIndicator) rsi oversold-thresh)
-        exit ((rule :CrossedUpIndicator) rsi overbought-thresh)]
-    (BaseStrategy. entry exit)))
+        entry (rule :CrossedDownIndicator rsi oversold-thresh)
+        exit (rule :CrossedUpIndicator rsi overbought-thresh)]
+    (BaseStrategy. entry exit))
+  )
 
 (defn run
+  []
+  (let [series (series)
+        strategy (rsi-strat series 14 30 70)
+        bsm (BarSeriesManager. series)] 
+    (.getPositions (.run bsm strategy)))
+) 
+
+(defn run-old
   []
   (let [series (series)
         rsi    (rsi-indicator series 14)
