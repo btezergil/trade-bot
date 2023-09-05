@@ -2,8 +2,7 @@
   (:require [telegrambot-lib.core :as tbot]
             [environ.core :refer [env]]
             [clojure.tools.logging :as log]
-            [clojure-scraps.aws :as aws-helper]
-            [clojure.core.match :refer [match]]))
+            [clojure-scraps.aws :as aws-helper]))
 
 (def trade-bot (tbot/create (env :bot-id)))
 (def btezergil-chat-id (env :btezergil-telegram-chat-id))
