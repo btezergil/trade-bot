@@ -6,8 +6,9 @@
             [clojure-scraps.indicators.pinbar :as pinbar]))
 
 (def operators [:and :or])
-(def operands [:rsi :sma :ema :fisher])
 (def prune-height 3)
+(def indicator-count 5)
+(def operands (range indicator-count))
 
 (defn generate-operator
   "Generates a random operator, taken from the operators list."
@@ -19,16 +20,13 @@
   []
   (rand-nth operands))
 
-(defmulti generate-node (fn [height-remaining] 
-                          (if (> height-remaining 0) (dec height-remaining) 0)))
-
 ; treenode is a three element list representing a tree node and its children
 ; with this structure, we can get the left child with first, right child with last, and the node itself with second.
-(defmethod generate-node 0 [_]
-  [(generate-operand) (generate-operator) (generate-operand)])
-
-(defmethod generate-node :default [param]
-  [(generate-node (dec param)) (generate-operator) (generate-node (dec param))])
+(defn generate-node
+  [height-remaining]
+  (if (> height-remaining 0)
+    [(generate-node (dec height-remaining)) (generate-operator) (generate-node (dec height-remaining))]
+    [(generate-operand) (generate-operator) (generate-operand)]))
 
 (generate-node 3)
 
@@ -36,4 +34,26 @@
   ([] (generate-node prune-height))
   ([height] (generate-node height)))
 
-(generate-tree)
+(defn mutation
+  [node-type node]
+  (condp = node-type
+    :operator (if (= :and node) :or :and)
+    :operand (generate-operand)))
+
+(defn swap-mutation 
+  [node]
+  (if (vector? node)
+    (let [prob (rand)
+          left (first node)
+          mid (second node)
+          right (last node)]
+      (cond (< prob 0.2) [left (mutation :operator mid) right] 
+            (< prob 0.6) [(swap-mutation left) mid right]
+            :else [left mid (swap-mutation right)]))
+    (mutation :operand node)))
+
+
+(rand)
+(vector? [2 :and 3])
+(mutation :operator :and)
+(swap-mutation (generate-tree))
