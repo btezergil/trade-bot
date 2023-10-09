@@ -8,7 +8,7 @@
 (def operators [:and :or])
 (def prune-height 3)
 (def indicator-count 5)
-(def operands (range indicator-count))
+(def operands (cons :identity (range indicator-count)))
 
 (defn generate-operator
   "Generates a random operator, taken from the operators list."
@@ -52,8 +52,40 @@
             :else [left mid (swap-mutation right)]))
     (mutation :operand node)))
 
+(defn check-signal-for-operand
+  [operand signals tree-type]
+  (if (= tree-type ((-> operand
+                        str
+                        keyword) signals))
+         tree-type
+         :no-signal))
 
-(rand)
+(defn signal-check
+  "Node is a eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction"
+  [node signals tree-type]
+  (if (vector? node)
+    (let [left-signal (signal-check (first node) signals tree-type)
+          right-signal (signal-check (last node) signals tree-type)
+          operator (second node)]
+      (cond (= :identity left-signal) right-signal
+            (= :identity right-signal) left-signal
+            (= :and operator) (if (= left-signal right-signal tree-type)
+                                tree-type
+                                :no-signal)
+            (= :or operator) (cond (= left-signal right-signal tree-type) tree-type
+                                   (= :no-signal left-signal) right-signal
+                                   (= :no-signal right-signal) left-signal
+                                   :else :no-signal)))
+    (if (= :identity node) 
+      :identity
+      (check-signal-for-operand node signals tree-type))))
+
+
+(signal-check [0 :and 1] {:0 :long :1 :long} :long)
+(keyword (str 1))
+(-> 1
+    str
+    keyword)
 (vector? [2 :and 3])
 (mutation :operator :and)
 (swap-mutation (generate-tree))
