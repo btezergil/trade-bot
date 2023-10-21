@@ -1,5 +1,6 @@
 (ns clojure-scraps.datagetter
   (:require [clojure.java.io :as io]
+            [clojure.data.csv :as csv]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [cheshire.core :as cheshire]
@@ -21,7 +22,7 @@
    "PYPL" "QCOM" "ROST" "SGEN" "SIRI" "SNPS" "TEAM" "TMUS" "TTD" "TXN" "VRSK"
    "VRTX" "WBA" "WBD" "WDAY" "XEL" "ZM" "ZS"])
 (def team-query-params {:symbol "TEAM"
-                        :interval "1day"
+                        :interval "1min"
                         :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
 (def time-series-url "https://api.twelvedata.com/time_series")
@@ -37,6 +38,17 @@
                                                              "apikey"   (env :twelvedata-apikey)}})]
     (cheshire/parse-string body true)))
 
+(defn get-forex-time-series
+  "Queries the API for data"
+  [] 
+  (let [response (client/get time-series-url {:query-params {"symbol"     "EUR/USD" 
+                                                             "interval"   "1h" 
+                                                             "outputsize" (* 24 90)
+                                                             "format"     "CSV" 
+                                                             "apikey"     (env :twelvedata-apikey)}})
+        body (:body response)]
+    (spit "eurusd-3month-1h.csv" body)))
+
 (defn get-time-series
   "Queries the API for data"
   ([size] (get-time-series size (:symbol team-query-params)))
@@ -48,6 +60,13 @@
                        body (cheshire/parse-string (:body response) true)
                        values (:values body)]
                    values)))
+
+(defn csv-data->maps [csv-data]
+  (mapv zipmap
+       (->> (first csv-data) ;; First row is the header
+            (map keyword) ;; Drop if you want string keys instead
+            repeat)
+	  (rest csv-data)))
 
 (defn get-data
   "Data accessor function to be called by other files, gets the data and returns it in the reverse order, which can be processed by ta4j."
@@ -64,6 +83,24 @@
   [dt]
   (ZonedDateTime/of (.atStartOfDay (LocalDate/parse dt (DateTimeFormatter/ofPattern "yyyy-MM-dd"))) (ZoneId/of "UTC")))
 
+(defn parse-csv-line
+  [entry]
+  (let [{:keys [datetime open high low close]} entry] 
+    (assoc entry 
+           :open (Double/parseDouble open)
+           :high (Double/parseDouble high)
+           :low (Double/parseDouble low)
+           :close (Double/parseDouble close)
+           :volume 0)))
+
+(defn read-csv-file
+  [filename]
+  (with-open [reader (io/reader filename)]
+    (->> (csv/read-csv reader {:separator \;})
+         csv-data->maps
+         (map parse-csv-line)
+         reverse)))
+
 (defn get-parser
   "Returns the appropriate parser depending of time interval requested."
   []
@@ -79,3 +116,6 @@
               (.addBar s ((get-parser) datetime) open high low close volume))
             s)))
 
+(-> "eurusd-3month-1h.csv" 
+    read-csv-file
+    get-bars)

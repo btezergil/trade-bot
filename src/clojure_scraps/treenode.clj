@@ -5,7 +5,6 @@
             [clojure-scraps.indicators.pinbar :as pinbar]))
 
 (def operators [:and :or])
-(def prune-height 1)
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 (def operands [:identity :rsi :sma :ema :engulfing :pinbar])
@@ -119,7 +118,7 @@
 ; with this structure, we can get the left child with first, right child with last, and the node itself with second.
 (defn generate-tree
   "Generates a tree with given height, recursively until leaves are reached. No parameter method uses prune-height as default. Also gives indices to operands."
-  ([] (generate-tree prune-height))
+  ([] (generate-tree (:prune-height p/params)))
   ([height-remaining] (if (> height-remaining 0)
                         [(generate-tree (dec height-remaining) 0) (generate-operator) (generate-tree (dec height-remaining) (get-right-index-for-operand height-remaining))]
                         [(generate-operand 0) (generate-operator) (generate-operand 1)]))
@@ -171,7 +170,7 @@
    It selects a node randomly and completely changes the tree on that node. 
    While swap mutation acts on a node only for operators, subtree mutation changes the whole subtree.
    If a leaf node is reached, randomly replaces the operand."
-   ([node] (subtree-mutation node prune-height))
+   ([node] (subtree-mutation node (:prune-height p/params)))
    ([node height] (println "before: " node)
     (if (vector? node) 
       (let [propagation-probability (rand)
@@ -246,7 +245,6 @@
       (check-signal-for-operand node signals tree-type))))
 
 ; signal structure: {:0  :long/short/no-signal}
-(:0 {0 "hebele"})
 
 (signal-check (generate-tree) {:0 :long :1 :no-signal :2 :long :3 :short} :long)
 (println "after: " (crossover (generate-tree) (generate-tree)))
