@@ -123,4 +123,7 @@
       read-csv-file
       get-bars))
 
-
+(defn get-subseries-from-bar
+  "Returns the subseries within the 'bars' with given start and end indices."
+  ([start end] (get-subseries-from-bar (get-bars-for-genetic) start end))
+  ([bars start end] (.getSubSeries bars start end)))
