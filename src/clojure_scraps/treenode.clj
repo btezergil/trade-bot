@@ -257,7 +257,8 @@
     :no-signal))
 
 (defn signal-check
-  "Node is a eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction"
+  "Node is a eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction.
+  Expected signal structure is: {:0 :long/short/no-signal}."
   [node signals tree-type]
   (if (vector? node)
     (let [left-signal (signal-check (first node) signals tree-type)
@@ -276,7 +277,4 @@
       :identity
       (check-signal-for-operand node signals tree-type))))
 
-; signal structure: {:0  :long/short/no-signal}
 
-(signal-check (generate-tree) {:0 :long :1 :no-signal :2 :long :3 :short} :long)
-(println "after: " (crossover (generate-tree) (generate-tree)))
