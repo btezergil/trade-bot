@@ -81,8 +81,7 @@
   [index]
   {:index index
    :indicator :fisher
-   :window (rand-int-range 5 15)
-   })
+   :window (rand-int-range 5 15)})
 
 (defn mutate-fisher
   [node]
@@ -91,8 +90,7 @@
 (defn generate-fibonacci
   [index]
   {:index index
-   :indicator :fibonacci
-   })
+   :indicator :fibonacci})
 
 (defn mutate-fibonacci
   [node]
@@ -150,7 +148,7 @@
                                       [(generate-tree (dec height-remaining) initial-index) (generate-operator) (generate-tree (dec height-remaining) (+ initial-index (get-right-index-for-operand height-remaining)))]
                                       [(generate-operand initial-index) (generate-operator) (generate-operand (inc initial-index))])))
 
-(defn mutation
+(defn perform-mutation
   "Genetic mutation operation, flips given operator or mutates given operand. Operand mutation can either be a change of parameter or replacement with a new one."
   [node-type node]
   (condp = node-type
@@ -179,10 +177,10 @@
           left (first node)
           mid (second node)
           right (last node)]
-      (cond (< prob 0.2) [left (mutation :operator mid) right] 
+      (cond (< prob 0.2) [left (perform-mutation :operator mid) right] 
             (< prob 0.6) [(swap-mutation left) mid right]
             :else [left mid (swap-mutation right)]))
-    (mutation :operand node)))
+    (perform-mutation :operand node)))
 
 (defn find-initial-index
   "Returns the initial index of given tree, needed by subtree mutation since it can arbitrarily select any subtree to be replaced."
@@ -210,11 +208,20 @@
               :else (if (< node-probability 0.5)
                       [(generate-tree (dec height) (find-initial-index left)) mid right]
                       [left mid (generate-tree (dec height) (find-initial-index right))])))
-      (mutation :operand node))))
+      (perform-mutation :operand node))))
+
+(defn mutation
+  "Genetic mutation operator for the node structure, performs either swap or subtree mutation on the given node."
+  [node]
+  (let [prob (rand)]
+    (if (< prob 0.5)
+      (swap-mutation node)
+      (subtree-mutation node))))
 
 (defn crossover
   "Genetic crossover operator for the node structure, swaps two branches of different trees."
-  [node1 node2]
+  ([node-list] (crossover (first node-list) (second node-list)))
+  ([node1 node2]
   (println "before node1: " node1)
   (println "before node2: " node2)
   (if (vector? node1) 
@@ -238,7 +245,7 @@
             :else (if (< node-probability 0.5)
                     [[left2 mid1 right1] [left1 mid2 right2]]
                     [[left1 mid1 right2] [left2 mid2 right1]])))
-    [node2 node1]))
+    [node2 node1])))
 
 (defn index-to-keyword
   [operand]
@@ -248,7 +255,8 @@
       keyword))
 
 (defn check-signal-for-operand
-  "Signal check for operand, if a leaf node is found, checks whether the given signal map contains a signal that fits with the tree type at hand."
+  "Performs the signal check for operand, if a leaf node is found, checks whether the given signal map contains a signal that fits with the tree type at hand.
+  Note that this method only checks whether the signal for this operand is fired for the tree type or not, it does not actually generate the signals. "
   [operand signals tree-type]
   (if (= tree-type (-> operand
                        index-to-keyword
