@@ -31,7 +31,6 @@
 (defn get-quote
   "Queries the API for data"
   []
-
   (let [{:keys [body]} (client/get quote-url {:query-params {"symbol"   (:symbol team-query-params)
                                                              "interval" (:interval team-query-params)
                                                              "exchange" (:exchange team-query-params)

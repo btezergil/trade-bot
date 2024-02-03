@@ -23,4 +23,5 @@
    :trade-threshold 0.05
    :accuracy-profit-ratio 0.01
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar]
-   :prune-height 1})
+   :prune-height 1
+   :default-age 0})
