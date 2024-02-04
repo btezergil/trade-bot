@@ -151,6 +151,7 @@
 (defn perform-mutation
   "Genetic mutation operation, flips given operator or mutates given operand. Operand mutation can either be a change of parameter or replacement with a new one."
   [node-type node]
+  (println "perform-mutation node: " node)
   (condp = node-type
     :operator (if (= :and node) :or :and)
     :operand (let [flip-probability (rand)]
@@ -172,6 +173,7 @@
   "Swap mutation operation is the simpler genetic mutation operator that can act on the tree.
    Basically, one node is selected to undergo mutation, which changes its value to a new random one." 
   [node]
+  (println "swap node: " node)
   (if (vector? node)
     (let [prob (rand)
           left (first node)
@@ -196,6 +198,7 @@
    If a leaf node is reached, randomly replaces the operand."
    ([node] (subtree-mutation node (:prune-height p/params)))
    ([node height] 
+    (println "subtree node: " node)
     (if (vector? node) 
       (let [propagation-probability (rand)
             node-probability (rand)
@@ -220,13 +223,15 @@
 (defn mutation
   "Genetic mutation operator for individials, performs either swap or subtree mutation on the given node defined in the individual.
   Only performs mutation on the long or the short tree."
-  [fitness-func ind]
-  (let [seqn (:genetic-sequence ind)
+  [fitness-func ind-list]
+  (let [ind (first ind-list)
+        seqn (:genetic-sequence ind)
         long-node (first seqn)
         short-node (second seqn)]
+    (println "mutation node: " seqn)
     (io/build-individual (if (< (rand) 0.5) 
-                             (conj (vector) (mutate-tree long-node) short-node)
-                             (conj (vector) long-node (mutate-tree short-node)))
+                             (vector (mutate-tree long-node) short-node)
+                             (vector long-node (mutate-tree short-node)))
                          (:parents ind)
                          (:age ind)
                          fitness-func)))
@@ -262,9 +267,7 @@
 (defn tree-selector
   "Helper function for crossover to return either the long tree selector (i.e. 'first' function) or the short one."
   [long?]
-  (if long?
-    first
-    second))
+  (if long? first second))
 
 (defn crossover
   "Genetic crossover operator for individuals, calls the crossover for nodes defined by the genetic sequence within individuals.
@@ -277,12 +280,16 @@
          node1 ((tree-selector long?) seqn1)
          node2 ((tree-selector long?) seqn2)
          crossover-result (node-crossover node1 node2)] 
-     (vector (io/build-individual (first crossover-result)
-                                  (vector node1 node2)
+     (vector (io/build-individual (if long? 
+                                    (vector (first crossover-result) (second seqn1))
+                                    (vector (first seqn1) (first crossover-result)))
+                                  (vector seqn1 seqn2) ; TODO: parent'i dogru mu setliyoruz bi bakalim
                                   (:default-age p/params)
                                   fitness-func)
-             (io/build-individual (second crossover-result)
-                                  (vector node1 node2)
+             (io/build-individual (if long? 
+                                    (vector (second crossover-result) (second seqn2))
+                                    (vector (first seqn2) (second crossover-result)))
+                                  (vector seqn1 seqn2)
                                   (:default-age p/params)
                                   fitness-func)))))
 
