@@ -3,8 +3,7 @@
 (def params
   {:indicator-count 5,
    :window-size-min 3,
-   :window-size-max 15, ; TODO: window-size'i fix param olarak kullansak da
-                        ; training'e katmasak makul olur mu
+   :window-size-max 15, ; TODO: window-size'i fix param olarak kullansak da training'e katmasak makul olur mu
    :crossover-probability 0.2,
    :mutation-probability 0.1,
    :flip-mutation-probability 0.25,
