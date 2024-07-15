@@ -6,9 +6,14 @@
             [clojure.tools.logging :as log]
             [clojure-scraps.strategy :as strat]
             [clojure-scraps.datagetter :as datagetter]
+            [clojure-scraps.aws :as aws-helper]
+            [clojure.data.json :as json]
+            [clojure.walk :as walk]
             [nature.core :as n]
             [nature.initialization-operators :as io]
             [nature.monitors :as mon]))
+
+(def table-vars {:table-name "strategy-v1", :table-key "id"})
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 
@@ -83,7 +88,7 @@
   (if (vector? tree)
     (merge (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data))
     (let [index-keyword (node/index-to-keyword tree)]
-      (log/info "Generating signal for " tree)
+      (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
         :rsi {index-keyword (check-rsi-signal tree direction index data)}
         :sma {index-keyword (check-single-sma-signal tree direction index data)}
@@ -138,11 +143,53 @@
                 :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
-(defn calculate-average-fitness-of-population
+(defn print-average-fitness-of-population
   "Calculates the average fitness of given population"
   [population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (println (/ (reduce + (map :fitness-score population)) (:population-size p/params))))
+  (println (format "Average fitness: %.4f" (/ (reduce + (map :fitness-score population)) (:population-size p/params)))))
+
+(defn write-individual-to-table
+  "Records the given genetic indivdual to database"
+  [individual]
+  {:pre [s/valid? :genetic/individual individual]}
+  (let [entry {"id" {:S (-> individual
+                            :guid
+                            str)},
+               "age" {:N (-> individual
+                             :age
+                             str)},
+               "fitness" {:N (-> individual
+                                 :fitness-score
+                                 str)},
+               "genetic-sequence" {:S (-> individual
+                                          :genetic-sequence
+                                          json/write-str)}}]
+    (aws-helper/write-to-table (:table-name table-vars) entry)))
+
+(defn write-to-table-monitor
+  "Monitor function for evolution that writes every individual of population to the table"
+  [population current-generation]
+  {:pre [(s/conform :genetic/individual population)]}
+  (dorun (map write-individual-to-table population)))
+
+(defn read-individual-from-table
+  "Queries the strategy-v1 table for the individual with the given id"
+  [strategy-id]
+  (let [read-from-table (aws-helper/read-from-table (:table-name table-vars) (:table-key table-vars) strategy-id)
+        item (:Item read-from-table)
+        {:keys [fitness genetic-sequence id age]} item]
+    {:age (-> age
+              :N
+              Integer/parseInt),
+     :fitness (-> fitness
+                  :N
+                  Double/parseDouble),
+     :guid (:S id),
+     :genetic-sequence (walk/postwalk node/keywordize-and-or
+                                      (-> genetic-sequence
+                                          :S
+                                          (json/read-str :key-fn keyword :value-fn node/parse-json-values)))}))
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
@@ -153,5 +200,5 @@
                                     (partial calculate-fitness (get-subseries 0 300))
                                     [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
                                     [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
-                                    {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution calculate-average-fitness-of-population]}))
+                                    {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution print-average-fitness-of-population write-to-table-monitor]}))
 

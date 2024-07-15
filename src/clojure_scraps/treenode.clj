@@ -23,6 +23,14 @@
       rand-int
       (+ min)))
 
+(defn parse-json-values "Value parser function for individuals
+  Used when an individual is read from table" [key value] (if (= key :indicator) (keyword value) value))
+(defn keywordize-and-or
+  "Convert all and's and or's in the :genetic-sequence list into keywords
+  Used when an individual is read from table"
+  [value]
+  (condp = value "and" (keyword value) "or" (keyword value) value))
+
 (defn generate-rsi [index] {:index index, :indicator :rsi, :oversold (rand-int-range 15 45), :overbought (rand-int-range 55 85), :window (rand-int-range 8 20)})
 
 (defn mutate-rsi
