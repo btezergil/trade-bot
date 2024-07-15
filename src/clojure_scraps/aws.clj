@@ -10,13 +10,19 @@
 (def sns (aws/client (merge {:api :sns} shared-client-params)))
 (def lambda (aws/client (merge {:api :lambda} shared-client-params)))
 (def ddb (aws/client (merge {:api :dynamodb} shared-client-params)))
-;(def ddb (aws/client {:api :dynamodb
-;                      :endpoint-override {:protocol :http
-;                                          :hostname "localhost"
-;                                          :port     8000}}))
+;(def ddb (aws/client {:api :dynamodb, :endpoint-override {:protocol :http, :hostname "localhost", :port 8000}}))
 (def sec-man (aws/client (merge {:api :secretsmanager} shared-client-params)))
 
 (aws/validate-requests ddb true)
+
+;(aws/invoke ddb
+;            {:op :CreateTable,
+;             :request {:TableName "evolution-v1",
+;                       :KeySchema [{:AttributeName "id", :KeyType "HASH"}],
+;                       :AttributeDefinitions [{:AttributeName "id", :AttributeType :S}],
+;                       :ProvisionedThroughput {:ReadCapacityUnits 1, :WriteCapacityUnits 1}}})
+;
+;(aws/invoke ddb {:op :Scan :request {:TableName "evolution-v1"}})
 
 
 (defn list-secrets [] (aws/invoke sec-man {:op :ListSecrets}))
@@ -38,7 +44,7 @@
 (defn write-to-table
   "Writes the given item to given DynamoDB table"
   [table-name data]
-  (log/info (format "writing to table %s" table-name))
+  (log/info (format "writing %s to table %s" data table-name))
   (let [response (aws/invoke ddb {:op :PutItem, :request {:TableName table-name, :Item data}})] (log/info (format "write response: %s" response))))
 
 (defn read-from-table
