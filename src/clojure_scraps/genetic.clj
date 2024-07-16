@@ -9,6 +9,7 @@
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [nature.core :as n]
+            [nature.initialization-operators :as io]
             [nature.monitors :as nmon]))
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
@@ -145,17 +146,37 @@
                 :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
+(defn calculate-transactions-for-monitor
+  "Calculates the transactions of given genetic sequence for bookkeeping."
+  [data individual]
+  (let [max-index (.getBarCount data)
+        genetic-sequence (:genetic-sequence individual)]
+    (loop [current-position :none
+           current-index 0
+           transactions (vector)]
+      (if (< current-index max-index)
+        (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
+              short-signals (generate-signals (last genetic-sequence) :short current-index data)]
+          (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
+                (recur :long (inc current-index) (conj transactions (create-transaction-map data current-index :long)))
+                (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
+                (recur :short (inc current-index) (conj transactions (create-transaction-map data current-index :short)))
+                :else (recur current-position (inc current-index) transactions)))
+        transactions))))
+
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
-  (let [evolution-id (uuid/v1)]
+  (let [evolution-id (uuid/v4)]
     (dyn/write-evolution-to-table evolution-id)
-    (n/evolve-with-sequence-generator
-     generate-sequence
-     (:population-size p/params)
-     (:generation-count p/params)
-     (partial calculate-fitness (get-subseries 0 300) true)
-     [(partial node/crossover (partial calculate-fitness (get-subseries 0 300) true))]
-     [(partial node/mutation (partial calculate-fitness (get-subseries 0 300) false))]
-     {:solutions 3, :carry-over 1, :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)]})))
+    (n/evolve-with-sequence-generator generate-sequence
+                                      (:population-size p/params)
+                                      (:generation-count p/params)
+                                      (partial calculate-fitness (get-subseries 0 300))
+                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
+                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
+                                      {:solutions 3,
+                                       :carry-over 1,
+                                       :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)
+                                                  (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (get-subseries 0 300)))]})))
 
