@@ -1,21 +1,15 @@
 (ns clojure-scraps.genetic
-  (:require [clojure-scraps.treenode :as node]
-            [clojure-scraps.params :as p]
-            [clojure.spec.alpha :as s]
-            [clojure.pprint :as pp]
-            [clojure.tools.logging :as log]
-            [clojure-scraps.strategy :as strat]
+  (:require [clj-uuid :as uuid]
             [clojure-scraps.datagetter :as datagetter]
-            [clojure-scraps.aws :as aws-helper]
-            [clojure.data.json :as json]
-            [clojure.walk :as walk]
-            [clj-uuid :as uuid]
+            [clojure-scraps.dynamo :as dyn]
+            [clojure-scraps.monitors :as mon]
+            [clojure-scraps.params :as p]
+            [clojure-scraps.strategy :as strat]
+            [clojure-scraps.treenode :as node]
+            [clojure.spec.alpha :as s]
+            [clojure.tools.logging :as log]
             [nature.core :as n]
-            [nature.initialization-operators :as io]
-            [nature.monitors :as mon]))
-
-(def strategy-table-vars {:table-name "strategy-v1", :table-key "id"})
-(def transaction-table-vars {:table-name "transaction-v1", :table-key "id"})
+            [nature.monitors :as nmon]))
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 
@@ -134,22 +128,6 @@
   [data current-index direction]
   {:price (datagetter/get-bar-value-at-index data current-index), :position direction, :bar-time (datagetter/get-bar-time-at-index data current-index)})
 
-(defn write-transaction-to-table
-  "Records the given transaction to database"
-  [strategy-id transaction]
-  (let [entry {"id" {:S (str (uuid/v1))},
-               "strategy-id" {:S (str strategy-id)},
-               "price" {:N (-> transaction
-                               :price
-                               str)},
-               "position" {:S (-> transaction
-                                  :position
-                                  name)},
-               "bar-time" {:S (-> transaction
-                                  :bar-time
-                                  str)}}]
-    (aws-helper/write-to-table (:table-name transaction-table-vars) entry)))
-
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
   [data genetic-sequence]
@@ -167,65 +145,17 @@
                 :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
-(defn print-average-fitness-of-population
-  "Calculates the average fitness of given population"
-  [population current-generation]
-  {:pre [(s/conform :genetic/individual population)]}
-  (println (format "Average fitness: %.4f" (/ (reduce + (map :fitness-score population)) (:population-size p/params)))))
-
-(defn write-individual-to-table
-  "Records the given genetic indivdual to database"
-  [evolution-id individual]
-  {:pre [s/valid? :genetic/individual individual]}
-  (let [entry {"id" {:S (-> individual
-                            :guid
-                            str)},
-               "evolution-id" {:S (str evolution-id)},
-               "age" {:N (-> individual
-                             :age
-                             str)},
-               "fitness" {:N (-> individual
-                                 :fitness-score
-                                 str)},
-               "genetic-sequence" {:S (-> individual
-                                          :genetic-sequence
-                                          json/write-str)}}]
-    (aws-helper/write-to-table (:table-name strategy-table-vars) entry)))
-
-(defn write-to-table-monitor
-  "Monitor function for evolution that writes every individual of population to the table"
-  [evolution-id population current-generation]
-  {:pre [(s/conform :genetic/individual population)]}
-  (dorun (map (partial write-individual-to-table evolution-id) population)))
-
-(defn read-individual-from-table
-  "Queries the strategy-v1 table for the individual with the given id"
-  [strategy-id]
-  (let [read-from-table (aws-helper/read-from-table (:table-name strategy-table-vars) (:table-key strategy-table-vars) strategy-id)
-        item (:Item read-from-table)
-        {:keys [fitness genetic-sequence id age]} item]
-    {:age (-> age
-              :N
-              Integer/parseInt),
-     :fitness (-> fitness
-                  :N
-                  Double/parseDouble),
-     :guid (:S id),
-     :genetic-sequence (walk/postwalk node/keywordize-and-or
-                                      (-> genetic-sequence
-                                          :S
-                                          (json/read-str :key-fn keyword :value-fn node/parse-json-values)))}))
-
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
   (let [evolution-id (uuid/v1)]
-    (p/write-evolution-to-table evolution-id)
-    (n/evolve-with-sequence-generator generate-sequence
-                                      (:population-size p/params)
-                                      (:generation-count p/params)
-                                      (partial calculate-fitness (get-subseries 0 300) true)
-                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300) true))]
-                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300) false))]
-                                      {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution print-average-fitness-of-population (partial write-to-table-monitor evolution-id)]})))
+    (dyn/write-evolution-to-table evolution-id)
+    (n/evolve-with-sequence-generator
+     generate-sequence
+     (:population-size p/params)
+     (:generation-count p/params)
+     (partial calculate-fitness (get-subseries 0 300) true)
+     [(partial node/crossover (partial calculate-fitness (get-subseries 0 300) true))]
+     [(partial node/mutation (partial calculate-fitness (get-subseries 0 300) false))]
+     {:solutions 3, :carry-over 1, :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)]})))
 
