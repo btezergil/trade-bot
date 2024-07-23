@@ -7,7 +7,7 @@
             [clj-http.client :as client]
             [environ.core :refer [env]]
             [clojure-scraps.aws :as aws-helper])
-  (:import [java.time ZoneId ZonedDateTime LocalDate]
+  (:import [java.time ZoneId ZonedDateTime LocalDate Duration]
            (java.time.format DateTimeFormatter)
            (com.fasterxml.jackson.core JsonParseException)
            (org.ta4j.core BaseBarSeriesBuilder)))
@@ -20,6 +20,7 @@
 (def team-query-params {:symbol "TEAM", :interval "1min", :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
 (def time-series-url "https://api.twelvedata.com/time_series")
+(def genetic-data-filename "eurusd-3month-1h.csv")
 
 (defn get-quote
   "Queries the API for data"
@@ -81,24 +82,34 @@
 
 (defn get-parser
   "Returns the appropriate parser depending of time interval requested."
-  []
-  (cond (str/ends-with? (:interval team-query-params) "min") parse-datetime-inday
-        (str/ends-with? (:interval team-query-params) "day") parse-datetime-daily))
+  [mode]
+  (if (= mode :genetic)
+    parse-datetime-inday
+    (cond (str/ends-with? (:interval team-query-params) "min") parse-datetime-inday
+          (str/ends-with? (:interval team-query-params) "day") parse-datetime-daily)))
+
+(defn get-duration
+  "Returns the appropriate duration for bars"
+  [mode]
+  (if (= mode :genetic)
+    (Duration/ofHours 1)
+    (cond (str/ends-with? (:interval team-query-params) "min") (Duration/ofMinutes 1)
+          (str/ends-with? (:interval team-query-params) "day") (Duration/ofDays 1))))
 
 (defn get-bars
   "Bars should be a sequence of maps containing :datetime/:open/:high/:low/:close/:volume"
-  ([] (get-bars (get-data 1000)))
-  ([bars]
+  ([] (get-bars (get-data 1000) :api))
+  ([bars mode]
    (let [s (.build (BaseBarSeriesBuilder.))]
-     (doseq [{:keys [datetime open high low close volume]} bars] (.addBar s ((get-parser) datetime) open high low close volume))
+     (doseq [{:keys [datetime open high low close volume]} bars] (.addBar s (get-duration mode) ((get-parser mode) datetime) open high low close volume))
      s)))
 
 (defn get-bars-for-genetic
   "Reads the experiment dataset and returns it as a ta4j BarSeries."
   []
-  (-> "eurusd-3month-1h.csv"
+  (-> genetic-data-filename
       read-csv-file
-      get-bars))
+      (get-bars :genetic)))
 
 (defn get-subseries-from-bar
   "Returns the subseries within the 'bars' with given start and end indices."
