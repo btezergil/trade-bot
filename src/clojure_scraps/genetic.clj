@@ -16,21 +16,6 @@
 
 (defn generate-sequence [] (vector (node/generate-tree) (node/generate-tree)))
 
-(s/def :genetic/indicator keyword?)
-(s/def :genetic/overbought int?)
-(s/def :genetic/oversold int?)
-(s/def :genetic/window int?)
-(s/def :genetic/window1 int?)
-(s/def :genetic/window2 int?)
-(s/def :genetic/rsi (s/keys :req-un [:genetic/indicator :genetic/overbought :genetic/oversold :genetic/window]))
-(s/def :genetic/ma (s/keys :req-un [:genetic/indicator :genetic/window]))
-(s/def :genetic/double-ma (s/keys :req-un [:genetic/indicator :genetic/window1 :genetic/window2]))
-
-(s/def :genetic/fitness-score double?)
-(s/def :genetic/genetic-sequence map?)
-(s/def :genetic/individual (s/keys :req-un [:genetic/fitness-score :genetic/genetic-sequence]))
-(s/def :genetic/population (s/coll-of :genetic/individual))
-
 (defn check-rsi-signal
   [node direction index data]
   {:pre [(s/valid? :genetic/rsi node)]}
@@ -163,6 +148,8 @@
                 (recur :short (inc current-index) (conj transactions (create-transaction-map data current-index :short)))
                 :else (recur current-position (inc current-index) transactions)))
         transactions))))
+
+; TODO: make data getting part generic and use that instead of calling get-subseries everywhere
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."

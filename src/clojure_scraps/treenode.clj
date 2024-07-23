@@ -1,16 +1,46 @@
 (ns clojure-scraps.treenode
   (:require [clojure.tools.logging :as log]
             [clojure-scraps.params :as p]
+            [clojure.spec.gen.alpha :as gen]
             [clojure.spec.alpha :as s]
             [clojure-scraps.indicators.pinbar :as pinbar]
             [nature.core :as n]
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema])
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema])
+
+(s/def :genetic/index int?)
+(s/def :genetic/indicator keyword?)
+(s/def :genetic/overbought
+  (s/and int?
+         #(> % 54)
+         #(< % 86)))
+(s/def :genetic/oversold
+  (s/and int?
+         #(> % 14)
+         #(< % 46)))
+(s/def :genetic/window int?)
+(s/def :genetic/window1
+  (s/and int?
+         #(> % 4)
+         #(< % 21)))
+(s/def :genetic/window2
+  (s/and int?
+         #(> % 39)
+         #(< % 81)))
+(s/def :genetic/rsi (s/keys :req-un [:genetic/index :genetic/indicator :genetic/overbought :genetic/oversold :genetic/window]))
+(s/def :genetic/ma (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window]))
+(s/def :genetic/double-ma (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window1 :genetic/window2]))
+; TODO: fisher ve candlestickler icin spec yaz
+
+(s/def :genetic/fitness-score double?)
+(s/def :genetic/genetic-sequence map?)
+(s/def :genetic/individual (s/keys :req-un [:genetic/fitness-score :genetic/genetic-sequence]))
+(s/def :genetic/population (s/coll-of :genetic/individual))
 
 (defn generate-operator "Generates a random operator, taken from the operators list." [] (rand-nth operators))
 
@@ -31,23 +61,27 @@
   [value]
   (condp = value "and" (keyword value) "or" (keyword value) value))
 
-(defn generate-rsi [index] {:index index, :indicator :rsi, :oversold (rand-int-range 15 45), :overbought (rand-int-range 55 85), :window (rand-int-range 8 20)})
+(defn generate-rsi [index] {:post [(s/valid? :genetic/rsi %)]} {:index index, :indicator :rsi, :oversold (rand-int-range 15 45), :overbought (rand-int-range 55 85), :window (rand-int-range 8 20)})
 
 (defn mutate-rsi
   [node]
+  {:pre [(s/valid? :genetic/rsi node)], :post [(s/valid? :genetic/rsi %)]}
   (let [param-prob (rand)] (condp < param-prob 0.33 (assoc node :oversold (rand-int-range 15 45)) 0.66 (assoc node :overbought (rand-int-range 55 85)) (assoc node :window (rand-int-range 8 20)))))
 
-(defn generate-sma [index] {:index index, :indicator :sma, :window (rand-int-range 10 100)})
+(defn generate-sma [index] {:post [(s/valid? :genetic/ma %)]} {:index index, :indicator :sma, :window (rand-int-range 10 100)})
 
-(defn generate-double-sma [index] {:index index, :indicator :double-sma, :window1 (rand-int-range 5 20), :window2 (rand-int-range 40 80)})
+(defn generate-double-sma [index] {:post [(s/valid? :genetic/double-ma %)]} {:index index, :indicator :double-sma, :window1 (rand-int-range 5 20), :window2 (rand-int-range 40 80)})
 
-(defn generate-ema [index] {:index index, :indicator :ema, :window (rand-int-range 10 100)})
+(defn generate-ema [index] {:post [(s/valid? :genetic/ma %)]} {:index index, :indicator :ema, :window (rand-int-range 10 100)})
 
-(defn generate-double-ema [index] {:index index, :indicator :double-ema, :window1 (rand-int-range 5 20), :window2 (rand-int-range 40 80)})
+(defn generate-double-ema [index] {:post [(s/valid? :genetic/double-ma %)]} {:index index, :indicator :double-ema, :window1 (rand-int-range 5 20), :window2 (rand-int-range 40 80)})
 
-(defn mutate-ma [node] (assoc node :window (rand-int-range 10 100)))
+(defn mutate-ma [node] {:pre [(s/valid? :genetic/ma node)], :post [(s/valid? :genetic/ma %)]} (assoc node :window (rand-int-range 10 100)))
 
-(defn mutate-double-ma [node] (let [param-prob (rand)] (if (< param-prob 0.5) (assoc node :window1 (rand-int-range 5 20)) (assoc node :window2 (rand-int-range 40 80)))))
+(defn mutate-double-ma
+  [node]
+  {:pre [(s/valid? :genetic/double-ma node)], :post [(s/valid? :genetic/double-ma %)]}
+  (let [param-prob (rand)] (if (< param-prob 0.5) (assoc node :window1 (rand-int-range 5 20)) (assoc node :window2 (rand-int-range 40 80)))))
 
 (defn generate-fisher [index] {:index index, :indicator :fisher, :window (rand-int-range 5 15)})
 
@@ -68,9 +102,9 @@
   [index]
   (let [operand (rand-nth operands)]
     (condp = operand
-      :rsi (generate-rsi index)
       :sma (generate-sma index)
       :ema (generate-ema index)
+      :rsi (generate-rsi index)
       :double-sma (generate-double-sma index)
       :double-ema (generate-double-ema index)
       :fisher (generate-fisher index) ; NOT ADDED YET
@@ -111,10 +145,10 @@
     :operand (let [flip-probability (rand)]
                (if (< flip-probability (:flip-mutation-probability p/params))
                  (generate-operand (:index node))
-                 (condp :indicator node
-                   :rsi (mutate-rsi node)
+                 (condp = (:indicator node)
                    :sma (mutate-ma node)
                    :ema (mutate-ma node)
+                   :rsi (mutate-rsi node)
                    :double-sma (mutate-double-ma node)
                    :double-ema (mutate-double-ma node)
                    :fisher (mutate-fisher node)
