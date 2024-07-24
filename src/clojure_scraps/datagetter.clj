@@ -116,15 +116,22 @@
   ([start end] (get-subseries-from-bar (get-bars-for-genetic) start end))
   ([bars start end] (.getSubSeries bars start end)))
 
+(defn get-bar-value
+  "Returns the bar value of the given bar."
+  [bar]
+  (-> bar .getClosePrice .doubleValue))
+
 (defn get-bar-value-at-index
   "Returns the bar value on the given index."
   [bars index]
-  (-> bars
-      (.getBar index)
-      .getClosePrice
-      .doubleValue))
+  (get-bar-value (.getBar bars index)))
 
-(defn get-bar-time-at-index
-  "Returns the bar start and end time on the given index."
+(defn get-bar-close-time
+  "Returns the bar end time of the given bar."
+  [bar]
+  (-> bar .getEndTime .toString str))
+
+(defn get-bar-close-time-at-index
+  "Returns the bar end time on the given index."
   [bars index]
-  (let [bar (.getBar bars index)] (str (.toString (.getBeginTime bar)) "-" (.toString (.getEndTime bar)))))
+  (let [bar (.getBar bars index)] (-> bar .getEndTime .toString str)))

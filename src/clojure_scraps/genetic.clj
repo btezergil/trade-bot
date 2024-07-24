@@ -10,11 +10,17 @@
             [clojure.tools.logging :as log]
             [nature.core :as n]
             [nature.initialization-operators :as io]
-            [nature.monitors :as nmon]))
+            [nature.monitors :as nmon]
+            [clojure.pprint :as pp]))
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 
 (defn generate-sequence [] (vector (node/generate-tree) (node/generate-tree)))
+
+(s/def :transaction/result double?)
+(s/def :transaction/position #{:long :short})
+(s/def :transaction/time-range string?) ; TODO: buradaki datetime yapisi icin ayri bir spec yazalim
+(s/def :genetic/transaction (s/keys :req-un [:transaction/result :transaction/position :transaction/time-range]))
 
 (defn check-rsi-signal
   [node direction index data]
@@ -83,71 +89,82 @@
 
 (defn short? "Checks whether the generated individual signals result in a overall short signal for this strategy." [tree signals] (= :short (node/signal-check tree signals :short)))
 
-(defn transaction-result "Calculates the profit of a single transaction." [direction initial-price final-price] (if (= :long direction) (- final-price initial-price) (- initial-price final-price)))
-
 (defn scale-profit-result
   "Scales the profit result to a positive value.
+  Positive profits are given a multipler to give more incentive within the evolution.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
-  (if (>= total-profit 0) (+ total-profit 1) (Math/pow 2 total-profit)))
+  (if (> total-profit 0) (* (inc total-profit) 1.5) (Math/pow 2 total-profit)))
 
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
-  [transactions final-price]
+  [transactions]
   (if-not (empty? transactions)
-    (let [initial-position (first transactions)
-          final-position (second transactions)
-          transaction-result-partial (partial transaction-result (:position initial-position) (:price initial-position))]
-      (if (nil? final-position) (transaction-result-partial final-price) (+ (transaction-result-partial (:price final-position)) (calculate-profit-from-transactions (rest transactions) final-price))))
+    (reduce + (map :result transactions))
     0))
 
 (defn calculate-scaled-profit
   "Calculates the total profit and scales it so that the result is positive."
-  [transactions final-price]
+  [transactions]
   (-> transactions
-      (calculate-profit-from-transactions final-price)
+      calculate-profit-from-transactions
       scale-profit-result))
 
 (defn create-transaction-map
   "Creates a transaction to be added to the transaction array
   Records the direction, time, and price"
   [data current-index direction]
-  {:price (datagetter/get-bar-value-at-index data current-index), :position direction, :bar-time (datagetter/get-bar-time-at-index data current-index)})
+  {:price (datagetter/get-bar-value-at-index data current-index), :position direction, :bar-time (datagetter/get-bar-close-time-at-index data current-index)})
 
-(defn calculate-fitness
-  "Calculates the fitness of given genetic sequence."
+(defn backtest-strategy
+  "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
   [data genetic-sequence]
   (let [max-index (.getBarCount data)]
     (loop [current-position :none
            current-index 0
-           transactions (vector)]
+           entry-exit-points (vector)]
       (if (< current-index max-index)
         (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
               short-signals (generate-signals (last genetic-sequence) :short current-index data)]
           (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
-                (recur :long (inc current-index) (conj transactions (create-transaction-map data current-index :long)))
+                (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
                 (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
-                (recur :short (inc current-index) (conj transactions (create-transaction-map data current-index :short)))
-                :else (recur current-position (inc current-index) transactions)))
-        (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
+                (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
+                :else (recur current-position (inc current-index) entry-exit-points)))
+        entry-exit-points))))
+
+(defn merge-to-transaction
+  "Merges the given entry and exit points into a transaction."
+  [entry exit]
+  {:post [(s/valid? :genetic/transaction %)]}
+  (let [position (:position entry)
+        result (- (:price exit) (:price entry))]
+    {:position position :result (if (= position :long) result (- result)) :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
+
+(defn merge-entry-points
+  "Merges transaction entry and exit points, then finds the profit of the transaction and records its time."
+  [entry-points final-bar-value final-bar-end-time]
+  (println entry-points)
+  (if-not (empty? entry-points)
+    (loop [transactions (vector)
+           rem-entries entry-points]
+      (if (> (count rem-entries) 1)
+        (recur (conj transactions (merge-to-transaction (first rem-entries) (second rem-entries))) (rest rem-entries))
+        (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value :bar-time final-bar-end-time}))))
+    (vector)))
+
+(defn calculate-fitness
+  "Calculates the fitness of given genetic sequence."
+  [data genetic-sequence]
+  (let [max-index (-> data .getBarCount dec)
+        entry-exit-points (backtest-strategy data genetic-sequence)]
+    (calculate-scaled-profit (merge-entry-points entry-exit-points (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index)))))
 
 (defn calculate-transactions-for-monitor
   "Calculates the transactions of given genetic sequence for bookkeeping."
-  [data individual]
-  (let [max-index (.getBarCount data)
-        genetic-sequence (:genetic-sequence individual)]
-    (loop [current-position :none
-           current-index 0
-           transactions (vector)]
-      (if (< current-index max-index)
-        (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
-              short-signals (generate-signals (last genetic-sequence) :short current-index data)]
-          (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
-                (recur :long (inc current-index) (conj transactions (create-transaction-map data current-index :long)))
-                (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
-                (recur :short (inc current-index) (conj transactions (create-transaction-map data current-index :short)))
-                :else (recur current-position (inc current-index) transactions)))
-        transactions))))
+  [data individual] (let [genetic-sequence (:genetic-sequence individual)
+                          max-index (-> data .getBarCount dec)]
+                      (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
 
 ; TODO: make data getting part generic and use that instead of calling get-subseries everywhere
 
