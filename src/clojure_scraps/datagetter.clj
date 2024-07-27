@@ -25,15 +25,21 @@
 (defn get-quote
   "Queries the API for data"
   []
-  (let [{:keys [body]} (client/get quote-url
-                                   {:query-params
-                                    {"symbol" (:symbol team-query-params), "interval" (:interval team-query-params), "exchange" (:exchange team-query-params), "apikey" (env :twelvedata-apikey)}})]
+  (let [{:keys [body]} (client/get quote-url {:query-params
+                                              {"symbol" (:symbol team-query-params)
+                                               "interval" (:interval team-query-params)
+                                               "exchange" (:exchange team-query-params)
+                                               "apikey" (env :twelvedata-apikey)}})]
     (cheshire/parse-string body true)))
 
 (defn get-forex-time-series
   "Queries the API for data"
   []
-  (let [response (client/get time-series-url {:query-params {"symbol" "EUR/USD", "interval" "1h", "outputsize" (* 24 90), "format" "CSV", "apikey" (env :twelvedata-apikey)}})
+  (let [response (client/get time-series-url {:query-params {"symbol" "EUR/USD"
+                                                             "interval" "1h"
+                                                             "outputsize" (* 24 90)
+                                                             "format" "CSV"
+                                                             "apikey" (env :twelvedata-apikey)}})
         body (:body response)]
     (spit "eurusd-3month-1h.csv" body)))
 
@@ -41,9 +47,12 @@
   "Queries the API for data"
   ([size] (get-time-series size (:symbol team-query-params)))
   ([size symbol]
-   (let [response (client/get time-series-url
-                              {:query-params
-                               {"symbol" symbol, "interval" (:interval team-query-params), "exchange" (:exchange team-query-params), "outputsize" size, "apikey" (env :twelvedata-apikey)}})
+   (let [response (client/get time-series-url {:query-params
+                                               {"symbol" symbol
+                                                "interval" (:interval team-query-params)
+                                                "exchange" (:exchange team-query-params)
+                                                "outputsize" size
+                                                "apikey" (env :twelvedata-apikey)}})
          body (cheshire/parse-string (:body response) true)
          values (:values body)]
      values)))
@@ -70,7 +79,8 @@
 
 (defn parse-csv-line
   [entry]
-  (let [{:keys [open high low close]} entry] (assoc entry :open (Double/parseDouble open) :high (Double/parseDouble high) :low (Double/parseDouble low) :close (Double/parseDouble close) :volume 0)))
+  (let [{:keys [open high low close]} entry]
+    (assoc entry :open (Double/parseDouble open) :high (Double/parseDouble high) :low (Double/parseDouble low) :close (Double/parseDouble close) :volume 0)))
 
 (defn read-csv-file
   [filename]
@@ -101,7 +111,8 @@
   ([] (get-bars (get-data 1000) :api))
   ([bars mode]
    (let [s (.build (BaseBarSeriesBuilder.))]
-     (doseq [{:keys [datetime open high low close volume]} bars] (.addBar s (get-duration mode) ((get-parser mode) datetime) open high low close volume))
+     (doseq [{:keys [datetime open high low close volume]} bars]
+       (.addBar s (get-duration mode) ((get-parser mode) datetime) open high low close volume))
      s)))
 
 (defn get-bars-for-genetic

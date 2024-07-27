@@ -8,7 +8,7 @@
   (:import [org.ta4j.core BaseStrategy Trade$TradeType]
            (org.ta4j.core.backtest BarSeriesManager)))
 
-(def table-vars {:table-name "strategy-v1", :table-key "strategyId"})
+(def table-vars {:table-name "strategy-v1" :table-key "strategyId"})
 
 (defn constructor
   [pre-str post-str]
