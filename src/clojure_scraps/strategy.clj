@@ -5,7 +5,8 @@
             [clojure-scraps.datagetter :as datagetter]
             [clojure.spec.alpha :as s]
             [clojure-scraps.indicators.pinbar :as pinbar])
-  (:import [org.ta4j.core BaseStrategy BarSeriesManager Trade$TradeType]))
+  (:import [org.ta4j.core BaseStrategy Trade$TradeType]
+           (org.ta4j.core.backtest BarSeriesManager)))
 
 (def table-vars {:table-name "strategy-v1", :table-key "strategyId"})
 

@@ -3,25 +3,26 @@
 (def params
   {:indicator-count 5,
    :window-size-min 3,
-   :window-size-max 15, ; TODO: window-size'i fix param olarak kullansak da training'e katmasak makul olur mu
-   :crossover-probability 0.2,
-   :mutation-probability 0.1,
+   :window-size-max 15, ; TODO: introduce windows for strategy generation?
+   :crossover-probability 0.2, ; TODO: UNUSED
+   :crossover-propagation-probability 0.5, ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
+   :mutation-probability 0.1, ; TODO: UNUSED
    :flip-mutation-probability 0.25,
-   :population-size 2,
-   :rank-selection-offset 0.6,
-   :generation-count 0,
-   :elitism-percentage 0.05,
-   :leverage 100,
+   :population-size 100,
+   :rank-selection-offset 0.6, ; TODO: UNUSED
+   :generation-count 100,
+   :elitism-ratio 0.05,
+   :leverage 100, ; TODO: introduce leverage, capital and commission usage to fitness generation and strategy execution
    :capital 1000,
    :commission 0.005,
-   :stoploss-enabled false,
+   :stoploss-enabled false, ; TODO: introduce stoploss and take profit, but later on
    :takeprofit-enabled false,
    :stoploss-ratio 0.1,
    :takeprofit-ratio 0.2,
-   :data-window 1000,
+   :data-window 1000, ; TODO: sliding data and trading windows?
    :trading-window 100,
-   :trade-threshold 0.05,
-   :accuracy-profit-ratio 0.01,
+   :trade-threshold 0.05, ; TODO: introduce trade threshold?
+   :accuracy-profit-ratio 0.01, ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar],
    :prune-height 2,
    :default-age 0})

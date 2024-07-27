@@ -44,13 +44,14 @@
 (defn write-to-table
   "Writes the given item to given DynamoDB table"
   [table-name data]
-  (log/info (format "writing %s to table %s" data table-name))
-  (let [response (aws/invoke ddb {:op :PutItem, :request {:TableName table-name, :Item data}})] (log/info (format "write response: %s" response))))
+  (log/debug (format "writing %s to table %s" data table-name))
+  (let [response (aws/invoke ddb {:op :PutItem, :request {:TableName table-name, :Item data}})]
+    (log/debug (format "write response: %s" response))))
 
 (defn read-from-table
   "Reads the item with id from given table"
   [table-name table-key id]
-  (log/info (format "reading from table %s" table-name))
+  (log/debug (format "reading from table %s" table-name))
   (let [response (aws/invoke ddb {:op :GetItem, :request {:TableName table-name, :Key {table-key {:S id}}}})]
-    (log/info (format "read response: %s" response))
+    (log/debug (format "read response: %s" response))
     response))

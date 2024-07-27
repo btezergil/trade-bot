@@ -95,9 +95,9 @@
                "generation-count" {:N (-> p/params
                                           :generation-count
                                           str)},
-               "elitism-percentage" {:N (-> p/params
-                                            :elitism-percentage
-                                            str)},
+               "elitism-ratio" {:N (-> p/params
+                                       :elitism-ratio
+                                       str)},
                "leverage" {:N (-> p/params
                                   :leverage
                                   str)},
