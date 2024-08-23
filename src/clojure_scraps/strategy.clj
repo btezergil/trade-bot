@@ -33,6 +33,18 @@
 (defn base-strategy [entry-rule exit-rule]
   (BaseStrategy. entry-rule exit-rule))
 
+(defn get-profit
+  "Returns the profit of given position as a double"
+  [position]
+  (-> position 
+      .getProfit 
+      .doubleValue))
+
+(defn calculate-result
+  "Gets the positions from a trading record and calculates the total profit/loss"
+  [trading-record]
+  (reduce + (map get-profit trading-record)))
+
 (defn rsi-indicator
   "Returns an RSI indicator with given bars"
   [bars period]
@@ -53,8 +65,8 @@
 
 (defn engulfing-strategy
   "Generates a strategy based on engulfing candlestick pattern"
-  [series]
-  (let [engulfing (engulfing-indicator series)
+  []
+  (let [engulfing (engulfing-indicator (datagetter/get-bars))
         entry (rule :BooleanIndicator engulfing)
         exit (rule :WaitFor Trade$TradeType/BUY 10)]
     (base-strategy entry exit)))
@@ -65,18 +77,6 @@
         entry (rule :BooleanIndicator ind)
         exit (rule :WaitFor Trade$TradeType/BUY 10)]
     (base-strategy entry exit)))
-
-(defn get-profit
-  "Returns the profit of given position as a double"
-  [position]
-  (-> position 
-      .getProfit 
-      .doubleValue))
-
-(defn calculate-result
-  "Gets the positions from a trading record and calculates the total profit/loss"
-  [trading-record]
-  (reduce + (map get-profit trading-record)))
 
 (defn run-strategy
   "Runs the given strategy and returns the generated positions"
@@ -89,12 +89,11 @@
   (let [strategy (rsi-strategy (datagetter/get-bars) 14 oversold overbought)] 
     (run-strategy strategy)))
 
-(defn run-engulfing
-  []
-  (let [strategy (engulfing-strategy (datagetter/get-bars))]
-    (run-strategy strategy)))
+(def run-engulfing (run-strategy (engulfing-strategy)))
+(def run-hammer (run-strategy (hammer-strategy)))
 
 (defn eng-criterion
+  "Uses criterion to find profit BUT NOT MATCHING THE ACTUAL RESULT, DON'T USE!!!"
   [strategy]
   (let [criterion (crit :pnl/NetProfit)
         bars (datagetter/get-bars)
@@ -102,10 +101,13 @@
         rec (.run bsm strategy)]
     (.calculate criterion bars rec)))
 
-(calculate-result (run-engulfing))
-(eng-criterion (engulfing-strategy (datagetter/get-bars)))
-(eng-criterion (hammer-strategy))
-(*e)
+(calculate-result run-engulfing)
+(calculate-result run-hammer)
+; TODO: hammer buy rule ile alakali bir problem olabilir, acaba bu yuzden mi hammer'da pozisyon acilmiyor?
+(map get-profit run-engulfing)
+(eng-criterion (engulfing-strategy))
+; TODO: calculate result ile net profit neden farkli donuyor? analiz etmek lazim, criterion mu dogru benim fonksiyon mu?
+(run-strategy (hammer-strategy))
 ; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
 
 
