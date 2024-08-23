@@ -164,15 +164,14 @@
             :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
-#_(n/evolve-with-sequence-generator generate-sequence 
+(n/evolve-with-sequence-generator generate-sequence 
                                   (:population-size p/params) 
                                   (:generation-count p/params) 
                                   (partial calculate-fitness (get-subseries 0 300)) 
                                   [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))] 
                                   [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))] 
                                   {:solutions 3 :carry-over 1})
-; TODO: crossover ve mutation metodlari bir tree'ye gore calisiyor, onlari invididual (yani 2 tree)'ye gore calisacak hale getir
-(node/crossover (partial calculate-fitness (get-subseries 0 300)) (io/build-population 2 generate-sequence (partial calculate-fitness (get-subseries 0 300))))
+#_(node/crossover (partial calculate-fitness (get-subseries 0 300)) (io/build-population 2 generate-sequence (partial calculate-fitness (get-subseries 0 300))))
 
 *e
 (calculate-fitness (generate-sequence) (get-subseries 0 300))
