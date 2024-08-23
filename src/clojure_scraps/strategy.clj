@@ -2,15 +2,17 @@
   (:require [clojure.tools.logging :as log]
             [clj-uuid :as uuid]
             [clojure-scraps.aws :as aws-helper]
-            [clojure-scraps.datagetter :as datagetter])
+            [clojure-scraps.datagetter :as datagetter]
+            [clojure.spec.alpha :as s])
   (:import (java.time ZoneId ZonedDateTime)
            (java.time.format DateTimeFormatter)
            [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType]))
 
-(def table-name "strategy-v1")
-(def table-key "strategyId")
+(def table-vars { 
+  :table-name "strategy-v1"
+  :table-key "strategyId"}) 
 
-(defn datetime-parser
+(defn parse-datetime
   "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
   [dt]
   (ZonedDateTime/parse dt (.withZone (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (ZoneId/of "UTC"))))
@@ -25,7 +27,7 @@
   ([] (series (get-data 1000)))
   ([bars] (let [s (.build (BaseBarSeriesBuilder.))]
             (doseq [{:keys [datetime open high low close volume]} bars]
-              (.addBar s (datetime-parser datetime) open high low close volume))
+              (.addBar s (parse-datetime datetime) open high low close volume))
             s)))
 
 (defn constructor [pre-str post-str]
@@ -37,6 +39,9 @@
         (to-array args)))))
 (defn ind [class-key & args]
   (let [ctor (constructor "org.ta4j.core.indicators." "Indicator")]
+    (ctor class-key args)))
+(defn candle-ind [class-key & args]
+  (let [ctor (constructor "org.ta4j.core.indicators.candles." "Indicator")]
     (ctor class-key args)))
 (defn rule [class-key & args]
   (let [ctor (constructor "org.ta4j.core.rules." "Rule")]
@@ -53,29 +58,59 @@
   [bars period]
   (ind :RSI (ind :helpers/ClosePrice bars) period))
 
-(defn rsi-strat
+(defn rsi-strategy
   "Generates a strategy based on RSI indicator"
   [series period oversold-thresh overbought-thresh]
   (let [rsi (rsi-indicator series period)
         entry (rule :CrossedDownIndicator rsi oversold-thresh)
         exit (rule :CrossedUpIndicator rsi overbought-thresh)]
-    (BaseStrategy. entry exit))
-  )
+    (base-strategy entry exit)))
+
+(defn engulfing-indicator
+  "Returns an engulfing indicator"
+  [bars]
+  (candle-ind :BullishEngulfing bars))
+
+(defn engulfing-strategy
+  "Generates a strategy based on engulfing candlestick pattern"
+  [series]
+  (let [engulfing (engulfing-indicator series)
+        entry (rule :BooleanIndicator engulfing)
+        exit (rule :WaitFor Trade$TradeType/BUY 10)]
+    (base-strategy entry exit)))
 
 (defn get-profit
-  "HELPER: Returns the profit of given position as a double"
+  "Returns the profit of given position as a double"
   [position]
   (-> position 
       .getProfit 
       .doubleValue))
 
+(defn calculate-result
+  "Gets the positions from a trading record and calculates the total profit/loss"
+  [trading-record]
+  (reduce + (map get-profit trading-record)))
+
+(defn run-strategy
+  "Runs the given strategy and returns the generated positions"
+  [strategy]
+  (let [bars (series)
+        bsm (BarSeriesManager. bars)] 
+    (.getPositions (.run bsm strategy))))
+
 (defn run-rsi
+  [oversold overbought]
+  (let [strategy (rsi-strategy (series) 14 oversold overbought)] 
+    (run-strategy strategy)))
+
+(defn run-engulfing
   []
-  (let [series (series)
-        strategy (rsi-strat series 14 30 70)
-        bsm (BarSeriesManager. series)] 
-    (reduce + (map get-profit (.getPositions (.run bsm strategy)))))
-) 
+  (let [strategy (engulfing-strategy (series))]
+    (run-strategy strategy)))
+
+(calculate-result (run-engulfing))
+; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
+
 
 (defn run-old
   []
@@ -99,36 +134,21 @@
             [(-> crit .getClass .getSimpleName)
              (.longValue (.calculate crit series rec))]))))
 
-(defprotocol Indicator
-  (init-indicator [indicator])
-  (buy? [indicator])
-  (sell? [indicator])
-  (write-to-table [indicator]))
+;; "TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 
-(deftype RsiStrategy [id buy-threshold sell-threshold]
-  Indicator
-  (init-indicator [indicator]
-    (log/info (format
-                "initialized an indicator for TradingStrategy with params %1 and %2"
-                (.buy-threshold indicator) (.sell-threshold indicator))))
-
-  (buy? [indicator]
-    (< (get-data) (.buy-threshold indicator)))
-
-  (sell? [indicator]
-    (> (get-data) (.sell-threshold indicator)))
-
-  (write-to-table [indicator]
-    (let [entry {"strategyId" {:S (str (.id indicator))}
-                 "indicatorName" {:S "RSI"}
-                 "buyThreshold" {:N (str (.buy-threshold indicator))}
-                 "sellThreshold" {:N (str (.sell-threshold indicator))}}]
-      (aws-helper/write-to-table table-name entry))))
+(defn write-to-table
+  "Writes the given indicator map to the table" 
+  [indicator]
+  (let [entry {"strategyId" {:S (str (uuid/v1))}
+               "indicatorName" {:S "RSI"}
+               "buyThreshold" {:N (str (.buy-threshold indicator))}
+               "sellThreshold" {:N (str (.sell-threshold indicator))}}]
+    (aws-helper/write-to-table (:table-name table-vars) entry)))
 
 (defn read-from-table
-  "Reads the given id from strategy table and returns an instance of its strategy"
+  "Reads the given id from strategy table and returns it as a map"
   [id]
-  (let [item (aws-helper/read-from-table table-name table-key id)
+  (let [item (aws-helper/read-from-table (:table-name table-vars) (:table-key table-vars) id)
         data-map (:Item item)
         indicator-name (-> data-map
                            :indicatorName
@@ -138,8 +158,11 @@
                           :N
                           parse-long)
         sell-threshold (-> data-map
-                          :sellThreshold
-                          :N
-                          parse-long)]
-    (cond
-      (= indicator-name "RSI") (->RsiStrategy (uuid/v1) buy-threshold sell-threshold))))
+                           :sellThreshold
+                           :N
+                           parse-long)]
+    {:id id
+     :type indicator-name
+     :buy-threshold buy-threshold
+     :sell-threshold sell-threshold
+     }))
