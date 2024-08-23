@@ -9,6 +9,7 @@
             [clojure-scraps.aws :as aws-helper]
             [clojure.data.json :as json]
             [clojure.walk :as walk]
+            [clj-uuid :as uuid]
             [nature.core :as n]
             [nature.initialization-operators :as io]
             [nature.monitors :as mon]))
@@ -151,11 +152,12 @@
 
 (defn write-individual-to-table
   "Records the given genetic indivdual to database"
-  [individual]
+  [evolution-id individual]
   {:pre [s/valid? :genetic/individual individual]}
   (let [entry {"id" {:S (-> individual
                             :guid
                             str)},
+               "evolution-id" {:S (str evolution-id)},
                "age" {:N (-> individual
                              :age
                              str)},
@@ -169,9 +171,9 @@
 
 (defn write-to-table-monitor
   "Monitor function for evolution that writes every individual of population to the table"
-  [population current-generation]
+  [evolution-id population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (dorun (map write-individual-to-table population)))
+  (dorun (map (partial write-individual-to-table evolution-id) population)))
 
 (defn read-individual-from-table
   "Queries the strategy-v1 table for the individual with the given id"
@@ -194,11 +196,13 @@
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
-  (n/evolve-with-sequence-generator generate-sequence
-                                    (:population-size p/params)
-                                    (:generation-count p/params)
-                                    (partial calculate-fitness (get-subseries 0 300))
-                                    [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
-                                    [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
-                                    {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution print-average-fitness-of-population write-to-table-monitor]}))
+  (let [evolution-id (uuid/v1)]
+    (p/write-evolution-to-table evolution-id)
+    (n/evolve-with-sequence-generator generate-sequence
+                                      (:population-size p/params)
+                                      (:generation-count p/params)
+                                      (partial calculate-fitness (get-subseries 0 300))
+                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
+                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
+                                      {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution print-average-fitness-of-population (partial write-to-table-monitor evolution-id)]})))
 
