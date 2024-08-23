@@ -14,7 +14,7 @@
 
 (defn generate-sequence
   []
-  (conj (vector) (node/generate-tree) (node/generate-tree)))
+  (vector (node/generate-tree) (node/generate-tree)))
 
 (s/def :genetic/indicator keyword?)
 (s/def :genetic/overbought int?)
@@ -172,7 +172,7 @@
                                   [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))] 
                                   {:solutions 3 :carry-over 1})
 ; TODO: crossover ve mutation metodlari bir tree'ye gore calisiyor, onlari invididual (yani 2 tree)'ye gore calisacak hale getir
-(node/mutation (partial calculate-fitness (get-subseries 0 300)) (first (io/build-population 1 generate-sequence (partial calculate-fitness (get-subseries 0 300)))))
+(node/crossover (partial calculate-fitness (get-subseries 0 300)) (io/build-population 2 generate-sequence (partial calculate-fitness (get-subseries 0 300))))
 
 *e
 (calculate-fitness (generate-sequence) (get-subseries 0 300))

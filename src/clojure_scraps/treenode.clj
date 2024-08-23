@@ -134,9 +134,7 @@
 (defn get-right-index-for-operand
   "Calculates the operand index for the right side of the tree."
   [height]
-  (-> 2
-      (Math/pow height)
-      int))
+  (-> 2 (Math/pow height) int))
 
 ; treenode is a three element list representing a tree node and its children
 ; with this structure, we can get the left child with first, right child with last, and the node itself with second.
@@ -144,11 +142,11 @@
   "Generates a tree with given height, recursively until leaves are reached. No parameter method uses prune-height as default. Also gives indices to operands."
   ([] (generate-tree (:prune-height p/params)))
   ([height-remaining] (if (> height-remaining 0)
-                        [(generate-tree (dec height-remaining) 0) (generate-operator) (generate-tree (dec height-remaining) (get-right-index-for-operand height-remaining))]
-                        [(generate-operand 0) (generate-operator) (generate-operand 1)]))
+                        [(generate-tree (dec height-remaining) 0) (generate-operator) (generate-tree (dec height-remaining) (get-right-index-for-operand (dec height-remaining)))]
+                        (generate-operand 0)))
   ([height-remaining initial-index] (if (> height-remaining 0)
-                                      [(generate-tree (dec height-remaining) initial-index) (generate-operator) (generate-tree (dec height-remaining) (+ initial-index (get-right-index-for-operand height-remaining)))]
-                                      [(generate-operand initial-index) (generate-operator) (generate-operand (inc initial-index))])))
+                                      [(generate-tree (dec height-remaining) initial-index) (generate-operator) (generate-tree (dec height-remaining) (+ initial-index (get-right-index-for-operand (dec height-remaining))))]
+                                      (generate-operand initial-index))))
 
 (defn perform-mutation
   "Genetic mutation operation, flips given operator or mutates given operand. Operand mutation can either be a change of parameter or replacement with a new one."
@@ -280,11 +278,11 @@
          node2 ((tree-selector long?) seqn2)
          crossover-result (node-crossover node1 node2)] 
      (vector (io/build-individual (first crossover-result)
-                                    [node1 node2]
+                                  (vector node1 node2)
                                   (:default-age p/params)
                                   fitness-func)
              (io/build-individual (second crossover-result)
-                                  [node1 node2]
+                                  (vector node1 node2)
                                   (:default-age p/params)
                                   fitness-func)))))
 
