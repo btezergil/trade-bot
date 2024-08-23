@@ -71,12 +71,9 @@
                "indicator-count" {:N (-> p/params
                                          :indicator-count
                                          str)}
-               "window-size-min" {:N (-> p/params
-                                         :window-size-min
-                                         str)}
-               "window-size-max" {:N (-> p/params
-                                         :window-size-max
-                                         str)}
+               "window-range" {:N (-> p/params
+                                      :window-range
+                                      str)}
                "crossover-probability" {:N (-> p/params
                                                :crossover-probability
                                                str)}

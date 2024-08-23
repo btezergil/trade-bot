@@ -8,7 +8,7 @@
             [clojure-scraps.treenode :as node]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
-            [clojure.math :as math :refer ceil]
+            [clojure.math :as math]
             [nature.core :as n]
             [nature.initialization-operators :as io]
             [nature.monitors :as nmon]
@@ -26,10 +26,30 @@
 (s/def :transaction/position #{:long :short})
 (s/def :transaction/time-range string?) ; TODO: buradaki datetime yapisi icin ayri bir spec yazalim
 (s/def :genetic/transaction (s/keys :req-un [:transaction/result :transaction/position :transaction/time-range]))
+(s/def :strategy/signal #{:long :short :no-signal})
+
+(defn combine-signal-list
+  "Combines the given signal list into one signal.
+  Last received signal has precedence."
+  [signal-list]
+  {:post [(s/valid? :strategy/signal %)]}
+  (let [last-long (.lastIndexOf signal-list :long)
+        last-short (.lastIndexOf signal-list :short)]
+    (cond (> last-long last-short) :long
+          (> last-short last-long) :short
+          :else :no-signal)))
+
+(defn check-signal-with-window
+  [index signal-check-partial]
+  {:post [(s/valid? :strategy/signal %)]}
+  (let [window-range (dec (:window-range p/params))
+        start-index-for-range (if (pos? (- index window-range)) (- index window-range) 0)]
+    (combine-signal-list (map signal-check-partial (range start-index-for-range (inc index))))))
 
 (defn check-rsi-signal
-  [node direction index data]
-  {:pre [(s/valid? :genetic/rsi node)]}
+  [node direction data index]
+  {:pre [(s/valid? :genetic/rsi node)]
+   :post [(s/valid? :strategy/signal %)]}
   (let [{:keys [overbought oversold window]} node
         rsi-indicator (strat/rsi-indicator data window)
         rsi-value (.doubleValue (.getValue rsi-indicator index))]
@@ -38,38 +58,48 @@
           :else :no-signal)))
 
 (defn check-single-ma-signal
-  [direction index indicator data]
+  [direction indicator data index]
+  {:post [(s/valid? :strategy/signal %)]}
   (cond (and (= direction :long) (strat/crosses-up? indicator data index)) :long
         (and (= direction :short) (strat/crosses-down? indicator data index)) :short
         :else :no-signal))
 
 (defn check-single-sma-signal
-  [node direction index data]
-  {:pre [(s/valid? :genetic/ma node)]}
-  (let [{:keys [window]} node sma-indicator (strat/sma-indicator data window)] (check-single-ma-signal direction index sma-indicator data)))
+  [node direction data index]
+  {:pre [(s/valid? :genetic/ma node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [window]} node
+        sma-indicator (strat/sma-indicator data window)]
+    (check-single-ma-signal direction sma-indicator data index)))
 
 (defn check-single-ema-signal
-  [node direction index data]
-  {:pre [(s/valid? :genetic/ma node)]}
-  (let [{:keys [window]} node ema-indicator (strat/ema-indicator data window)] (check-single-ma-signal direction index ema-indicator data)))
+  [node direction data index]
+  {:pre [(s/valid? :genetic/ma node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [window]} node
+        ema-indicator (strat/ema-indicator data window)]
+    (check-single-ma-signal direction ema-indicator data index)))
 
 (defn check-double-ma-signal
   [direction index ind1 ind2]
+  {:post [(s/valid? :strategy/signal %)]}
   (cond (and (= direction :long) (strat/indicators-cross-up? ind1 ind2 index)) :long
         (and (= direction :short) (strat/indicators-cross-down? ind1 ind2 index)) :short
         :else :no-signal))
 
 (defn check-double-sma-signal
-  [node direction index data]
-  {:pre [(s/valid? :genetic/double-ma node)]}
+  [node direction data index]
+  {:pre [(s/valid? :genetic/double-ma node)]
+   :post [(s/valid? :strategy/signal %)]}
   (let [{:keys [window1 window2]} node
         sma-indicator1 (strat/sma-indicator data window1)
         sma-indicator2 (strat/sma-indicator data window2)]
     (check-double-ma-signal direction index sma-indicator1 sma-indicator2)))
 
 (defn check-double-ema-signal
-  [node direction index data]
-  {:pre [(s/valid? :genetic/double-ma node)]}
+  [node direction data index]
+  {:pre [(s/valid? :genetic/double-ma node)]
+   :post [(s/valid? :strategy/signal %)]}
   (let [{:keys [window1 window2]} node
         ema-indicator1 (strat/ema-indicator data window1)
         ema-indicator2 (strat/ema-indicator data window2)]
@@ -83,11 +113,11 @@
     (let [index-keyword (node/index-to-keyword tree)]
       (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
-        :rsi {index-keyword (check-rsi-signal tree direction index data)}
-        :sma {index-keyword (check-single-sma-signal tree direction index data)}
-        :ema {index-keyword (check-single-ema-signal tree direction index data)}
-        :double-sma {index-keyword (check-double-sma-signal tree direction index data)}
-        :double-ema {index-keyword (check-double-ema-signal tree direction index data)}
+        :rsi {index-keyword (check-signal-with-window index (partial check-rsi-signal tree direction data))}
+        :sma {index-keyword (check-signal-with-window index (partial check-single-sma-signal tree direction data))}
+        :ema {index-keyword (check-signal-with-window index (partial check-single-ema-signal tree direction data))}
+        :double-sma {index-keyword (check-signal-with-window index (partial check-double-sma-signal tree direction data))}
+        :double-ema {index-keyword (check-signal-with-window index (partial check-double-ema-signal tree direction data))}
         :identity {index-keyword :identity}))))
 
 (defn find-elitism-ind-count
