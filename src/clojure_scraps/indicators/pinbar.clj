@@ -98,7 +98,7 @@
      (<= bar-percentage-upside 0.005)
      (>= bar-percentage-downside 0.025))))
 
-(is-hammer? 380.43 380.63 349.56 350.42)
-(filter #(true? (second %)) (map #(list % (s/valid? :pinbar/is-hammer %)) (.getBarData (datagetter/get-bars))))
+;(is-hammer? 380.43 380.63 349.56 350.42)
+;(filter #(true? (second %)) (map #(list % (s/valid? :pinbar/is-hammer %)) (.getBarData (datagetter/get-bars))))
 ; TODO: false olanlari filter-out'la, gercekten hammer bulabiliyor mu bi gorelim
 

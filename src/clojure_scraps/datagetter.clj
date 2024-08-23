@@ -106,9 +106,19 @@
     (cond (str/ends-with? (:interval team-query-params) "min") (Duration/ofMinutes 1)
           (str/ends-with? (:interval team-query-params) "day") (Duration/ofDays 1))))
 
+; TODO: API data casting to bars with duration is not working, find out what the problem is
+
+(defn get-bars-from-api
+  [data-count]
+  (let [data (get-data data-count)
+        s (.build (BaseBarSeriesBuilder.))]
+    (doseq [{:keys [datetime open high low close volume]} data]
+      (.addBar s ((get-parser :api) datetime) open high low close volume))
+    s))
+
 (defn get-bars
   "Bars should be a sequence of maps containing :datetime/:open/:high/:low/:close/:volume"
-  ([] (get-bars (get-data 1000) :api))
+  ([] (get-bars-from-api 20))
   ([bars mode]
    (let [s (.build (BaseBarSeriesBuilder.))]
      (doseq [{:keys [datetime open high low close volume]} bars]
