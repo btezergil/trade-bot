@@ -3,6 +3,9 @@
             [clj-uuid :as uuid]
             [clojure-scraps.aws :as aws-helper]))
 
+(def table-name "strategy-v1")
+(def table-key "strategyId")
+
 (defn get-data
   "Gets data for one step for dummy strategy signal generation"
   []
@@ -32,4 +35,23 @@
                  "indicatorName" {:S "RSI"}
                  "buyThreshold" {:N (str (.buy-threshold indicator))}
                  "sellThreshold" {:N (str (.sell-threshold indicator))}}]
-      (aws-helper/write-to-table "strategy-v1" entry))))
+      (aws-helper/write-to-table table-name entry))))
+
+(defn read-from-table
+  "Reads the given id from strategy table and returns an instance of its strategy"
+  [id]
+  (let [item (aws-helper/read-from-table table-name table-key id)
+        data-map (:Item item)
+        indicator-name (-> data-map
+                           :indicatorName
+                           :S)
+        buy-threshold (-> data-map
+                          :buyThreshold
+                          :N
+                          parse-long)
+        sell-threshold (-> data-map
+                          :sellThreshold
+                          :N
+                          parse-long)]
+    (cond
+      (= indicator-name "RSI") (->RsiStrategy (uuid/v1) buy-threshold sell-threshold))))
