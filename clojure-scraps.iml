@@ -21,6 +21,7 @@
     <orderEntry type="library" name="Leiningen: clj-http:3.12.3" level="project" />
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/api:0.8.656" level="project" />
+    <orderEntry type="library" name="Leiningen: com.cognitect.aws/dynamodb:845.2.1345.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/endpoints:1.1.12.437" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/lambda:845.2.1359.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect.aws/sns:836.2.1323.0" level="project" />
@@ -33,6 +34,7 @@
     <orderEntry type="library" name="Leiningen: commons-codec:1.15" level="project" />
     <orderEntry type="library" name="Leiningen: commons-io:2.8.0" level="project" />
     <orderEntry type="library" name="Leiningen: commons-logging:1.2" level="project" />
+    <orderEntry type="library" name="Leiningen: danlentz/clj-uuid:0.1.9" level="project" />
     <orderEntry type="library" name="Leiningen: environ:1.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: nrepl:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.httpcomponents/httpasyncclient:4.1.4" level="project" />
@@ -62,6 +64,7 @@
     <orderEntry type="library" name="Leiningen: org.nrepl/incomplete:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.ow2.asm/asm:9.2" level="project" />
     <orderEntry type="library" name="Leiningen: potemkin:0.4.6" level="project" />
+    <orderEntry type="library" name="Leiningen: primitive-math:0.1.6" level="project" />
     <orderEntry type="library" name="Leiningen: riddley:0.1.12" level="project" />
     <orderEntry type="library" name="Leiningen: slingshot:0.12.2" level="project" />
     <orderEntry type="library" name="Leiningen: telegrambot-lib:2.3.0" level="project" />
