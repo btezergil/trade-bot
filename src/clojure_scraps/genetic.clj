@@ -40,13 +40,13 @@
           :else :no-signal)))
 
 (defn check-signal-with-window
-  [index signal-check-partial]
+  [index signal-check-fn]
   {:post [(s/valid? :strategy/signal %)]}
   (let [window-range (dec (:window-range p/params))
         start-index-for-range (if (pos? (- index window-range)) (- index window-range) 0)]
-    (combine-signal-list (map signal-check-partial (range start-index-for-range (inc index))))))
+    (combine-signal-list (map signal-check-fn (range start-index-for-range (inc index))))))
 
-(defn check-rsi-signal
+(defn check-rsi-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/rsi node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -57,6 +57,9 @@
           (and (= direction :short) (>= rsi-value overbought)) :short
           :else :no-signal)))
 
+(def check-rsi-signal
+  (memoize check-rsi-signal-raw))
+
 (defn check-single-ma-signal
   [direction indicator data index]
   {:post [(s/valid? :strategy/signal %)]}
@@ -64,7 +67,7 @@
         (and (= direction :short) (strat/crosses-down? indicator data index)) :short
         :else :no-signal))
 
-(defn check-single-sma-signal
+(defn check-single-sma-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -72,13 +75,19 @@
         sma-indicator (strat/sma-indicator data window)]
     (check-single-ma-signal direction sma-indicator data index)))
 
-(defn check-single-ema-signal
+(def check-single-sma-signal
+  (memoize check-single-sma-signal-raw))
+
+(defn check-single-ema-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/ma node)]
    :post [(s/valid? :strategy/signal %)]}
   (let [{:keys [window]} node
         ema-indicator (strat/ema-indicator data window)]
     (check-single-ma-signal direction ema-indicator data index)))
+
+(def check-single-ema-signal
+  (memoize check-single-ema-signal-raw))
 
 (defn check-double-ma-signal
   [direction index ind1 ind2]
@@ -87,7 +96,7 @@
         (and (= direction :short) (strat/indicators-cross-down? ind1 ind2 index)) :short
         :else :no-signal))
 
-(defn check-double-sma-signal
+(defn check-double-sma-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/double-ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -96,7 +105,10 @@
         sma-indicator2 (strat/sma-indicator data window2)]
     (check-double-ma-signal direction index sma-indicator1 sma-indicator2)))
 
-(defn check-double-ema-signal
+(def check-double-sma-signal
+  (memoize check-double-sma-signal-raw))
+
+(defn check-double-ema-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/double-ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -104,6 +116,9 @@
         ema-indicator1 (strat/ema-indicator data window1)
         ema-indicator2 (strat/ema-indicator data window2)]
     (check-double-ma-signal direction index ema-indicator1 ema-indicator2)))
+
+(def check-double-ema-signal
+  (memoize check-double-ema-signal-raw))
 
 (defn generate-signals
   "Generates signals on the given data index."
@@ -113,11 +128,11 @@
     (let [index-keyword (node/index-to-keyword tree)]
       (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
-        :rsi {index-keyword (check-signal-with-window index (partial check-rsi-signal tree direction data))}
-        :sma {index-keyword (check-signal-with-window index (partial check-single-sma-signal tree direction data))}
-        :ema {index-keyword (check-signal-with-window index (partial check-single-ema-signal tree direction data))}
-        :double-sma {index-keyword (check-signal-with-window index (partial check-double-sma-signal tree direction data))}
-        :double-ema {index-keyword (check-signal-with-window index (partial check-double-ema-signal tree direction data))}
+        :rsi {index-keyword (check-signal-with-window index (fn [index] (check-rsi-signal tree direction data index)))}
+        :sma {index-keyword (check-signal-with-window index (fn [index] (check-single-sma-signal tree direction data index)))}
+        :ema {index-keyword (check-signal-with-window index (fn [index] (check-single-ema-signal tree direction data index)))}
+        :double-sma {index-keyword (check-signal-with-window index (fn [index] (check-double-sma-signal tree direction data index)))}
+        :double-ema {index-keyword (check-signal-with-window index (fn [index] (check-double-ema-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn find-elitism-ind-count
