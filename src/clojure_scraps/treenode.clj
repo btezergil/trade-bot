@@ -53,8 +53,12 @@
       rand-int
       (+ min)))
 
-(defn parse-json-values "Value parser function for individuals
-  Used when an individual is read from table" [key value] (if (= key :indicator) (keyword value) value))
+(defn parse-json-values
+  "Value parser function for individuals
+  Used when an individual is read from table"
+  [key value]
+  (if (= key :indicator) (keyword value) value))
+
 (defn keywordize-and-or
   "Convert all and's and or's in the :genetic-sequence list into keywords
   Used when an individual is read from table"
@@ -214,7 +218,7 @@
   (log/debug "before node1: " node1)
   (log/debug "before node2: " node2)
   (if (vector? node1)
-    (let [propagation-probability (rand)
+    (let [propagation-probability (:crossover-propagation-probability p/params)
           node-probability (rand)
           left1 (first node1)
           mid1 (second node1)

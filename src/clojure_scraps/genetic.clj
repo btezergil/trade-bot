@@ -8,6 +8,7 @@
             [clojure-scraps.treenode :as node]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
+            [clojure.math :as math :refer ceil]
             [nature.core :as n]
             [nature.initialization-operators :as io]
             [nature.monitors :as nmon]
@@ -86,6 +87,13 @@
         :double-ema {index-keyword (check-double-ema-signal tree direction index data)}
         :identity {index-keyword :identity}))))
 
+(defn find-elitism-ind-count
+  "Calculates the elite individual count from parameters for evolution."
+  []
+  (let [total (:population-size p/params)
+        elite-ratio (:elitism-ratio p/params)]
+    (math/ceil (* total elite-ratio))))
+
 (defn long? "Checks whether the generated individual signals result in a overall long signal for this strategy." [tree signals] (= :long (node/signal-check tree signals :long)))
 
 (defn short? "Checks whether the generated individual signals result in a overall short signal for this strategy." [tree signals] (= :short (node/signal-check tree signals :short)))
@@ -95,7 +103,9 @@
   Positive profits are given a multipler to give more incentive within the evolution.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
-  (if (> total-profit 0) (* (inc total-profit) 1.5) (Math/pow 2 total-profit)))
+  (if (> total-profit 0)
+    (* (inc total-profit) 1.5)
+    (Math/pow 2 total-profit)))
 
 (defn calculate-profit-from-transactions "Calculates the total profit of given transactions." [transactions] (if-not (empty? transactions) (reduce + (map :result transactions)) 0))
 
@@ -178,8 +188,8 @@
                                       calculate-fitness-partial
                                       [(partial node/crossover calculate-fitness-partial)]
                                       [(partial node/mutation calculate-fitness-partial)]
-                                      {:solutions 3,
-                                       :carry-over 1,
+                                      {:solutions 3
+                                       :carry-over (find-elitism-ind-count)
                                        :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)
                                                   (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments))]})))
 
