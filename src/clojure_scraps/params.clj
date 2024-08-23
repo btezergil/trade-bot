@@ -1,29 +1,28 @@
 (ns clojure-scraps.params)
 
 (def params
-  {:indicator-count 5,
-   :window-size-min 3,
-   :window-size-max 15, ; TODO: introduce windows for strategy generation?
-   :crossover-probability 0.2, ; TODO: UNUSED
-   :crossover-propagation-probability 0.5, ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
-   :mutation-probability 0.1, ; TODO: UNUSED
-   :flip-mutation-probability 0.25,
-   :population-size 100,
-   :rank-selection-offset 0.6, ; TODO: UNUSED
-   :generation-count 100,
-   :elitism-ratio 0.05,
-   :leverage 100, ; TODO: introduce leverage, capital and commission usage to fitness generation and strategy execution
-   :capital 1000,
-   :commission 0.005,
-   :stoploss-enabled false, ; TODO: introduce stoploss and take profit, but later on
-   :takeprofit-enabled false,
-   :stoploss-ratio 0.1,
-   :takeprofit-ratio 0.2,
-   :data-window 1000, ; TODO: sliding data and trading windows?
-   :trading-window 100,
-   :trade-threshold 0.05, ; TODO: introduce trade threshold?
-   :accuracy-profit-ratio 0.01, ; TODO: what is this even?
-   :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar],
-   :prune-height 2,
+  {:indicator-count 5
+   :window-range 5
+   :crossover-probability 0.2 ; TODO: UNUSED
+   :crossover-propagation-probability 0.5 ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
+   :mutation-probability 0.1 ; TODO: UNUSED
+   :flip-mutation-probability 0.25
+   :population-size 4
+   :rank-selection-offset 0.6 ; TODO: UNUSED
+   :generation-count 2
+   :elitism-ratio 0.05
+   :leverage 100
+   :capital 1000
+   :commission 0.005
+   :stoploss-enabled false ; TODO: introduce stoploss and take profit, but later on
+   :takeprofit-enabled false
+   :stoploss-ratio 0.1
+   :takeprofit-ratio 0.2
+   :data-window 1000 ; TODO: sliding data and trading windows?
+   :trading-window 100
+   :trade-threshold 0.05 ; TODO: introduce trade threshold?
+   :accuracy-profit-ratio 0.01 ; TODO: what is this even?
+   :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar]
+   :prune-height 2
    :default-age 0})
 
