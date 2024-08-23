@@ -14,7 +14,8 @@
             [nature.initialization-operators :as io]
             [nature.monitors :as mon]))
 
-(def table-vars {:table-name "strategy-v1", :table-key "id"})
+(def strategy-table-vars {:table-name "strategy-v1", :table-key "id"})
+(def transaction-table-vars {:table-name "transaction-v1", :table-key "id"})
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 
@@ -127,6 +128,28 @@
       (calculate-profit-from-transactions final-price)
       scale-profit-result))
 
+(defn create-transaction-map
+  "Creates a transaction to be added to the transaction array
+  Records the direction, time, and price"
+  [data current-index direction]
+  {:price (datagetter/get-bar-value-at-index data current-index), :position direction, :bar-time (datagetter/get-bar-time-at-index data current-index)})
+
+(defn write-transaction-to-table
+  "Records the given transaction to database"
+  [strategy-id transaction]
+  (let [entry {"id" {:S (str (uuid/v1))},
+               "strategy-id" {:S (str strategy-id)},
+               "price" {:N (-> transaction
+                               :price
+                               str)},
+               "position" {:S (-> transaction
+                                  :position
+                                  name)},
+               "bar-time" {:S (-> transaction
+                                  :bar-time
+                                  str)}}]
+    (aws-helper/write-to-table (:table-name transaction-table-vars) entry)))
+
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
   [data genetic-sequence]
@@ -134,13 +157,13 @@
     (loop [current-position :none
            current-index 0
            transactions (vector)]
-      (if-not (>= current-index max-index)
+      (if (< current-index max-index)
         (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
               short-signals (generate-signals (last genetic-sequence) :short current-index data)]
           (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
-                (recur :long (inc current-index) (conj transactions {:price (datagetter/get-bar-value-at-index data current-index), :position :long}))
+                (recur :long (inc current-index) (conj transactions (create-transaction-map data current-index :long)))
                 (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
-                (recur :short (inc current-index) (conj transactions {:price (datagetter/get-bar-value-at-index data current-index), :position :short}))
+                (recur :short (inc current-index) (conj transactions (create-transaction-map data current-index :short)))
                 :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
@@ -167,7 +190,7 @@
                "genetic-sequence" {:S (-> individual
                                           :genetic-sequence
                                           json/write-str)}}]
-    (aws-helper/write-to-table (:table-name table-vars) entry)))
+    (aws-helper/write-to-table (:table-name strategy-table-vars) entry)))
 
 (defn write-to-table-monitor
   "Monitor function for evolution that writes every individual of population to the table"
@@ -178,7 +201,7 @@
 (defn read-individual-from-table
   "Queries the strategy-v1 table for the individual with the given id"
   [strategy-id]
-  (let [read-from-table (aws-helper/read-from-table (:table-name table-vars) (:table-key table-vars) strategy-id)
+  (let [read-from-table (aws-helper/read-from-table (:table-name strategy-table-vars) (:table-key strategy-table-vars) strategy-id)
         item (:Item read-from-table)
         {:keys [fitness genetic-sequence id age]} item]
     {:age (-> age
@@ -201,8 +224,8 @@
     (n/evolve-with-sequence-generator generate-sequence
                                       (:population-size p/params)
                                       (:generation-count p/params)
-                                      (partial calculate-fitness (get-subseries 0 300))
-                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
-                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
+                                      (partial calculate-fitness (get-subseries 0 300) true)
+                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300) true))]
+                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300) false))]
                                       {:solutions 3, :carry-over 1, :monitors [mon/print-best-solution print-average-fitness-of-population (partial write-to-table-monitor evolution-id)]})))
 
