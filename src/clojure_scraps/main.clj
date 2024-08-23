@@ -6,7 +6,7 @@
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
   []
-  (log/info (g/start-evolution)))
+  (pp/pprint (g/start-evolution)))
 
 (run-evolution)
-#_*e
+;*e

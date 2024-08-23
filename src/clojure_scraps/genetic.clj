@@ -3,18 +3,16 @@
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pp]
+            [clojure.tools.logging :as log]
             [clojure-scraps.strategy :as strat]
             [clojure-scraps.datagetter :as datagetter]
             [nature.core :as n]
-            [nature.initialization-operators :as io]))
+            [nature.initialization-operators :as io]
+            [nature.monitors :as mon]))
 
-(defn get-subseries
-  [start end]
-  (datagetter/get-subseries-from-bar start end))
+(defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 
-(defn generate-sequence
-  []
-  (vector (node/generate-tree) (node/generate-tree)))
+(defn generate-sequence [] (vector (node/generate-tree) (node/generate-tree)))
 
 (s/def :genetic/indicator keyword?)
 (s/def :genetic/overbought int?)
@@ -22,27 +20,35 @@
 (s/def :genetic/window int?)
 (s/def :genetic/window1 int?)
 (s/def :genetic/window2 int?)
-(s/def :genetic/rsi (s/keys :req-un [:genetic/indicator :genetic/overbought :genetic/oversold :genetic/window]))
+(s/def :genetic/rsi
+  (s/keys :req-un [:genetic/indicator :genetic/overbought :genetic/oversold
+                   :genetic/window]))
 (s/def :genetic/ma (s/keys :req-un [:genetic/indicator :genetic/window]))
-(s/def :genetic/double-ma (s/keys :req-un [:genetic/indicator :genetic/window1 :genetic/window2]))
+(s/def :genetic/double-ma
+  (s/keys :req-un [:genetic/indicator :genetic/window1 :genetic/window2]))
+
+(s/def :genetic/fitness-score double?)
+(s/def :genetic/genetic-sequence map?)
+(s/def :genetic/individual
+  (s/keys :req-un [:genetic/fitness-score :genetic/genetic-sequence]))
+(s/def :genetic/population (s/coll-of :genetic/individual))
 
 (defn check-rsi-signal
   [node direction index data]
   {:pre [(s/valid? :genetic/rsi node)]}
   (let [{:keys [overbought oversold window]} node
-        rsi-indicator (strat/rsi-indicator data window) 
+        rsi-indicator (strat/rsi-indicator data window)
         rsi-value (.doubleValue (.getValue rsi-indicator index))]
-    (cond 
-      (and (= direction :long) (<= rsi-value oversold)) :long
-      (and (= direction :short) (>= rsi-value overbought)) :short
-      :else :no-signal)))
+    (cond (and (= direction :long) (<= rsi-value oversold)) :long
+          (and (= direction :short) (>= rsi-value overbought)) :short
+          :else :no-signal)))
 
 (defn check-single-ma-signal
   [direction index indicator data]
-  (cond
-    (and (= direction :long) (strat/crosses-up? indicator data index)) :long
-    (and (= direction :short) (strat/crosses-down? indicator data index)) :short
-    :else :no-signal))
+  (cond (and (= direction :long) (strat/crosses-up? indicator data index)) :long
+        (and (= direction :short) (strat/crosses-down? indicator data index))
+          :short
+        :else :no-signal))
 
 (defn check-single-sma-signal
   [node direction index data]
@@ -60,10 +66,12 @@
 
 (defn check-double-ma-signal
   [direction index ind1 ind2]
-  (cond
-    (and (= direction :long) (strat/indicators-cross-up? ind1 ind2 index)) :long
-    (and (= direction :short) (strat/indicators-cross-down? ind1 ind2 index)) :short
-    :else :no-signal))
+  (cond (and (= direction :long) (strat/indicators-cross-up? ind1 ind2 index))
+          :long
+        (and (= direction :short)
+             (strat/indicators-cross-down? ind1 ind2 index))
+          :short
+        :else :no-signal))
 
 (defn check-double-sma-signal
   [node direction index data]
@@ -85,14 +93,18 @@
   "Generates signals on the given data index."
   [tree direction index data]
   (if (vector? tree)
-    (merge (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data))
-    (let [index-keyword (node/index-to-keyword tree)] 
+    (merge (generate-signals (first tree) direction index data)
+           (generate-signals (last tree) direction index data))
+    (let [index-keyword (node/index-to-keyword tree)]
+      (log/info "Generating signal for " tree)
       (condp = (:indicator tree)
         :rsi {index-keyword (check-rsi-signal tree direction index data)}
         :sma {index-keyword (check-single-sma-signal tree direction index data)}
         :ema {index-keyword (check-single-ema-signal tree direction index data)}
-        :double-sma {index-keyword (check-double-sma-signal tree direction index data)}
-        :double-ema {index-keyword (check-double-ema-signal tree direction index data)}
+        :double-sma {index-keyword
+                       (check-double-sma-signal tree direction index data)}
+        :double-ema {index-keyword
+                       (check-double-ema-signal tree direction index data)}
         :identity {index-keyword :identity}))))
 
 (defn long?
@@ -116,9 +128,7 @@
   "Scales the profit result to a positive value.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
-  (if (>= total-profit 0)
-    (+ total-profit 1)
-    (Math/pow 2 total-profit)))
+  (if (>= total-profit 0) (+ total-profit 1) (Math/pow 2 total-profit)))
 
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
@@ -126,52 +136,82 @@
   (if-not (empty? transactions)
     (let [initial-position (first transactions)
           final-position (second transactions)
-          transaction-result-partial (partial transaction-result (:position initial-position) (:price initial-position))]
+          transaction-result-partial (partial transaction-result
+                                              (:position initial-position)
+                                              (:price initial-position))]
       (if (nil? final-position)
-        (transaction-result-partial final-price) 
-        (+ (transaction-result-partial (:price final-position)) 
-           (calculate-profit-from-transactions (rest transactions) final-price))))
+        (transaction-result-partial final-price)
+        (+ (transaction-result-partial (:price final-position))
+           (calculate-profit-from-transactions (rest transactions)
+                                               final-price))))
     0))
 
 (defn calculate-scaled-profit
   "Calculates the total profit and scales it so that the result is positive."
   [transactions final-price]
-  (-> transactions 
+  (-> transactions
       (calculate-profit-from-transactions final-price)
       scale-profit-result))
 
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
   [data genetic-sequence]
-  (let [max-index (.getBarCount data)] 
+  (let [max-index (.getBarCount data)]
     (loop [current-position :none
            current-index 0
            transactions (vector)]
       (if-not (>= current-index max-index)
-        (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
-              short-signals (generate-signals (last genetic-sequence) :short current-index data)]
-          (cond
-            (and (long? (first genetic-sequence) long-signals) 
-                 (not= current-position :long)) 
-            (recur :long 
-                   (inc current-index) 
-                   (conj transactions {:price (datagetter/get-bar-value-at-index data current-index) :position :long}))
-            (and (short? (last genetic-sequence) short-signals) 
-                 (not= current-position :short)) 
-            (recur :short 
-                   (inc current-index) 
-                   (conj transactions {:price (datagetter/get-bar-value-at-index data current-index) :position :short}))
-            :else (recur current-position (inc current-index) transactions)))
-        (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
+        (let [long-signals (generate-signals (first genetic-sequence)
+                                             :long
+                                             current-index
+                                             data)
+              short-signals (generate-signals (last genetic-sequence)
+                                              :short
+                                              current-index
+                                              data)]
+          (cond (and (long? (first genetic-sequence) long-signals)
+                     (not= current-position :long))
+                  (recur :long
+                         (inc current-index)
+                         (conj transactions
+                               {:price (datagetter/get-bar-value-at-index
+                                         data
+                                         current-index),
+                                :position :long}))
+                (and (short? (last genetic-sequence) short-signals)
+                     (not= current-position :short))
+                  (recur :short
+                         (inc current-index)
+                         (conj transactions
+                               {:price (datagetter/get-bar-value-at-index
+                                         data
+                                         current-index),
+                                :position :short}))
+                :else
+                  (recur current-position (inc current-index) transactions)))
+        (calculate-scaled-profit
+          transactions
+          (datagetter/get-bar-value-at-index data (dec max-index)))))))
+
+(defn calculate-average-fitness-of-population
+  "Calculates the average fitness of given population"
+  [population current-generation]
+  {:pre [(s/conform :genetic/individual population)]}
+  (println (/ (reduce + (map :fitness-score population))
+              (:population-size p/params))))
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
-  (n/evolve-with-sequence-generator generate-sequence 
-                                    (:population-size p/params) 
-                                    (:generation-count p/params) 
-                                    (partial calculate-fitness (get-subseries 0 300)) 
-                                    [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))] 
-                                    [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))] 
-                                    {:solutions 3 :carry-over 1}))
+  (n/evolve-with-sequence-generator
+    generate-sequence
+    (:population-size p/params)
+    (:generation-count p/params)
+    (partial calculate-fitness (get-subseries 0 300))
+    [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
+    [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
+    {:solutions 3,
+     :carry-over 1,
+     :monitors [mon/print-best-solution
+                calculate-average-fitness-of-population]}))
 

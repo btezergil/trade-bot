@@ -5,39 +5,40 @@
             [clojure-scraps.datagetter :as datagetter]
             [clojure.spec.alpha :as s]
             [clojure-scraps.indicators.pinbar :as pinbar])
-  (:import [org.ta4j.core BaseStrategy  BarSeriesManager Trade$TradeType]))
+  (:import [org.ta4j.core BaseStrategy BarSeriesManager Trade$TradeType]))
 
-(def table-vars { 
-  :table-name "strategy-v1"
-  :table-key "strategyId"})
+(def table-vars {:table-name "strategy-v1", :table-key "strategyId"})
 
-(defn constructor [pre-str post-str]
+(defn constructor
+  [pre-str post-str]
   (fn [class-key args]
-    (let [kns       (when-let [x (namespace class-key)] (str x "."))
+    (let [kns (when-let [x (namespace class-key)] (str x "."))
           class-str (str pre-str kns (name class-key) post-str)]
-      (clojure.lang.Reflector/invokeConstructor
-        (resolve (symbol class-str))
-        (to-array args)))))
-(defn ind [class-key & args]
+      (clojure.lang.Reflector/invokeConstructor (resolve (symbol class-str))
+                                                (to-array args)))))
+(defn ind
+  [class-key & args]
   (let [ctor (constructor "org.ta4j.core.indicators." "Indicator")]
     (ctor class-key args)))
-(defn candle-ind [class-key & args]
+(defn candle-ind
+  [class-key & args]
   (let [ctor (constructor "org.ta4j.core.indicators.candles." "Indicator")]
     (ctor class-key args)))
-(defn rule [class-key & args]
+(defn rule
+  [class-key & args]
   (let [ctor (constructor "org.ta4j.core.rules." "Rule")]
     (ctor class-key args)))
-(defn crit [class-key & args]
+(defn crit
+  [class-key & args]
   (let [ctor (constructor "org.ta4j.core.criteria." "Criterion")]
     (ctor class-key args)))
-(defn base-strategy [entry-rule exit-rule]
-  (BaseStrategy. entry-rule exit-rule))
+(defn base-strategy [entry-rule exit-rule] (BaseStrategy. entry-rule exit-rule))
 
 (defn get-profit
   "Returns the profit of given position as a double"
   [position]
-  (-> position 
-      .getProfit 
+  (-> position
+      .getProfit
       .doubleValue))
 
 (defn calculate-result
@@ -67,7 +68,7 @@
 (defn crosses-down?
   "Returns whether the given indicator value crosses down the price."
   [indicator bars index]
-  (if (> index 0) 
+  (if (> index 0)
     (let [indicator-value-before (get-indicator-value indicator (dec index))
           indicator-value-current (get-indicator-value indicator index)
           bar-close-before (datagetter/get-bar-value-at-index bars (dec index))
@@ -79,7 +80,7 @@
 (defn indicators-cross-up?
   "Returns whether the given first indicator value crosses up the second one."
   [ind1 ind2 index]
-  (if (> index 0) 
+  (if (> index 0)
     (let [ind1-value-before (get-indicator-value ind1 (dec index))
           ind1-value-current (get-indicator-value ind1 index)
           ind2-value-before (get-indicator-value ind2 (dec index))
@@ -91,7 +92,7 @@
 (defn indicators-cross-down?
   "Returns whether the given first indicator value crosses down the second one."
   [ind1 ind2 index]
-  (if (> index 0) 
+  (if (> index 0)
     (let [ind1-value-before (get-indicator-value ind1 (dec index))
           ind1-value-current (get-indicator-value ind1 index)
           ind2-value-before (get-indicator-value ind2 (dec index))
@@ -133,25 +134,29 @@
   []
   (let [engulfing (engulfing-indicator (datagetter/get-bars))
         entry (rule :BooleanIndicator engulfing)
-        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil dusunuyoruz onu kararlastir
+        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil
+                                                     ; dusunuyoruz onu
+                                                     ; kararlastir
     (base-strategy entry exit)))
 
 (defn hammer-strategy
   []
   (let [ind (pinbar/create-hammer-indicator (datagetter/get-bars))
         entry (rule :BooleanIndicator ind)
-        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl dusunuyoruz onu kararlastir
+        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl
+                                                     ; dusunuyoruz onu
+                                                     ; kararlastir
     (base-strategy entry exit)))
 
 (defn run-strategy
   "Runs the given strategy and returns the generated positions"
   [strategy]
-  (let [bsm (BarSeriesManager. (datagetter/get-bars))] 
+  (let [bsm (BarSeriesManager. (datagetter/get-bars))]
     (.getPositions (.run bsm strategy))))
 
 (defn run-rsi
   [oversold overbought]
-  (let [strategy (rsi-strategy (datagetter/get-bars) 14 oversold overbought)] 
+  (let [strategy (rsi-strategy (datagetter/get-bars) 14 oversold overbought)]
     (run-strategy strategy)))
 
 (def run-engulfing (run-strategy (engulfing-strategy)))
@@ -168,28 +173,36 @@
 
 #_(calculate-result run-engulfing)
 #_(calculate-result run-hammer)
-; TODO: hammer buy rule ile alakali bir problem olabilir, acaba bu yuzden mi hammer'da pozisyon acilmiyor?
+; TODO: hammer buy rule ile alakali bir problem olabilir, acaba bu yuzden mi
+; hammer'da pozisyon acilmiyor?
+
 #_(map get-profit run-engulfing)
 #_(eng-criterion (engulfing-strategy))
-; TODO: calculate result ile net profit neden farkli donuyor? analiz etmek lazim, criterion mu dogru benim fonksiyon mu?
-#_(run-strategy (hammer-strategy))
-; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
+; TODO: calculate result ile net profit neden farkli donuyor? analiz etmek
+; lazim, criterion mu dogru benim fonksiyon mu?
+
+#_(run-strategy (rsi-strategy))
+(calculate-result (run-rsi 30 70))
+; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari
+; temel alan stratejiler olustur
 
 ; TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 
 (defn write-to-table
-  "Writes the given indicator map to the table" 
+  "Writes the given indicator map to the table"
   [indicator]
-  (let [entry {"strategyId" {:S (str (uuid/v1))}
-               "indicatorName" {:S "RSI"}
-               "buyThreshold" {:N (str (.buy-threshold indicator))}
+  (let [entry {"strategyId" {:S (str (uuid/v1))},
+               "indicatorName" {:S "RSI"},
+               "buyThreshold" {:N (str (.buy-threshold indicator))},
                "sellThreshold" {:N (str (.sell-threshold indicator))}}]
     (aws-helper/write-to-table (:table-name table-vars) entry)))
 
 (defn read-from-table
   "Reads the given id from strategy table and returns it as a map"
   [id]
-  (let [item (aws-helper/read-from-table (:table-name table-vars) (:table-key table-vars) id)
+  (let [item (aws-helper/read-from-table (:table-name table-vars)
+                                         (:table-key table-vars)
+                                         id)
         data-map (:Item item)
         indicator-name (-> data-map
                            :indicatorName
@@ -202,8 +215,7 @@
                            :sellThreshold
                            :N
                            parse-long)]
-    {:id id
-     :type indicator-name
-     :buy-threshold buy-threshold
-     :sell-threshold sell-threshold
-     }))
+    {:id id,
+     :type indicator-name,
+     :buy-threshold buy-threshold,
+     :sell-threshold sell-threshold}))
