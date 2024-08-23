@@ -11,6 +11,7 @@
                  [com.cognitect.aws/api "0.8.656"]
                  [com.cognitect.aws/endpoints "1.1.12.437"]
                  [com.cognitect.aws/sns "836.2.1323.0"]
+                 [com.cognitect.aws/lambda "845.2.1359.0"]
                  [org.clojure/core.match "1.0.1"]]
   :plugins [[lein-environ "1.2.0"]]
   :repl-options {:init-ns clojure-scraps.core}
