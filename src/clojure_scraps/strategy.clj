@@ -3,32 +3,13 @@
             [clj-uuid :as uuid]
             [clojure-scraps.aws :as aws-helper]
             [clojure-scraps.datagetter :as datagetter]
-            [clojure.spec.alpha :as s])
-  (:import (java.time ZoneId ZonedDateTime)
-           (java.time.format DateTimeFormatter)
-           [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType]))
+            [clojure.spec.alpha :as s]
+            [clojure-scraps.indicators.pinbar :as pinbar])
+  (:import [org.ta4j.core BaseStrategy  BarSeriesManager Trade$TradeType]))
 
 (def table-vars { 
   :table-name "strategy-v1"
   :table-key "strategyId"}) 
-
-(defn parse-datetime
-  "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
-  [dt]
-  (ZonedDateTime/parse dt (.withZone (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (ZoneId/of "UTC"))))
-
-(defn get-data
-  "HELPER: Gets data for one step for dummy strategy signal generation"
-  [size]
-  (reverse (datagetter/get-time-series size)))
-
-(defn series
-  "Bars should be a sequence of maps containing :datetime/:open/:high/:low/:close/:volume"
-  ([] (series (get-data 1000)))
-  ([bars] (let [s (.build (BaseBarSeriesBuilder.))]
-            (doseq [{:keys [datetime open high low close volume]} bars]
-              (.addBar s (parse-datetime datetime) open high low close volume))
-            s)))
 
 (defn constructor [pre-str post-str]
   (fn [class-key args]
@@ -51,7 +32,6 @@
     (ctor class-key args)))
 (defn base-strategy [entry-rule exit-rule]
   (BaseStrategy. entry-rule exit-rule))
-
 
 (defn rsi-indicator
   "Returns an RSI indicator with given bars"
@@ -79,6 +59,13 @@
         exit (rule :WaitFor Trade$TradeType/BUY 10)]
     (base-strategy entry exit)))
 
+(defn hammer-strategy
+  []
+  (let [ind (pinbar/create-hammer-indicator (datagetter/get-bars))
+        entry (rule :BooleanIndicator ind)
+        exit (rule :WaitFor Trade$TradeType/BUY 10)]
+    (base-strategy entry exit)))
+
 (defn get-profit
   "Returns the profit of given position as a double"
   [position]
@@ -94,27 +81,37 @@
 (defn run-strategy
   "Runs the given strategy and returns the generated positions"
   [strategy]
-  (let [bars (series)
-        bsm (BarSeriesManager. bars)] 
+  (let [bsm (BarSeriesManager. (datagetter/get-bars))] 
     (.getPositions (.run bsm strategy))))
 
 (defn run-rsi
   [oversold overbought]
-  (let [strategy (rsi-strategy (series) 14 oversold overbought)] 
+  (let [strategy (rsi-strategy (datagetter/get-bars) 14 oversold overbought)] 
     (run-strategy strategy)))
 
 (defn run-engulfing
   []
-  (let [strategy (engulfing-strategy (series))]
+  (let [strategy (engulfing-strategy (datagetter/get-bars))]
     (run-strategy strategy)))
 
+(defn eng-criterion
+  [strategy]
+  (let [criterion (crit :pnl/NetProfit)
+        bars (datagetter/get-bars)
+        bsm (BarSeriesManager. bars)
+        rec (.run bsm strategy)]
+    (.calculate criterion bars rec)))
+
 (calculate-result (run-engulfing))
+(eng-criterion (engulfing-strategy (datagetter/get-bars)))
+(eng-criterion (hammer-strategy))
+(*e)
 ; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
 
 
 (defn run-old
   []
-  (let [series (series)
+  (let [series (datagetter/get-bars)
         rsi    (rsi-indicator series 14)
         strat  (base-strategy (rule :CrossedDownIndicator rsi 30)
                               (rule :WaitFor Trade$TradeType/BUY 5))
