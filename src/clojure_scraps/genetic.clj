@@ -14,8 +14,9 @@
             [clojure.pprint :as pp]))
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
+(def get-bar-series-for-experiments (get-subseries 0 300))
 
-(defn generate-sequence [] (vector (node/generate-tree) (node/generate-tree)))
+(defn generate-sequence "Generates a genetic sequence for individual. " [] (vector (node/generate-tree) (node/generate-tree)))
 
 (s/def :transaction/result double?)
 (s/def :transaction/position #{:long :short})
@@ -96,12 +97,7 @@
   [total-profit]
   (if (> total-profit 0) (* (inc total-profit) 1.5) (Math/pow 2 total-profit)))
 
-(defn calculate-profit-from-transactions
-  "Calculates the total profit of given transactions."
-  [transactions]
-  (if-not (empty? transactions)
-    (reduce + (map :result transactions))
-    0))
+(defn calculate-profit-from-transactions "Calculates the total profit of given transactions." [transactions] (if-not (empty? transactions) (reduce + (map :result transactions)) 0))
 
 (defn calculate-scaled-profit
   "Calculates the total profit and scales it so that the result is positive."
@@ -139,48 +135,51 @@
   {:post [(s/valid? :genetic/transaction %)]}
   (let [position (:position entry)
         result (- (:price exit) (:price entry))]
-    {:position position :result (if (= position :long) result (- result)) :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
+    {:position position, :result (if (= position :long) result (- result)), :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
 
 (defn merge-entry-points
   "Merges transaction entry and exit points, then finds the profit of the transaction and records its time."
   [entry-points final-bar-value final-bar-end-time]
-  (println entry-points)
   (if-not (empty? entry-points)
     (loop [transactions (vector)
            rem-entries entry-points]
       (if (> (count rem-entries) 1)
         (recur (conj transactions (merge-to-transaction (first rem-entries) (second rem-entries))) (rest rem-entries))
-        (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value :bar-time final-bar-end-time}))))
+        (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value, :bar-time final-bar-end-time}))))
     (vector)))
 
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
   [data genetic-sequence]
-  (let [max-index (-> data .getBarCount dec)
+  (let [max-index (-> data
+                      .getBarCount
+                      dec)
         entry-exit-points (backtest-strategy data genetic-sequence)]
     (calculate-scaled-profit (merge-entry-points entry-exit-points (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index)))))
 
 (defn calculate-transactions-for-monitor
   "Calculates the transactions of given genetic sequence for bookkeeping."
-  [data individual] (let [genetic-sequence (:genetic-sequence individual)
-                          max-index (-> data .getBarCount dec)]
-                      (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
-
-; TODO: make data getting part generic and use that instead of calling get-subseries everywhere
+  [data individual]
+  (let [genetic-sequence (:genetic-sequence individual)
+        max-index (-> data
+                      .getBarCount
+                      dec)]
+    (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
-  (let [evolution-id (uuid/v4)]
+  (let [evolution-id (uuid/v4)
+        calculate-fitness-partial (partial calculate-fitness get-bar-series-for-experiments)]
     (dyn/write-evolution-to-table evolution-id)
     (n/evolve-with-sequence-generator generate-sequence
                                       (:population-size p/params)
                                       (:generation-count p/params)
-                                      (partial calculate-fitness (get-subseries 0 300))
-                                      [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))]
-                                      [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))]
+                                      calculate-fitness-partial
+                                      [(partial node/crossover calculate-fitness-partial)]
+                                      [(partial node/mutation calculate-fitness-partial)]
                                       {:solutions 3,
                                        :carry-over 1,
                                        :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)
-                                                  (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (get-subseries 0 300)))]})))
+                                                  (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments))]})))
 
