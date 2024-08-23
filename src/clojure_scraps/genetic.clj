@@ -4,7 +4,8 @@
             [clojure.spec.alpha :as s]
             [clojure.pprint :as pp]
             [clojure-scraps.strategy :as strat]
-            [clojure-scraps.datagetter :as datagetter]))
+            [clojure-scraps.datagetter :as datagetter]
+            [nature.core :as n]))
 
 (defn get-subseries
   [start end]
@@ -111,6 +112,14 @@
     (- final-price initial-price)
     (- initial-price final-price)))
 
+(defn scale-profit-result
+  "Scales the profit result to a positive value.
+  Profit value needs to be positive since it is used for weighted selection."
+  [total-profit]
+  (if (>= total-profit 0)
+    (+ total-profit 1)
+    (Math/pow 2 total-profit)))
+
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
   [transactions final-price]
@@ -124,9 +133,16 @@
            (calculate-profit-from-transactions (rest transactions) final-price))))
     0))
 
+(defn calculate-scaled-profit
+  "Calculates the total profit and scales it so that the result is positive."
+  [transactions final-price]
+  (-> transactions 
+      (calculate-profit-from-transactions final-price)
+      scale-profit-result))
+
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
-  [genetic-sequence data]
+  [data genetic-sequence]
   (let [max-index (.getBarCount data)] 
     (loop [current-position :none
            current-index 0
@@ -146,7 +162,13 @@
                    (inc current-index) 
                    (conj transactions {:price (datagetter/get-bar-value-at-index data current-index) :position :short}))
             :else (recur current-position (inc current-index) transactions)))
-        (calculate-profit-from-transactions transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
+        (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
+
+; TODO: nature'a call atip dogru sekilde genetic surecini baslat, bu noktada elimizde tum fonksiyonlar var
+(n/evolve [] 1 (:population-size p/params) (:generation-count p/params) (partial calculate-fitness (get-subseries 0 300)) [node/crossover] [node/mutation] {:generator generate-sequence :solutions 3 :carry-over 1})
+
+
+
 *e
 (calculate-fitness (generate-sequence) (get-subseries 0 300))
 (vector? (generate-sequence))

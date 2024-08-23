@@ -19,7 +19,8 @@
         danlentz/clj-uuid {:mvn/version "0.1.9"}
         clj-http/clj-http {:mvn/version "3.12.3"} 
         org.ta4j/ta4j-core {:mvn/version "0.15"}
-        org.clojars.btezergil/nature {:mvn/version "1.0.0"}
+        ;org.clojars.btezergil/nature {:mvn/version "1.0.0"}
+        btezergil/nature {:local/root "/Users/btezergil/phd/nature"}
         org.clojure/data.csv {:mvn/version "1.0.1"}}
  
 
