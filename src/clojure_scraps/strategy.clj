@@ -63,22 +63,50 @@
 (defn crosses-up?
   "Returns whether the given indicator value crosses up the price."
   [indicator bars index]
-  (let [indicator-value-before (get-indicator-value indicator (dec index))
-        indicator-value-current (get-indicator-value indicator index)
-        bar-close-before (get-bar-value bars (dec index))
-        bar-close-current (get-bar-value bars index)]
-    (and (< indicator-value-before bar-close-before)
-         (> indicator-value-current bar-close-current))))
+  (if (> index 0)
+    (let [indicator-value-before (get-indicator-value indicator (dec index))
+          indicator-value-current (get-indicator-value indicator index)
+          bar-close-before (get-bar-value bars (dec index))
+          bar-close-current (get-bar-value bars index)]
+      (and (< indicator-value-before bar-close-before)
+           (> indicator-value-current bar-close-current)))
+    false))
 
 (defn crosses-down?
   "Returns whether the given indicator value crosses down the price."
   [indicator bars index]
-  (let [indicator-value-before (get-indicator-value indicator (dec index))
-        indicator-value-current (get-indicator-value indicator index)
-        bar-close-before (get-bar-value bars (dec index))
-        bar-close-current (get-bar-value bars index)]
-    (and (> indicator-value-before bar-close-before)
-         (< indicator-value-current bar-close-current))))
+  (if (> index 0) 
+    (let [indicator-value-before (get-indicator-value indicator (dec index))
+          indicator-value-current (get-indicator-value indicator index)
+          bar-close-before (get-bar-value bars (dec index))
+          bar-close-current (get-bar-value bars index)]
+      (and (> indicator-value-before bar-close-before)
+           (< indicator-value-current bar-close-current)))
+    false))
+
+(defn indicators-cross-up?
+  "Returns whether the given first indicator value crosses up the second one."
+  [ind1 ind2 index]
+  (if (> index 0) 
+    (let [ind1-value-before (get-indicator-value ind1 (dec index))
+          ind1-value-current (get-indicator-value ind1 index)
+          ind2-value-before (get-indicator-value ind2 (dec index))
+          ind2-value-current (get-indicator-value ind2 index)]
+      (and (< ind1-value-before ind2-value-before)
+           (> ind1-value-current ind2-value-current)))
+    false))
+
+(defn indicators-cross-down?
+  "Returns whether the given first indicator value crosses down the second one."
+  [ind1 ind2 index]
+  (if (> index 0) 
+    (let [ind1-value-before (get-indicator-value ind1 (dec index))
+          ind1-value-current (get-indicator-value ind1 index)
+          ind2-value-before (get-indicator-value ind2 (dec index))
+          ind2-value-current (get-indicator-value ind2 index)]
+      (and (> ind1-value-before ind2-value-before)
+           (< ind1-value-current ind2-value-current)))
+    false))
 
 (defn rsi-indicator
   "Returns an RSI indicator with given bars"
@@ -89,6 +117,11 @@
   "Returns a SMA indicator with given bars"
   [bars period]
   (ind :SMA (ind :helpers/ClosePrice bars) period))
+
+(defn ema-indicator
+  "Returns a EMA indicator with given bars"
+  [bars period]
+  (ind :EMA (ind :helpers/ClosePrice bars) period))
 
 (defn rsi-strategy
   "Generates a strategy based on RSI indicator"

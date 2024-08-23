@@ -7,7 +7,7 @@
 (def operators [:and :or])
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
-(def operands [:identity :rsi :sma :ema :engulfing :pinbar])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :engulfing :pinbar])
 
 (defn generate-operator
   "Generates a random operator, taken from the operators list."
@@ -45,15 +45,36 @@
    :indicator :sma
    :window (rand-int-range 10 100)})
 
+(defn generate-double-sma
+  [index]
+  {:index index
+   :indicator :double-sma
+   :window1 (rand-int-range 5 20)
+   :window2 (rand-int-range 40 80)})
+
 (defn generate-ema
   [index]
   {:index index
    :indicator :ema
    :window (rand-int-range 10 100)})
 
+(defn generate-double-ema
+  [index]
+  {:index index
+   :indicator :double-ema
+   :window1 (rand-int-range 5 20)
+   :window2 (rand-int-range 40 80)})
+
 (defn mutate-ma
   [node]
   (assoc node :window (rand-int-range 10 100)))
+
+(defn mutate-double-ma
+  [node]
+  (let [param-prob (rand)]
+    (if (< param-prob 0.5)
+      (assoc node :window1 (rand-int-range 5 20))
+      (assoc node :window2 (rand-int-range 40 80)))))
 
 (defn generate-fisher
   [index]
@@ -99,6 +120,8 @@
       :rsi (generate-rsi index)
       :sma (generate-sma index)
       :ema (generate-ema index)
+      :double-sma (generate-double-sma index)
+      :double-ema (generate-double-ema index)
       :fisher (generate-fisher index) ; NOT ADDED YET
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
       :engulfing (generate-engulfing index)
@@ -138,6 +161,8 @@
                    :rsi (mutate-rsi node)
                    :sma (mutate-ma node)
                    :ema (mutate-ma node)
+                   :double-sma (mutate-double-ma node)
+                   :double-ema (mutate-double-ma node)
                    :fisher (mutate-fisher node)
                    :fibonacci (mutate-fibonacci node)
                    :engulfing (generate-operand (:index node))
