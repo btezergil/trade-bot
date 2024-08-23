@@ -45,10 +45,50 @@
   [trading-record]
   (reduce + (map get-profit trading-record)))
 
+(defn get-indicator-value
+  "Returns the indicator value on the given index."
+  [indicator index]
+  (-> indicator
+      (.getValue index)
+      .doubleValue))
+
+(defn get-bar-value
+  "Returns the bar value on the given index."
+  [bars index]
+  (-> bars
+      (.getBar index)
+      .getClosePrice
+      .doubleValue))
+
+(defn crosses-up?
+  "Returns whether the given indicator value crosses up the price."
+  [indicator bars index]
+  (let [indicator-value-before (get-indicator-value indicator (dec index))
+        indicator-value-current (get-indicator-value indicator index)
+        bar-close-before (get-bar-value bars (dec index))
+        bar-close-current (get-bar-value bars index)]
+    (and (< indicator-value-before bar-close-before)
+         (> indicator-value-current bar-close-current))))
+
+(defn crosses-down?
+  "Returns whether the given indicator value crosses down the price."
+  [indicator bars index]
+  (let [indicator-value-before (get-indicator-value indicator (dec index))
+        indicator-value-current (get-indicator-value indicator index)
+        bar-close-before (get-bar-value bars (dec index))
+        bar-close-current (get-bar-value bars index)]
+    (and (> indicator-value-before bar-close-before)
+         (< indicator-value-current bar-close-current))))
+
 (defn rsi-indicator
   "Returns an RSI indicator with given bars"
   [bars period]
   (ind :RSI (ind :helpers/ClosePrice bars) period))
+
+(defn sma-indicator
+  "Returns a SMA indicator with given bars"
+  [bars period]
+  (ind :SMA (ind :helpers/ClosePrice bars) period))
 
 (defn rsi-strategy
   "Generates a strategy based on RSI indicator"

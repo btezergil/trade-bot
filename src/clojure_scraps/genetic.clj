@@ -5,8 +5,7 @@
             [clojure.reflect :as r]
             [clojure.pprint :as pp]
             [clojure-scraps.strategy :as strat]
-            [clojure-scraps.datagetter :as datagetter])
-  (:import [org.ta4j.core.indicators RSIIndicator]))
+            [clojure-scraps.datagetter :as datagetter]))
 
 (defn get-subseries
   [start end]
@@ -24,27 +23,33 @@
     (merge (generate-signals (first tree) data-index direction) (generate-signals (last tree) data-index direction))
     {(node/index-to-keyword tree) :long})) ; TODO: call strategy methods for the operators instead of this placeholder
 
-; oncelikle her strateji icin verdigimiz periyotta tradingRecord cikartabiliyoruz
-; bu tradingRecord array'i icerisinde long sinyali gelen yerde entry var mi diye kontrol edebiliriz
-
-; COZUM ONERISI: strategy ile ugrasmayalim, kendimiz rule satisfaction'u kontrol edelim
-; bunu yaparsak her noktada gereksiz yere tum stratejiyi hesaplamis olmuyoruz, indikatorun uzerindeki degerler bizim icin yeterli
-
 (s/def :genetic/indicator keyword?)
 (s/def :genetic/overbought int?)
 (s/def :genetic/oversold int?)
 (s/def :genetic/window int?)
 (s/def :genetic/rsi (s/keys :req-un [:genetic/indicator :genetic/overbought :genetic/oversold :genetic/window]))
+(s/def :genetic/ma (s/keys :req-un [:genetic/indicator :genetic/window]))
 
 (defn check-rsi-signal
   [node direction data-index]
   {:pre [(s/valid? :genetic/rsi node)]}
   (let [{:keys [overbought oversold window]} node
-        rsi-indicator (strat/rsi-indicator (get-subseries 0 200) window)
+        rsi-indicator (strat/rsi-indicator (get-subseries 0 200) window) ; TODO: burada barlari fix verdik, bunu function input veya baska bir sekilde vermemiz lazim
         rsi-value (.doubleValue (.getValue rsi-indicator data-index))]
     (cond 
       (and (= direction :long) (<= rsi-value oversold)) :long
       (and (= direction :short) (>= rsi-value overbought)) :short
+      :else :no-signal)))
+
+(defn check-sma-signal
+  [node direction data-index]
+  {:pre [(s/valid? :genetic/ma node)]}
+  (let [{:keys [window]} node
+        data (get-subseries 0 200) ; TODO: burada barlari fix verdik, bunu function input veya baska bir sekilde vermemiz lazim
+        sma-indicator (strat/sma-indicator data window)]
+    (cond
+      (and (= direction :long) (strat/crosses-up? sma-indicator data data-index)) :long
+      (and (= direction :short) (strat/crosses-down? sma-indicator data data-index)) :short
       :else :no-signal)))
 
 
