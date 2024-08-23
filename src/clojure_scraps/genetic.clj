@@ -237,7 +237,6 @@
 
 ; TODO: code is somewhat slow, action items:
 ; TODO: crossover and selection parts might be taking quite a long time, can we apply parallelization to it?
-; TODO: there is 3/4 part of the time where we don't know what takes that long, find it
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
@@ -255,6 +254,7 @@
                                       [(partial node/mutation calculate-fitness-partial)]
                                       {:solutions 3
                                        :carry-over (find-elitism-ind-count)
+                                       :insert-new (find-elitism-ind-count)
                                        :monitors [nmon/print-best-solution
                                                   mon/print-average-fitness-of-population
                                                   (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))

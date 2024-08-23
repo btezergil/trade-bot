@@ -248,10 +248,13 @@
          crossover-result (node-crossover node1 node2)]
      (vector
       (io/build-individual (if long? (vector (first crossover-result) (second seqn1)) (vector (first seqn1) (first crossover-result)))
-                           (vector seqn1 seqn2) ; TODO: parent'i dogru mu setliyoruz bi bakalim
+                           (vector seqn1 seqn2)
                            (:default-age p/params)
                            fitness-func)
-      (io/build-individual (if long? (vector (second crossover-result) (second seqn2)) (vector (first seqn2) (second crossover-result))) (vector seqn1 seqn2) (:default-age p/params) fitness-func)))))
+      (io/build-individual (if long? (vector (second crossover-result) (second seqn2)) (vector (first seqn2) (second crossover-result)))
+                           (vector seqn1 seqn2)
+                           (:default-age p/params)
+                           fitness-func)))))
 
 (defn index-to-keyword
   [operand]
