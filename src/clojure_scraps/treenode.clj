@@ -1,11 +1,11 @@
 (ns clojure-scraps.treenode 
   (:require [clojure.tools.logging :as log]
-            [clojure-scraps.genetic :as g]
+            [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
             [clojure-scraps.indicators.pinbar :as pinbar]))
 
 (def operators [:and :or])
-(def prune-height 2)
+(def prune-height 1)
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 (def operands [:identity :rsi :sma :ema :engulfing :pinbar])
@@ -133,7 +133,7 @@
   (condp = node-type
     :operator (if (= :and node) :or :and)
     :operand (let [flip-probability (rand)]
-               (if (< flip-probability (:flip-mutation-probability g/genetic-params))
+               (if (< flip-probability (:flip-mutation-probability p/params))
                  (generate-operand (:index node))
                  (condp :indicator node
                    :rsi (mutate-rsi node)
@@ -219,6 +219,7 @@
   "Signal check for operand, if a leaf node is found, checks whether the given signal map contains a signal that fits with the tree type at hand."
   [operand signals tree-type]
   (if (= tree-type ((-> operand
+                        :index
                         str
                         keyword) signals))
          tree-type
@@ -244,8 +245,8 @@
       :identity
       (check-signal-for-operand node signals tree-type))))
 
-; TODO: signal-check check
+; signal structure: {:0  :long/short/no-signal}
+(:0 {0 "hebele"})
 
-
-(signal-check [0 :or {:indicator :rsi}] {:rsi :long :1 :long} :long)
+(signal-check (generate-tree) {:0 :long :1 :no-signal :2 :long :3 :short} :long)
 (println "after: " (crossover (generate-tree) (generate-tree)))
