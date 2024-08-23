@@ -127,3 +127,11 @@
   "Returns the subseries within the 'bars' with given start and end indices."
   ([start end] (get-subseries-from-bar (get-bars-for-genetic) start end))
   ([bars start end] (.getSubSeries bars start end)))
+
+(defn get-bar-value-at-index
+  "Returns the bar value on the given index."
+  [bars index]
+  (-> bars
+      (.getBar index)
+      .getClosePrice
+      .doubleValue))

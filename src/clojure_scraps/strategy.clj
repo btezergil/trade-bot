@@ -52,13 +52,7 @@
       (.getValue index)
       .doubleValue))
 
-(defn get-bar-value
-  "Returns the bar value on the given index."
-  [bars index]
-  (-> bars
-      (.getBar index)
-      .getClosePrice
-      .doubleValue))
+
 
 (defn crosses-up?
   "Returns whether the given indicator value crosses up the price."
@@ -66,8 +60,8 @@
   (if (> index 0)
     (let [indicator-value-before (get-indicator-value indicator (dec index))
           indicator-value-current (get-indicator-value indicator index)
-          bar-close-before (get-bar-value bars (dec index))
-          bar-close-current (get-bar-value bars index)]
+          bar-close-before (datagetter/get-bar-value-at-index bars (dec index))
+          bar-close-current (datagetter/get-bar-value-at-index bars index)]
       (and (< indicator-value-before bar-close-before)
            (> indicator-value-current bar-close-current)))
     false))
@@ -78,8 +72,8 @@
   (if (> index 0) 
     (let [indicator-value-before (get-indicator-value indicator (dec index))
           indicator-value-current (get-indicator-value indicator index)
-          bar-close-before (get-bar-value bars (dec index))
-          bar-close-current (get-bar-value bars index)]
+          bar-close-before (datagetter/get-bar-value-at-index bars (dec index))
+          bar-close-current (datagetter/get-bar-value-at-index bars index)]
       (and (> indicator-value-before bar-close-before)
            (< indicator-value-current bar-close-current)))
     false))
