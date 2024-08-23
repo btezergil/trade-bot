@@ -7,8 +7,9 @@
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
   []
-  (let [out (java.io.StringWriter.)]
-    (pp/pprint (g/start-evolution) out)
+  (let [out (java.io.StringWriter.)
+        evolution-result (g/start-evolution)]
+    (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out)
     (tb/message-to-me (.toString out))))
 
 (time (run-evolution))

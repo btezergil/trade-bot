@@ -6,6 +6,7 @@
             [clojure-scraps.params :as p]
             [clojure-scraps.strategy :as strat]
             [clojure-scraps.treenode :as node]
+            [clojure-scraps.bot :as tb]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [clojure.math :as math]
@@ -15,8 +16,7 @@
             [clojure.pprint :as pp]))
 
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
-(def get-bar-series-for-experiments (get-subseries 0 300))
-
+(def get-bar-series-for-experiments (datagetter/get-bars-for-genetic)) ; (get-subseries 0 300)
 (defn generate-sequence
   "Generates a genetic sequence for individual."
   []
@@ -151,9 +151,7 @@
   Positive profits are given a multipler to give more incentive within the evolution.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
-  (if (> total-profit 0)
-    (* (inc total-profit) 1.5)
-    (Math/pow 2 total-profit)))
+  (+ total-profit 20000))
 
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
@@ -198,8 +196,11 @@
   "Merges the given entry and exit points into a transaction."
   [entry exit]
   {:post [(s/valid? :genetic/transaction %)]}
-  (let [position (:position entry)
-        result (- (:price exit) (:price entry))]
+  (let [{:keys [capital leverage commission]} p/params
+        position (:position entry)
+        single-lot-result (- (:price exit) (:price entry))
+        number-of-lots (/ capital (:price entry))
+        result (- (* number-of-lots single-lot-result leverage) (* capital commission))]
     {:position position
      :result (if (= position :long) result (- result))
      :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
@@ -221,8 +222,9 @@
   (let [max-index (-> data
                       .getBarCount
                       dec)
-        entry-exit-points (backtest-strategy data genetic-sequence)]
-    (calculate-scaled-profit (merge-entry-points entry-exit-points (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index)))))
+        entry-exit-points (backtest-strategy data genetic-sequence)
+        transactions (merge-entry-points entry-exit-points (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))]
+    (calculate-scaled-profit transactions)))
 
 (defn calculate-transactions-for-monitor
   "Calculates the transactions of given genetic sequence for bookkeeping."
