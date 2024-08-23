@@ -6,10 +6,13 @@
             [clj-http.client :as client]
             [environ.core :refer [env]]
             [clojure-scraps.aws :as aws-helper])
-  (:import (com.fasterxml.jackson.core JsonParseException)))
+  (:import [java.time ZoneId ZonedDateTime LocalDate]
+           (java.time.format DateTimeFormatter)
+           (com.fasterxml.jackson.core JsonParseException)
+           (org.ta4j.core BaseBarSeriesBuilder)))
 
 (def team-query-params {:symbol "TEAM"
-                        :interval "15min"
+                        :interval "1day"
                         :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
 (def time-series-url "https://api.twelvedata.com/time_series")
@@ -86,3 +89,34 @@
         body (cheshire/parse-string (:body response) true)
         values (:values body)]
     values))
+
+(defn get-data
+  "Data accessor function to be called by other files, gets the data and returns it in the reverse order, which can be processed by ta4j."
+  [size]
+  (reverse (get-time-series size)))
+
+(defn parse-datetime-inday
+  "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
+  [dt]
+  (ZonedDateTime/parse dt (.withZone (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (ZoneId/of "UTC"))))
+
+(defn parse-datetime-daily
+  "HELPER: Parses given datetime string in format yyyy-MM-dd."
+  [dt]
+  (ZonedDateTime/of (.atStartOfDay (LocalDate/parse dt (DateTimeFormatter/ofPattern "yyyy-MM-dd"))) (ZoneId/of "UTC")))
+
+(defn get-parser
+  "Returns the appropriate parser depending of time interval requested."
+  []
+  (cond 
+    (str/ends-with? (:interval team-query-params) "min") parse-datetime-inday
+    (str/ends-with? (:interval team-query-params) "day") parse-datetime-daily))
+
+(defn get-bars
+  "Bars should be a sequence of maps containing :datetime/:open/:high/:low/:close/:volume"
+  ([] (get-bars (get-data 1000)))
+  ([bars] (let [s (.build (BaseBarSeriesBuilder.))]
+            (doseq [{:keys [datetime open high low close volume]} bars]
+              (.addBar s ((get-parser) datetime) open high low close volume))
+            s)))
+
