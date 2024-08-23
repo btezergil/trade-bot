@@ -13,8 +13,11 @@
                  [com.cognitect.aws/sns "836.2.1323.0"]
                  [com.cognitect.aws/lambda "845.2.1359.0"]
                  [com.cognitect.aws/dynamodb "845.2.1345.0"]
+                 [com.cognitect.aws/secretsmanager "845.2.1345.0"]
                  [danlentz/clj-uuid "0.1.9"]
-                 [org.clojure/core.match "1.0.1"]]
+                 [clj-http "3.12.3"]
+                 [org.clojure/core.match "1.0.1"]
+                 [org.ta4j/ta4j-core "0.15"]]
   :plugins [[lein-environ "1.2.0"]]
   :repl-options {:init-ns clojure-scraps.core}
   :profiles {:dev [:project/dev :profiles/dev]
