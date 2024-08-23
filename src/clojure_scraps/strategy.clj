@@ -5,7 +5,7 @@
             [clojure-scraps.datagetter :as datagetter])
   (:import (java.time ZoneId ZonedDateTime)
            (java.time.format DateTimeFormatter)
-           [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType TradingRecord BaseTradingRecord]))
+           [org.ta4j.core BaseStrategy BaseBarSeriesBuilder BarSeriesManager Trade$TradeType]))
 
 (def table-name "strategy-v1")
 (def table-key "strategyId")
@@ -62,12 +62,19 @@
     (BaseStrategy. entry exit))
   )
 
-(defn run
+(defn get-profit
+  "HELPER: Returns the profit of given position as a double"
+  [position]
+  (-> position 
+      .getProfit 
+      .doubleValue))
+
+(defn run-rsi
   []
   (let [series (series)
         strategy (rsi-strat series 14 30 70)
         bsm (BarSeriesManager. series)] 
-    (.getPositions (.run bsm strategy)))
+    (reduce + (map get-profit (.getPositions (.run bsm strategy)))))
 ) 
 
 (defn run-old
