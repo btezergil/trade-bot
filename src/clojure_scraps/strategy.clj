@@ -183,29 +183,6 @@
 (run-strategy (hammer-strategy))
 ; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
 
-
-(defn run-old
-  []
-  (let [series (datagetter/get-bars)
-        rsi    (rsi-indicator series 14)
-        strat  (base-strategy (rule :CrossedDownIndicator rsi 30)
-                              (rule :WaitFor Trade$TradeType/BUY 5))
-        crits  [(crit :pnl/AverageProfit)
-                (crit :EnterAndHoldReturn)
-                (crit :LinearTransactionCost 5000 0.005)
-                (crit :MaximumDrawdown)
-                (crit :NumberOfBars)
-                (crit :NumberOfPositions)
-                (crit :ValueAtRisk 0.5)
-                (crit :pnl/NetProfit)
-                (crit :pnl/ProfitLoss)]
-        mgr    (BarSeriesManager. series)
-        rec    (.run mgr strat)]
-    (into {}
-          (for [crit crits]
-            [(-> crit .getClass .getSimpleName)
-             (.longValue (.calculate crit series rec))]))))
-
 ;; "TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 
 (defn write-to-table

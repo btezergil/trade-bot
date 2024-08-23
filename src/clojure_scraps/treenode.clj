@@ -7,7 +7,8 @@
 (def operators [:and :or])
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :engulfing :pinbar])
+; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema])
 
 (defn generate-operator
   "Generates a random operator, taken from the operators list."
