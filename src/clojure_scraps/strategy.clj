@@ -9,7 +9,7 @@
 
 (def table-vars { 
   :table-name "strategy-v1"
-  :table-key "strategyId"}) 
+  :table-key "strategyId"})
 
 (defn constructor [pre-str post-str]
   (fn [class-key args]
@@ -51,8 +51,6 @@
   (-> indicator
       (.getValue index)
       .doubleValue))
-
-
 
 (defn crosses-up?
   "Returns whether the given indicator value crosses up the price."
@@ -117,6 +115,11 @@
   [bars period]
   (ind :EMA (ind :helpers/ClosePrice bars) period))
 
+(defn engulfing-indicator
+  "Returns an engulfing indicator"
+  [bars]
+  (candle-ind :BullishEngulfing bars))
+
 (defn rsi-strategy
   "Generates a strategy based on RSI indicator"
   [series period oversold-thresh overbought-thresh]
@@ -125,24 +128,19 @@
         exit (rule :CrossedUpIndicator rsi overbought-thresh)]
     (base-strategy entry exit)))
 
-(defn engulfing-indicator
-  "Returns an engulfing indicator"
-  [bars]
-  (candle-ind :BullishEngulfing bars))
-
 (defn engulfing-strategy
   "Generates a strategy based on engulfing candlestick pattern"
   []
   (let [engulfing (engulfing-indicator (datagetter/get-bars))
         entry (rule :BooleanIndicator engulfing)
-        exit (rule :WaitFor Trade$TradeType/BUY 10)]
+        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
 (defn hammer-strategy
   []
   (let [ind (pinbar/create-hammer-indicator (datagetter/get-bars))
         entry (rule :BooleanIndicator ind)
-        exit (rule :WaitFor Trade$TradeType/BUY 10)]
+        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
 (defn run-strategy
@@ -177,7 +175,7 @@
 (run-strategy (hammer-strategy))
 ; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
 
-;; "TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
+; TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 
 (defn write-to-table
   "Writes the given indicator map to the table" 
