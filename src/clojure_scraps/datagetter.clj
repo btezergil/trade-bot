@@ -85,7 +85,7 @@
 
 (defn parse-csv-line
   [entry]
-  (let [{:keys [datetime open high low close]} entry] 
+  (let [{:keys [open high low close]} entry] 
     (assoc entry 
            :open (Double/parseDouble open)
            :high (Double/parseDouble high)
@@ -116,6 +116,11 @@
               (.addBar s ((get-parser) datetime) open high low close volume))
             s)))
 
-(-> "eurusd-3month-1h.csv" 
-    read-csv-file
-    get-bars)
+(defn get-bars-for-genetic
+  "Reads the experiment dataset and returns it as a ta4j BarSeries."
+  []
+  (-> "eurusd-3month-1h.csv" 
+      read-csv-file
+      get-bars))
+
+

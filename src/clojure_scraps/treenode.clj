@@ -214,15 +214,21 @@
                     [[left1 mid1 right2] [left2 mid2 right1]])))
     [node2 node1]))
 
+(defn index-to-keyword
+  [operand]
+  (-> operand
+      :index
+      str
+      keyword))
+
 (defn check-signal-for-operand
   "Signal check for operand, if a leaf node is found, checks whether the given signal map contains a signal that fits with the tree type at hand."
   [operand signals tree-type]
-  (if (= tree-type ((-> operand
-                        :index
-                        str
-                        keyword) signals))
-         tree-type
-         :no-signal))
+  (if (= tree-type (-> operand
+                       index-to-keyword
+                       signals))
+    tree-type
+    :no-signal))
 
 (defn signal-check
   "Node is a eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction"
