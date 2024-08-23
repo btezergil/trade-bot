@@ -17,7 +17,10 @@
 (defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
 (def get-bar-series-for-experiments (get-subseries 0 300))
 
-(defn generate-sequence "Generates a genetic sequence for individual. " [] (vector (node/generate-tree) (node/generate-tree)))
+(defn generate-sequence
+  "Generates a genetic sequence for individual."
+  []
+  (vector (node/generate-tree) (node/generate-tree)))
 
 (s/def :transaction/result double?)
 (s/def :transaction/position #{:long :short})
@@ -107,7 +110,12 @@
     (* (inc total-profit) 1.5)
     (Math/pow 2 total-profit)))
 
-(defn calculate-profit-from-transactions "Calculates the total profit of given transactions." [transactions] (if-not (empty? transactions) (reduce + (map :result transactions)) 0))
+(defn calculate-profit-from-transactions
+  "Calculates the total profit of given transactions."
+  [transactions]
+  (if-not (empty? transactions)
+    (reduce + (map :result transactions))
+    0))
 
 (defn calculate-scaled-profit
   "Calculates the total profit and scales it so that the result is positive."
@@ -120,7 +128,9 @@
   "Creates a transaction to be added to the transaction array
   Records the direction, time, and price"
   [data current-index direction]
-  {:price (datagetter/get-bar-value-at-index data current-index), :position direction, :bar-time (datagetter/get-bar-close-time-at-index data current-index)})
+  {:price (datagetter/get-bar-value-at-index data current-index)
+   :position direction
+   :bar-time (datagetter/get-bar-close-time-at-index data current-index)})
 
 (defn backtest-strategy
   "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
@@ -145,7 +155,9 @@
   {:post [(s/valid? :genetic/transaction %)]}
   (let [position (:position entry)
         result (- (:price exit) (:price entry))]
-    {:position position, :result (if (= position :long) result (- result)), :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
+    {:position position
+     :result (if (= position :long) result (- result))
+     :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
 
 (defn merge-entry-points
   "Merges transaction entry and exit points, then finds the profit of the transaction and records its time."
@@ -190,6 +202,8 @@
                                       [(partial node/mutation calculate-fitness-partial)]
                                       {:solutions 3
                                        :carry-over (find-elitism-ind-count)
-                                       :monitors [nmon/print-best-solution mon/print-average-fitness-of-population (partial mon/write-individuals-to-table-monitor evolution-id)
+                                       :monitors [nmon/print-best-solution
+                                                  mon/print-average-fitness-of-population
+                                                  (partial mon/write-individuals-to-table-monitor evolution-id)
                                                   (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments))]})))
 
