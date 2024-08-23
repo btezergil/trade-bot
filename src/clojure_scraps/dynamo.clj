@@ -51,7 +51,7 @@
 (defn write-transaction-to-table
   "Records the given transaction to database"
   [strategy-id transaction]
-  (let [entry {"id" {:S (str (uuid/v1))},
+  (let [entry {"id" {:S (str (uuid/v4))},
                "strategy-id" {:S (str strategy-id)},
                "price" {:N (-> transaction
                                :price
