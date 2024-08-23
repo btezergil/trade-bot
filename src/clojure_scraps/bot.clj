@@ -2,13 +2,11 @@
   (:require [telegrambot-lib.core :as tbot]
             [environ.core :refer [env]]
             [clojure.tools.logging :as log]
-            [cognitect.aws.client.api :as aws]))
+            [clojure-scraps.aws :as aws-helper]))
 
 (def bot-id (env :bot-id))
 (def trade-bot (tbot/create bot-id))
 (def btezergil-chat-id (env :btezergil-telegram-chat-id))
-
-(def sns (aws/client {:api :sns}))
 
 (defn message-to-me
   "Send a message to me from Telegram"
@@ -27,21 +25,11 @@
   ([bot offset]
    (let [resp (tbot/get-updates bot {:offset offset
                                      :timeout (:timeout config)})]
-     (if (contains? resp :error)
+     (if (:error resp)
        (log/error "tbot/get-updates error:" (:error resp))
        resp))))
 
 (defonce update-id (atom nil))
-
-(defn list-sns-actions
-  []
-  (aws/ops sns))
-
-(defn send-sns
-  "Sends a SNS notification"
-  [message]
-  (log/info "sending a SNS")
-  (aws/invoke sns {:op :Publish :request {:Message message :TopicArn "arn:aws:sns:eu-central-1:994976387571:Sns-deneme-topic"}}))
 
 (defn set-id!
   "Sets the update id to process next as the passed in `id`."
@@ -60,14 +48,14 @@
 
       ;; Check all messages, if any, for commands/keywords.
       (doseq [msg messages]
-        (let [is-bot-command (= "bot_command" (-> msg
+        (let [bot-command? (= "bot_command" (-> msg
                                                   :message
                                                   :entities
                                                   first
                                                   :type))]
-          (when (true? is-bot-command) (log/info (format "received a bot command: %s " (-> msg
-                                                                                           :message
-                                                                                           :text)))))
+          (when bot-command? (log/info (format "received a bot command: %s " (-> msg
+                                                                                 :message
+                                                                                 :text)))))
         ;;(println (str msg)) ; your fn that decides what to do with each message.
 
         ;; Increment the next update-id to process.
