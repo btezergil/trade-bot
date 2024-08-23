@@ -218,11 +218,17 @@
                       dec)]
     (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
 
+; TODO: code is somewhat slow, action items:
+; TODO: crossover and selection parts might be taking quite a long time, can we apply parallelization to it?
+; TODO: there is 3/4 part of the time where we don't know what takes that long, find it
+
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
   []
-  (let [evolution-id (uuid/v4)
-        calculate-fitness-partial (partial calculate-fitness get-bar-series-for-experiments)]
+  (let [evolution-id (str (uuid/v4))
+        calculate-fitness-partial (partial calculate-fitness get-bar-series-for-experiments)
+        gen-count (atom 0)]
+    (tb/message-to-me (str "Starting evolution with id " evolution-id))
     (dyn/write-evolution-to-table evolution-id)
     (n/evolve-with-sequence-generator generate-sequence
                                       (:population-size p/params)
@@ -234,6 +240,7 @@
                                        :carry-over (find-elitism-ind-count)
                                        :monitors [nmon/print-best-solution
                                                   mon/print-average-fitness-of-population
-                                                  (partial mon/write-individuals-to-table-monitor evolution-id)
-                                                  (partial mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments))]})))
+                                                  (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))
+                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments) population current-generation))
+                                                  (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]})))
 

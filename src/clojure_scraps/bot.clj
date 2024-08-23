@@ -1,11 +1,11 @@
 (ns clojure-scraps.bot
   (:require [telegrambot-lib.core :as tbot]
-            [environ.core :refer [env]]
+            [envvar.core :as envvar :refer [env]]
             [clojure.tools.logging :as log]
             [clojure-scraps.aws :as aws-helper]))
 
-(def trade-bot (tbot/create (env :bot-id)))
-(def btezergil-chat-id (env :btezergil-telegram-chat-id))
+(def trade-bot (tbot/create (:bot-id @env)))
+(def btezergil-chat-id (:btezergil-telegram-chat-id @env))
 
 (defn message-to-me
   "Send a message to me from Telegram"

@@ -5,7 +5,7 @@
             [clojure.tools.logging :as log]
             [cheshire.core :as cheshire]
             [clj-http.client :as client]
-            [environ.core :refer [env]]
+            [envvar.core :as envvar :refer [env]]
             [clojure-scraps.aws :as aws-helper])
   (:import [java.time ZoneId ZonedDateTime LocalDate Duration]
            (java.time.format DateTimeFormatter)
@@ -29,7 +29,7 @@
                                               {"symbol" (:symbol team-query-params)
                                                "interval" (:interval team-query-params)
                                                "exchange" (:exchange team-query-params)
-                                               "apikey" (env :twelvedata-apikey)}})]
+                                               "apikey" (:twelvedata-apikey @env)}})]
     (cheshire/parse-string body true)))
 
 (defn get-forex-time-series
@@ -39,7 +39,7 @@
                                                              "interval" "1h"
                                                              "outputsize" (* 24 90)
                                                              "format" "CSV"
-                                                             "apikey" (env :twelvedata-apikey)}})
+                                                             "apikey" (:twelvedata-apikey @env)}})
         body (:body response)]
     (spit "eurusd-3month-1h.csv" body)))
 
@@ -52,7 +52,7 @@
                                                 "interval" (:interval team-query-params)
                                                 "exchange" (:exchange team-query-params)
                                                 "outputsize" size
-                                                "apikey" (env :twelvedata-apikey)}})
+                                                "apikey" (:twelvedata-apikey @env)}})
          body (cheshire/parse-string (:body response) true)
          values (:values body)]
      values)))

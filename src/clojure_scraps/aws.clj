@@ -1,11 +1,13 @@
 (ns clojure-scraps.aws
-  (:require [environ.core :refer [env]]
+  (:require [envvar.core :as envvar :refer [env]]
             [clojure.tools.logging :as log]
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]
             [cheshire.core :as cheshire]))
 
-(def shared-client-params {:region (env :aws-region), :credentials-provider (credentials/basic-credentials-provider {:access-key-id (env :aws-access-key), :secret-access-key (env :aws-secret-key)})})
+(def shared-client-params {:region (:aws-region @env)
+                           :credentials-provider (credentials/basic-credentials-provider {:access-key-id (:aws-access-key @env)
+                                                                                          :secret-access-key (:aws-secret-key @env)})})
 
 (def sns (aws/client (merge {:api :sns} shared-client-params)))
 (def lambda (aws/client (merge {:api :lambda} shared-client-params)))
