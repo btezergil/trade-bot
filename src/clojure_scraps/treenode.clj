@@ -151,7 +151,7 @@
 (defn perform-mutation
   "Genetic mutation operation, flips given operator or mutates given operand. Operand mutation can either be a change of parameter or replacement with a new one."
   [node-type node]
-  (println "perform-mutation node: " node)
+  (log/debug "perform-mutation node: " node)
   (condp = node-type
     :operator (if (= :and node) :or :and)
     :operand (let [flip-probability (rand)]
@@ -173,7 +173,7 @@
   "Swap mutation operation is the simpler genetic mutation operator that can act on the tree.
    Basically, one node is selected to undergo mutation, which changes its value to a new random one." 
   [node]
-  (println "swap node: " node)
+  (log/debug "swap node: " node)
   (if (vector? node)
     (let [prob (rand)
           left (first node)
@@ -198,7 +198,7 @@
    If a leaf node is reached, randomly replaces the operand."
    ([node] (subtree-mutation node (:prune-height p/params)))
    ([node height] 
-    (println "subtree node: " node)
+    (log/debug "subtree node: " node)
     (if (vector? node) 
       (let [propagation-probability (rand)
             node-probability (rand)
@@ -228,7 +228,7 @@
         seqn (:genetic-sequence ind)
         long-node (first seqn)
         short-node (second seqn)]
-    (println "mutation node: " seqn)
+    (log/debug "mutation node: " seqn)
     (io/build-individual (if (< (rand) 0.5) 
                              (vector (mutate-tree long-node) short-node)
                              (vector long-node (mutate-tree short-node)))
@@ -239,8 +239,8 @@
 (defn node-crossover
   "Genetic crossover operator for the node structure, swaps two branches of different trees."
   [node1 node2]
-  (println "before node1: " node1)
-  (println "before node2: " node2)
+  (log/debug "before node1: " node1)
+  (log/debug "before node2: " node2)
   (if (vector? node1) 
     (let [propagation-probability (rand)
           node-probability (rand)

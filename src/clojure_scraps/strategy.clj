@@ -166,13 +166,13 @@
         rec (.run bsm strategy)]
     (.calculate criterion bars rec)))
 
-(calculate-result run-engulfing)
-(calculate-result run-hammer)
+#_(calculate-result run-engulfing)
+#_(calculate-result run-hammer)
 ; TODO: hammer buy rule ile alakali bir problem olabilir, acaba bu yuzden mi hammer'da pozisyon acilmiyor?
-(map get-profit run-engulfing)
-(eng-criterion (engulfing-strategy))
+#_(map get-profit run-engulfing)
+#_(eng-criterion (engulfing-strategy))
 ; TODO: calculate result ile net profit neden farkli donuyor? analiz etmek lazim, criterion mu dogru benim fonksiyon mu?
-(run-strategy (hammer-strategy))
+#_(run-strategy (hammer-strategy))
 ; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
 
 ; TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
