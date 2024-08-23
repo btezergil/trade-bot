@@ -53,15 +53,15 @@
   [strategy-id transaction]
   (let [entry {"id" {:S (str (uuid/v4))},
                "strategy-id" {:S (str strategy-id)},
-               "price" {:N (-> transaction
-                               :price
-                               str)},
+               "result" {:N (-> transaction
+                                :result
+                                str)},
                "position" {:S (-> transaction
                                   :position
                                   name)},
-               "bar-time" {:S (-> transaction
-                                  :bar-time
-                                  str)}}]
+               "time-range" {:S (-> transaction
+                                    :time-range
+                                    str)}}]
     (aws-helper/write-to-table (:table-name transaction-table-vars) entry)))
 
 (defn write-evolution-to-table
