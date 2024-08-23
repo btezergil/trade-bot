@@ -17,5 +17,5 @@
 (defn send-sns
   "Sends a SNS notification"
   [message]
-  (log/info "sending a SNS")
+  (log/info "sending an SNS")
   (aws/invoke sns {:op :Publish :request {:Message message :TopicArn "arn:aws:sns:eu-central-1:994976387571:Sns-deneme-topic"}}))
