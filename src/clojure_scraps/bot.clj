@@ -45,7 +45,21 @@
          "/mokoko" (log/info "come on, mokoko?")
          "/sns" (aws-helper/send-sns "bot wants an SNS sent")))
 
-(defn start-bot
+(defn webhook-handler
+  "Handles webhook updates"
+  [update]
+  (let [message (-> update
+                    :message)
+        bot-command? (= "bot_command" (-> message
+                                          :entities
+                                          first
+                                          :type))
+        command (:text message)]
+    (when bot-command?
+      (log/info (format "received a bot command: %s " command))
+      (execute-bot-actions command))))
+
+(defn start-bot-long-polling
   "Retrieve and process chat messages."
   []
   (log/info "bot service started.")
