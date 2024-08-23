@@ -11,11 +11,21 @@
            (com.fasterxml.jackson.core JsonParseException)
            (org.ta4j.core BaseBarSeriesBuilder)))
 
+(def nasdaq-100-symbols
+  ["ADBE" "ADI" "ADSK" "AEP" "ALGN" "AMAT" "AMD" "AMGN" "ANSS" "ASML" "AVGO" "AZN"
+   "BIIB" "BKNG" "BKR" "CDNS" "CEG" "CHTR" "CMCSA" "COST" "CPRT" "CRWD" "CSCO" "CSGP"
+   "CSX" "CTAS" "CTSH" "DDOG" "DLTR" "DXCM" "EA" "EBAY" "ENPH" "EXC" "FANG" "FAST" 
+   "FTNT" "GEHC" "GFS" "GOOGL" "HON" "IDXX" "ILMN" "INTC" "INTU" "ISRG" "JD" "KDP" 
+   "KHC" "KLAC" "LCID" "LRCX" "LULU" "MAR" "MCHP" "MDLZ" "MELI" "META" "MRNA" "MRVL"
+   "MSFT" "MU" "NFLX" "NXPI" "ODFL" "ON" "ORLY" "PANW" "PAYX" "PCAR" "PDD" "PEP"
+   "PYPL" "QCOM" "ROST" "SGEN" "SIRI" "SNPS" "TEAM" "TMUS" "TTD" "TXN" "VRSK"
+   "VRTX" "WBA" "WBD" "WDAY" "XEL" "ZM" "ZS"])
 (def team-query-params {:symbol "TEAM"
                         :interval "1day"
                         :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
 (def time-series-url "https://api.twelvedata.com/time_series")
+
 
 (defn get-quote
   "Queries the API for data"
@@ -29,16 +39,15 @@
 
 (defn get-time-series
   "Queries the API for data"
-  [size]
-
-  (let [response (client/get time-series-url {:query-params {"symbol"     (:symbol team-query-params)
-                                                             "interval"   (:interval team-query-params)
-                                                             "exchange"   (:exchange team-query-params)
-                                                             "outputsize" size
-                                                             "apikey"     (env :twelvedata-apikey)}})
-        body (cheshire/parse-string (:body response) true)
-        values (:values body)]
-    values))
+  ([size] (get-time-series size (:symbol team-query-params)))
+  ([size symbol] (let [response (client/get time-series-url {:query-params {"symbol"     symbol 
+                                                                            "interval"   (:interval team-query-params)
+                                                                            "exchange"   (:exchange team-query-params)
+                                                                            "outputsize" size
+                                                                            "apikey"     (env :twelvedata-apikey)}})
+                       body (cheshire/parse-string (:body response) true)
+                       values (:values body)]
+                   values)))
 
 (defn get-data
   "Data accessor function to be called by other files, gets the data and returns it in the reverse order, which can be processed by ta4j."
