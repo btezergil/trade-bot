@@ -2,7 +2,9 @@
   (:require [clojure.tools.logging :as log]
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
-            [clojure-scraps.indicators.pinbar :as pinbar]))
+            [clojure-scraps.indicators.pinbar :as pinbar]
+            [nature.core :as n]
+            [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
@@ -195,7 +197,7 @@
    While swap mutation acts on a node only for operators, subtree mutation changes the whole subtree.
    If a leaf node is reached, randomly replaces the operand."
    ([node] (subtree-mutation node (:prune-height p/params)))
-   ([node height] (println "before: " node)
+   ([node height] 
     (if (vector? node) 
       (let [propagation-probability (rand)
             node-probability (rand)
@@ -210,18 +212,30 @@
                       [left mid (generate-tree (dec height) (find-initial-index right))])))
       (perform-mutation :operand node))))
 
-(defn mutation
-  "Genetic mutation operator for the node structure, performs either swap or subtree mutation on the given node."
+(defn mutate-tree
+  "Performs mutation on the given tree."
   [node]
-  (let [prob (rand)]
-    (if (< prob 0.5)
-      (swap-mutation node)
-      (subtree-mutation node))))
+  (if (< (rand) 0.5)
+       (swap-mutation node)
+       (subtree-mutation node)))
 
-(defn crossover
+(defn mutation
+  "Genetic mutation operator for individials, performs either swap or subtree mutation on the given node defined in the individual.
+  Only performs mutation on the long or the short tree."
+  [fitness-func ind]
+  (let [seqn (:genetic-sequence ind)
+        long-node (first seqn)
+        short-node (second seqn)]
+    (io/build-individual (if (< (rand) 0.5) 
+                             (conj (vector) (mutate-tree long-node) short-node)
+                             (conj (vector) long-node (mutate-tree short-node)))
+                         (:parents ind)
+                         (:age ind)
+                         fitness-func)))
+
+(defn node-crossover
   "Genetic crossover operator for the node structure, swaps two branches of different trees."
-  ([node-list] (crossover (first node-list) (second node-list)))
-  ([node1 node2]
+  [node1 node2]
   (println "before node1: " node1)
   (println "before node2: " node2)
   (if (vector? node1) 
@@ -234,18 +248,45 @@
           mid2 (second node2)
           right2 (last node2)]
       (cond (< propagation-probability 0.5) (if (< node-probability 0.5)
-                                              (let [crossover-result (crossover left1 left2)
+                                              (let [crossover-result (node-crossover left1 left2)
                                                     new-left1 (first crossover-result)
                                                     new-left2 (second crossover-result)]
                                                 [[new-left1 mid1 right1] [new-left2 mid2 right2]])
-                                              (let [crossover-result (crossover right1 right2)
+                                              (let [crossover-result (node-crossover right1 right2)
                                                     new-right1 (first crossover-result)
                                                     new-right2 (second crossover-result)]
                                                 [[left1 mid1 new-right1] [left2 mid2 new-right2]])) 
             :else (if (< node-probability 0.5)
                     [[left2 mid1 right1] [left1 mid2 right2]]
                     [[left1 mid1 right2] [left2 mid2 right1]])))
-    [node2 node1])))
+    [node2 node1]))
+
+(defn tree-selector
+  "Helper function for crossover to return either the long tree selector (i.e. 'first' function) or the short one."
+  [long?]
+  (if long?
+    first
+    second))
+
+(defn crossover
+  "Genetic crossover operator for individuals, calls the crossover for nodes defined by the genetic sequence within individuals.
+  Only performs crossover on the long or the short tree."
+  ([fitness-func ind-list] (crossover fitness-func (first ind-list) (second ind-list)))
+  ([fitness-func ind1 ind2] 
+   (let [seqn1 (:genetic-sequence ind1)
+         seqn2 (:genetic-sequence ind2)
+         long? (< (rand) 0.5)
+         node1 ((tree-selector long?) seqn1)
+         node2 ((tree-selector long?) seqn2)
+         crossover-result (node-crossover node1 node2)] 
+     (vector (io/build-individual (first crossover-result)
+                                    [node1 node2]
+                                  (:default-age p/params)
+                                  fitness-func)
+             (io/build-individual (second crossover-result)
+                                  [node1 node2]
+                                  (:default-age p/params)
+                                  fitness-func)))))
 
 (defn index-to-keyword
   [operand]

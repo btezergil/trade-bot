@@ -5,7 +5,8 @@
             [clojure.pprint :as pp]
             [clojure-scraps.strategy :as strat]
             [clojure-scraps.datagetter :as datagetter]
-            [nature.core :as n]))
+            [nature.core :as n]
+            [nature.initialization-operators :as io]))
 
 (defn get-subseries
   [start end]
@@ -13,8 +14,7 @@
 
 (defn generate-sequence
   []
-  (conj (node/generate-tree)
-        (node/generate-tree)))
+  (conj (vector) (node/generate-tree) (node/generate-tree)))
 
 (s/def :genetic/indicator keyword?)
 (s/def :genetic/overbought int?)
@@ -164,14 +164,18 @@
             :else (recur current-position (inc current-index) transactions)))
         (calculate-scaled-profit transactions (datagetter/get-bar-value-at-index data (dec max-index)))))))
 
-; TODO: nature'a call atip dogru sekilde genetic surecini baslat, bu noktada elimizde tum fonksiyonlar var
-(n/evolve [] 1 (:population-size p/params) (:generation-count p/params) (partial calculate-fitness (get-subseries 0 300)) [node/crossover] [node/mutation] {:generator generate-sequence :solutions 3 :carry-over 1})
-
-
+#_(n/evolve-with-sequence-generator generate-sequence 
+                                  (:population-size p/params) 
+                                  (:generation-count p/params) 
+                                  (partial calculate-fitness (get-subseries 0 300)) 
+                                  [(partial node/crossover (partial calculate-fitness (get-subseries 0 300)))] 
+                                  [(partial node/mutation (partial calculate-fitness (get-subseries 0 300)))] 
+                                  {:solutions 3 :carry-over 1})
+; TODO: crossover ve mutation metodlari bir tree'ye gore calisiyor, onlari invididual (yani 2 tree)'ye gore calisacak hale getir
+(node/mutation (partial calculate-fitness (get-subseries 0 300)) (first (io/build-population 1 generate-sequence (partial calculate-fitness (get-subseries 0 300)))))
 
 *e
 (calculate-fitness (generate-sequence) (get-subseries 0 300))
-(vector? (generate-sequence))
 (map (partial check-double-sma-signal (node/generate-double-sma 0) :short) (range 200))
 (s/explain :genetic/rsi (node/generate-rsi 0))
 (generate-signals (node/generate-tree) 0 :long (get-subseries 0 200))
