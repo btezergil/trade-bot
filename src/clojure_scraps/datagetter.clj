@@ -32,8 +32,7 @@
 (defn get-forex-time-series
   "Queries the API for data"
   []
-  (let [response (client/get time-series-url
-                             {:query-params {"symbol" "EUR/USD", "interval" "1h", "outputsize" (* 24 90), "format" "CSV", "apikey" (env :twelvedata-apikey)}})
+  (let [response (client/get time-series-url {:query-params {"symbol" "EUR/USD", "interval" "1h", "outputsize" (* 24 90), "format" "CSV", "apikey" (env :twelvedata-apikey)}})
         body (:body response)]
     (spit "eurusd-3month-1h.csv" body)))
 
@@ -113,7 +112,6 @@
       (.getBar index)
       .getClosePrice
       .doubleValue))
-
 
 (defn get-bar-time-at-index
   "Returns the bar start and end time on the given index."
