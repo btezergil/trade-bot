@@ -136,26 +136,3 @@
 
 ; TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 
-(defn write-to-table
-  "Writes the given indicator map to the table"
-  [indicator]
-  (let [entry {"strategyId" {:S (str (uuid/v1))}, "indicatorName" {:S "RSI"}, "buyThreshold" {:N (str (.buy-threshold indicator))}, "sellThreshold" {:N (str (.sell-threshold indicator))}}]
-    (aws-helper/write-to-table (:table-name table-vars) entry)))
-
-(defn read-from-table
-  "Reads the given id from strategy table and returns it as a map"
-  [id]
-  (let [item (aws-helper/read-from-table (:table-name table-vars) (:table-key table-vars) id)
-        data-map (:Item item)
-        indicator-name (-> data-map
-                           :indicatorName
-                           :S)
-        buy-threshold (-> data-map
-                          :buyThreshold
-                          :N
-                          parse-long)
-        sell-threshold (-> data-map
-                           :sellThreshold
-                           :N
-                           parse-long)]
-    {:id id, :type indicator-name, :buy-threshold buy-threshold, :sell-threshold sell-threshold}))

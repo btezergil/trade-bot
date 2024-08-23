@@ -10,7 +10,6 @@
         com.cognitect.aws/endpoints {:mvn/version "1.1.12.437"}
         com.cognitect.aws/sns {:mvn/version "836.2.1323.0"}
         com.cognitect.aws/lambda {:mvn/version "845.2.1359.0"}
-        com.cognitect.aws/dynamodb {:mvn/version "845.2.1345.0"}
         com.cognitect.aws/secretsmanager {:mvn/version "845.2.1345.0"}
         com.taoensso/faraday {:mvn/version "1.12.3"}
         danlentz/clj-uuid {:mvn/version "0.1.9"}
