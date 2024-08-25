@@ -141,6 +141,21 @@
 (def check-fisher-signal
   (memoize check-fisher-signal-raw))
 
+(defn check-cci-signal-raw
+  [node direction data index]
+  {:pre [(s/valid? :genetic/cci node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [overbought oversold window]} node
+        cci-indicator (strat/cci-indicator data window)
+        cci-value (.doubleValue (.getValue cci-indicator index))
+        prev-cci-value (.doubleValue (.getValue cci-indicator (dec index)))]
+    (cond (and (= direction :long) (> cci-value oversold) (< prev-cci-value oversold)) :long
+          (and (= direction :short) (< cci-value overbought) (> prev-cci-value overbought)) :short
+          :else :no-signal)))
+
+(def check-cci-signal
+  (memoize check-cci-signal-raw))
+
 (defn generate-signals
   "Generates signals on the given data index."
   [tree direction index data]
@@ -155,6 +170,7 @@
         :double-sma {index-keyword (check-signal-with-window index (fn [index] (check-double-sma-signal tree direction data index)))}
         :double-ema {index-keyword (check-signal-with-window index (fn [index] (check-double-ema-signal tree direction data index)))}
         :fisher {index-keyword (check-signal-with-window index (fn [index] (check-fisher-signal tree direction data index)))}
+        :cci {index-keyword (check-signal-with-window index (fn [index] (check-cci-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn find-elitism-ind-count

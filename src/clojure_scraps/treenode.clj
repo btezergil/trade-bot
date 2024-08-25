@@ -8,8 +8,7 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher])
-; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci])
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
 
@@ -35,11 +34,13 @@
 (s/def :genetic/rsi (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/overbought :genetic/oversold :genetic/window])
                            #(= :rsi (:indicator %))))
 (s/def :genetic/ma (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
-                          (s/or #(= :sma (:indicator %)) #(= :ema (:indicator %)))))
+                          (s/or :indicator #(= :sma (:indicator %)) :indicator #(= :ema (:indicator %)))))
 (s/def :genetic/double-ma (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window1 :genetic/window2])
-                                 (s/or #(= :double-sma (:indicator %)) #(= :double-ema (:indicator %)))))
+                                 (s/or :indicator #(= :double-sma (:indicator %)) :indicator #(= :double-ema (:indicator %)))))
 (s/def :genetic/fisher (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
                               #(= :fisher (:indicator %))))
+(s/def :genetic/cci (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
+                           #(= :cci (:indicator %))))
 ; TODO: candlestickler icin spec yaz
 
 (s/def :genetic/fitness-score double?)
@@ -84,6 +85,10 @@
 
 (defn mutate-fisher [node] {:pre [(s/valid? :genetic/fisher node)], :post [(s/valid? :genetic/fisher %)]} (assoc node :window (rand-int-range 7 15)))
 
+(defn generate-cci [index] {:post [(s/valid? :genetic/cci %)]} {:index index, :indicator :cci, :window (rand-int-range 12 28)})
+
+(defn mutate-cci [node] {:pre [(s/valid? :genetic/cci node)], :post [(s/valid? :genetic/cci %)]} (assoc node :window (rand-int-range 12 28)))
+
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
 (defn mutate-fibonacci [node] node)
@@ -105,6 +110,7 @@
       :double-sma (generate-double-sma index)
       :double-ema (generate-double-ema index)
       :fisher (generate-fisher index)
+      :cci (generate-cci index)
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
       :engulfing (generate-engulfing index) ; NOT ADDED YET
       :pinbar (generate-pinbar index) ; NOT ADDED YET
