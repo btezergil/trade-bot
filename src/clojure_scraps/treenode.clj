@@ -8,7 +8,7 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher])
 ; TODO: fisher indikator parametrelerini anlamadim, onlari anlamak icin birkac calisma yap, anlayana kadar fisher'i ekleme
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
@@ -32,10 +32,15 @@
   (s/and int?
          #(> % 39)
          #(< % 81)))
-(s/def :genetic/rsi (s/keys :req-un [:genetic/index :genetic/indicator :genetic/overbought :genetic/oversold :genetic/window]))
-(s/def :genetic/ma (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window]))
-(s/def :genetic/double-ma (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window1 :genetic/window2]))
-; TODO: fisher ve candlestickler icin spec yaz
+(s/def :genetic/rsi (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/overbought :genetic/oversold :genetic/window])
+                           #(= :rsi (:indicator %))))
+(s/def :genetic/ma (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
+                          (s/or #(= :sma (:indicator %)) #(= :ema (:indicator %)))))
+(s/def :genetic/double-ma (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window1 :genetic/window2])
+                                 (s/or #(= :double-sma (:indicator %)) #(= :double-ema (:indicator %)))))
+(s/def :genetic/fisher (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
+                              #(= :fisher (:indicator %))))
+; TODO: candlestickler icin spec yaz
 
 (s/def :genetic/fitness-score double?)
 (s/def :genetic/genetic-sequence map?)
@@ -52,18 +57,6 @@
       (- min)
       rand-int
       (+ min)))
-
-(defn parse-json-values
-  "Value parser function for individuals
-  Used when an individual is read from table"
-  [key value]
-  (if (= key :indicator) (keyword value) value))
-
-(defn keywordize-and-or
-  "Convert all and's and or's in the :genetic-sequence list into keywords
-  Used when an individual is read from table"
-  [value]
-  (condp = value "and" (keyword value) "or" (keyword value) value))
 
 (defn generate-rsi [index] {:post [(s/valid? :genetic/rsi %)]} {:index index, :indicator :rsi, :oversold (rand-int-range 15 45), :overbought (rand-int-range 55 85), :window (rand-int-range 8 20)})
 
@@ -87,9 +80,9 @@
   {:pre [(s/valid? :genetic/double-ma node)], :post [(s/valid? :genetic/double-ma %)]}
   (let [param-prob (rand)] (if (< param-prob 0.5) (assoc node :window1 (rand-int-range 5 20)) (assoc node :window2 (rand-int-range 40 80)))))
 
-(defn generate-fisher [index] {:index index, :indicator :fisher, :window (rand-int-range 5 15)})
+(defn generate-fisher [index] {:post [(s/valid? :genetic/fisher %)]} {:index index, :indicator :fisher, :window (rand-int-range 7 15)})
 
-(defn mutate-fisher [node] node)
+(defn mutate-fisher [node] {:pre [(s/valid? :genetic/fisher node)], :post [(s/valid? :genetic/fisher %)]} (assoc node :window (rand-int-range 7 15)))
 
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
@@ -111,13 +104,11 @@
       :rsi (generate-rsi index)
       :double-sma (generate-double-sma index)
       :double-ema (generate-double-ema index)
-      :fisher (generate-fisher index) ; NOT ADDED YET
+      :fisher (generate-fisher index)
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
-      :engulfing (generate-engulfing index)
-      :pinbar (generate-pinbar index)
+      :engulfing (generate-engulfing index) ; NOT ADDED YET
+      :pinbar (generate-pinbar index) ; NOT ADDED YET
       :identity (generate-identity index))))
-
-; TODO: operand generation icin bir spec yazilabilir
 
 (defn get-right-index-for-operand
   "Calculates the operand index for the right side of the tree."

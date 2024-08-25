@@ -56,6 +56,7 @@
     (cond (and (= direction :long) (<= rsi-value oversold)) :long
           (and (= direction :short) (>= rsi-value overbought)) :short
           :else :no-signal)))
+; TODO: RSI icin simdilik kullandigimizin disinda baska bir sinyal cikarma yontemi kullanabilir miyiz/kullanmali miyiz
 
 (def check-rsi-signal
   (memoize check-rsi-signal-raw))
@@ -120,6 +121,26 @@
 (def check-double-ema-signal
   (memoize check-double-ema-signal-raw))
 
+(defn check-fisher-signal-raw
+  [node direction data index]
+  {:pre [(s/valid? :genetic/fisher node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [window]} node
+        fisher-indicator (strat/fisher-indicator data window)
+        fisher-value (.doubleValue (.getValue fisher-indicator index))
+        trigger-value (.doubleValue (.getValue fisher-indicator (dec index)))]
+    (cond (and (= direction :long) (>= fisher-value trigger-value) (<= fisher-value -1)) :long
+          (and (= direction :short) (<= fisher-value trigger-value) (>= fisher-value 1)) :short
+          :else :no-signal)))
+; TODO: fisher sinyali icin alternatifler: 
+; TODO: 1. fisher, trigger'i asagi/yukari kirarsa
+; TODO: 2. fisher ve RSI ayni anda sinyal verirse
+; TODO: 3. fisher ve fibonacci retracement, geri cekilmede fib retracement'tan dondugunde fisher'i teyit olarak kullanip islem ac
+; TODO: fisher'da threshold'lari hardcoded verdim, bunlari genetic'e parametre olarak verebiliriz
+
+(def check-fisher-signal
+  (memoize check-fisher-signal-raw))
+
 (defn generate-signals
   "Generates signals on the given data index."
   [tree direction index data]
@@ -133,6 +154,7 @@
         :ema {index-keyword (check-signal-with-window index (fn [index] (check-single-ema-signal tree direction data index)))}
         :double-sma {index-keyword (check-signal-with-window index (fn [index] (check-double-sma-signal tree direction data index)))}
         :double-ema {index-keyword (check-signal-with-window index (fn [index] (check-double-ema-signal tree direction data index)))}
+        :fisher {index-keyword (check-signal-with-window index (fn [index] (check-fisher-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn find-elitism-ind-count

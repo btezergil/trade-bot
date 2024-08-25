@@ -88,6 +88,8 @@
 
 (defn ema-indicator "Returns a EMA indicator with given bars" [bars period] (ind :EMA (ind :helpers/ClosePrice bars) period))
 
+(defn fisher-indicator "Returns a Fisher indicator with given bars" [bars period] (ind :Fisher (ind :helpers/MedianPrice bars) period))
+
 (defn engulfing-indicator "Returns an engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
 
 (defn rsi-strategy
