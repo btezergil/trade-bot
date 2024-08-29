@@ -90,7 +90,15 @@
 
 (defn fisher-indicator "Returns a Fisher indicator with given bars" [bars period] (ind :Fisher (ind :helpers/MedianPrice bars) period))
 
-(defn cci-indicator "Returs a CCI indicator with given bars" [bars period] (ind :CCI bars period))
+(defn cci-indicator "Returns a CCI indicator with given bars" [bars period] (ind :CCI bars period))
+
+(defn stochastic-oscillator-indicator-k "Returns a stochastic oscillator indicator K with given bars" [bars period] (ind :StochasticOscillatorK bars period))
+
+(defn stochastic-oscillator-indicator-d "Returns a stochastic oscillator indicator D with given bars" [stochK] (ind :StochasticOscillatorD stochK))
+
+(defn parabolic-sar-indicator "Returns a parabolic SAR indicator with given bars" [bars] (ind :ParabolicSar bars))
+
+(defn supertrend-indicator "Returns a supertrend indicator with given bars" [bars period multiplier] (ind :SuperTrend bars period multiplier))
 
 (defn engulfing-indicator "Returns an engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
 

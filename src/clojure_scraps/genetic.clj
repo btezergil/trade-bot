@@ -152,9 +152,57 @@
     (cond (and (= direction :long) (> cci-value oversold) (< prev-cci-value oversold)) :long
           (and (= direction :short) (< cci-value overbought) (> prev-cci-value overbought)) :short
           :else :no-signal)))
+; TODO: CCI sinyali icin alternatifler:
+; TODO: CCI overbought'u yukari kirarsa al, asagi kirarsa sat (long)
+; TODO: CCI 0'i yukari kirarsa al, asagi kirarsa sat
 
 (def check-cci-signal
   (memoize check-cci-signal-raw))
+
+(defn check-stoch-signal-raw
+  [node direction data index]
+  {:pre [(s/valid? :genetic/stoch node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [window]} node
+        stoch-k-indicator (strat/stochastic-oscillator-indicator-k data window)
+        stoch-d-indicator (strat/stochastic-oscillator-indicator-d stoch-k-indicator)]
+    (cond (and (= direction :long) (strat/indicators-cross-up? stoch-k-indicator stoch-d-indicator index)) :long
+          (and (= direction :short) (strat/indicators-cross-down? stoch-k-indicator stoch-d-indicator index)) :short
+          :else :no-signal)))
+; TODO: stochastic oscillator signal generation would be K crosses D up -> long and K crosses D down -> short
+; TODO: alternatively, trade overbought and oversold thresholds
+; TODO: alternatively, combine the above logic, look for crosses within oversold region for long and overbought region for short signals
+; TODO: K threshold should be a parameter, then the found K with the D threshold should be the parameter to D
+
+(def check-stoch-signal
+  (memoize check-stoch-signal-raw))
+
+(defn check-parabolic-sar-signal-raw
+  [node direction data index]
+  {:pre [(s/valid? :genetic/parabolic-sar node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [parabolic-sar-indicator (strat/parabolic-sar-indicator data)]
+    (cond (and (= direction :long) (strat/crosses-down? parabolic-sar-indicator data index)) :long
+          (and (= direction :short) (strat/crosses-up? parabolic-sar-indicator data index)) :short
+          :else :no-signal)))
+
+(def check-parabolic-sar-signal
+  (memoize check-parabolic-sar-signal-raw))
+
+(defn check-supertrend-signal-raw
+  [node direction data index]
+  {:pre [(s/valid? :genetic/supertrend node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [{:keys [window multiplier]} node
+        supertrend-indicator (strat/supertrend-indicator data window multiplier)]
+    (cond (and (= direction :long) (strat/crosses-down? supertrend-indicator data index)) :long
+          (and (= direction :short) (strat/crosses-up? supertrend-indicator data index)) :short
+          :else :no-signal)))
+; TODO: signal generation is the same as SAR
+; TODO: indicator parameters are window (7-15) and multiplier (2-5)
+
+(def check-supertrend-signal
+  (memoize check-supertrend-signal-raw))
 
 (defn generate-signals
   "Generates signals on the given data index."
