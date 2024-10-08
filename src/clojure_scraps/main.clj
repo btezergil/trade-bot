@@ -14,3 +14,13 @@
 
 (time (run-evolution))
 ;*e
+
+(defn test-individual
+  "Generates an individual and calculates its fitness for test purposes."
+  []
+  (let [ind (g/generate-sequence)
+        data g/get-bar-series-for-experiments]
+    (println ind)
+    (g/calculate-fitness data ind)))
+
+;(test-individual)

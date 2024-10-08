@@ -98,7 +98,7 @@
 
 (defn parabolic-sar-indicator "Returns a parabolic SAR indicator with given bars" [bars] (ind :ParabolicSar bars))
 
-(defn supertrend-indicator "Returns a supertrend indicator with given bars" [bars period multiplier] (ind :SuperTrend bars period multiplier))
+(defn supertrend-indicator "Returns a supertrend indicator with given bars" [bars period multiplier] (ind :supertrend/SuperTrend bars period multiplier))
 
 (defn engulfing-indicator "Returns an engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
 

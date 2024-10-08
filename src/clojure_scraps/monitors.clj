@@ -1,13 +1,14 @@
 (ns clojure-scraps.monitors
   (:require [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.params :as p]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.tools.logging :as log]))
 
 (defn print-average-fitness-of-population
   "Calculates the average fitness of given population"
   [population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (println (format "Average fitness: %.4f" (/ (reduce + (map :fitness-score population)) (:population-size p/params)))))
+  (log/info (format "Average fitness: %.4f" (/ (reduce + (map :fitness-score population)) (:population-size p/params)))))
 
 (defn save-fitnesses-for-current-generation
   "Saves the current generation's best and average fitness into the table

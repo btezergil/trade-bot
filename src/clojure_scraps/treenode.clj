@@ -8,7 +8,7 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend])
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
 
@@ -133,6 +133,9 @@
       :double-ema (generate-double-ema index)
       :fisher (generate-fisher index)
       :cci (generate-cci index)
+      :stoch (generate-stochastic-oscillator index)
+      :parabolic-sar (generate-parabolic-sar index)
+      :supertrend (generate-supertrend index)
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
       :engulfing (generate-engulfing index) ; NOT ADDED YET
       :pinbar (generate-pinbar index) ; NOT ADDED YET
@@ -176,6 +179,9 @@
                    :double-ema (mutate-double-ma node)
                    :fisher (mutate-fisher node)
                    :cci (mutate-cci node)
+                   :stoch (mutate-stochastic-oscillator node)
+                   :parabolic-sar (generate-operand (:index node))
+                   :supertrend (mutate-supertrend node)
                    :fibonacci (mutate-fibonacci node)
                    :engulfing (generate-operand (:index node))
                    :pinbar (generate-operand (:index node))

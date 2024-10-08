@@ -47,6 +47,9 @@
     (combine-signal-list (map signal-check-fn (range start-index-for-range (inc index))))))
 
 (defn check-rsi-signal-raw
+  "Generates signal for RSI, signal condition is:
+  long: RSI goes below oversold threshold
+  short: RSI goes above overbought threshold"
   [node direction data index]
   {:pre [(s/valid? :genetic/rsi node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -62,6 +65,9 @@
   (memoize check-rsi-signal-raw))
 
 (defn check-single-ma-signal
+  "Generates signal for single moving averages, signal condition is:
+  long: indicator goes above average
+  short: indicator goes below average"
   [direction indicator data index]
   {:post [(s/valid? :strategy/signal %)]}
   (cond (and (= direction :long) (strat/crosses-up? indicator data index)) :long
@@ -91,6 +97,9 @@
   (memoize check-single-ema-signal-raw))
 
 (defn check-double-ma-signal
+  "Generates signal for double moving averages, signal condition is:
+  long: short-interval average goes above long-interval average
+  short: short-interval average goes below long-interval average"
   [direction index ind1 ind2]
   {:post [(s/valid? :strategy/signal %)]}
   (cond (and (= direction :long) (strat/indicators-cross-up? ind1 ind2 index)) :long
@@ -122,6 +131,9 @@
   (memoize check-double-ema-signal-raw))
 
 (defn check-fisher-signal-raw
+  "Generates signal for Fisher transform, signal condition is:
+  long: Fisher transform value is above the trigger and below -1
+  short: Fisher transform value is below the trigger and above 1"
   [node direction data index]
   {:pre [(s/valid? :genetic/fisher node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -142,6 +154,9 @@
   (memoize check-fisher-signal-raw))
 
 (defn check-cci-signal-raw
+  "Generates signal for CCI, signal condition is:
+  long: CCI goes over the oversold threshold
+  short: CCI goes below the overbought threshold"
   [node direction data index]
   {:pre [(s/valid? :genetic/cci node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -160,6 +175,9 @@
   (memoize check-cci-signal-raw))
 
 (defn check-stoch-signal-raw
+  "Generates signal for Stochastic oscillator, signal condition is:
+  long: K crosses D up
+  short: K crosses D down"
   [node direction data index]
   {:pre [(s/valid? :genetic/stoch node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -178,6 +196,9 @@
   (memoize check-stoch-signal-raw))
 
 (defn check-parabolic-sar-signal-raw
+  "Generates signal for Parabolic SAR, signal condition is:
+  long: Parabolic SAR goes below the price
+  short: Parabolic SAR goes above the price"
   [node direction data index]
   {:pre [(s/valid? :genetic/parabolic-sar node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -190,6 +211,9 @@
   (memoize check-parabolic-sar-signal-raw))
 
 (defn check-supertrend-signal-raw
+  "Generates signal for Supertrend, signal condition is:
+  long: Supertrend goes below the price
+  short: Supertrend goes above the price"
   [node direction data index]
   {:pre [(s/valid? :genetic/supertrend node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -199,7 +223,6 @@
           (and (= direction :short) (strat/crosses-up? supertrend-indicator data index)) :short
           :else :no-signal)))
 ; TODO: signal generation is the same as SAR
-; TODO: indicator parameters are window (7-15) and multiplier (2-5)
 
 (def check-supertrend-signal
   (memoize check-supertrend-signal-raw))
@@ -219,6 +242,9 @@
         :double-ema {index-keyword (check-signal-with-window index (fn [index] (check-double-ema-signal tree direction data index)))}
         :fisher {index-keyword (check-signal-with-window index (fn [index] (check-fisher-signal tree direction data index)))}
         :cci {index-keyword (check-signal-with-window index (fn [index] (check-cci-signal tree direction data index)))}
+        :stoch {index-keyword (check-signal-with-window index (fn [index] (check-stoch-signal tree direction data index)))}
+        :parabolic-sar {index-keyword (check-signal-with-window index (fn [index] (check-parabolic-sar-signal tree direction data index)))}
+        :supertrend {index-keyword (check-signal-with-window index (fn [index] (check-supertrend-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn find-elitism-ind-count
@@ -320,9 +346,6 @@
                       .getBarCount
                       dec)]
     (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
-
-; TODO: code is somewhat slow, action items:
-; TODO: crossover and selection parts might be taking quite a long time, can we apply parallelization to it?
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
