@@ -24,5 +24,6 @@
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar]
    :prune-height 2
-   :default-age 0})
+   :default-age 0
+   :data-history-window 100})
 

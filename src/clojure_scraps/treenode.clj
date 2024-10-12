@@ -8,7 +8,7 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :parabolic-sar :supertrend])
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
 
@@ -60,56 +60,102 @@
       rand-int
       (+ min)))
 
-(defn generate-rsi [index] {:post [(s/valid? :genetic/rsi %)]} {:index index :indicator :rsi :oversold (rand-int-range 15 45) :overbought (rand-int-range 55 85) :window (rand-int-range 8 20)})
+(defn generate-rsi
+  [index]
+  {:post [(s/valid? :genetic/rsi %)]}
+  {:index index :indicator :rsi :oversold (rand-int-range 15 45) :overbought (rand-int-range 55 85) :window (rand-int-range 8 20)})
 
 (defn mutate-rsi
   [node]
   {:pre [(s/valid? :genetic/rsi node)] :post [(s/valid? :genetic/rsi %)]}
-  (let [param-prob (rand)] (condp < param-prob 0.33 (assoc node :oversold (rand-int-range 15 45)) 0.66 (assoc node :overbought (rand-int-range 55 85)) (assoc node :window (rand-int-range 8 20)))))
+  (let [param-prob (rand)]
+    (condp < param-prob
+      0.33 (assoc node :oversold (rand-int-range 15 45))
+      0.66 (assoc node :overbought (rand-int-range 55 85))
+      (assoc node :window (rand-int-range 8 20)))))
 
-(defn generate-sma [index] {:post [(s/valid? :genetic/ma %)]} {:index index :indicator :sma, :window (rand-int-range 10 100)})
+(defn generate-sma
+  [index]
+  {:post [(s/valid? :genetic/ma %)]}
+  {:index index :indicator :sma, :window (rand-int-range 10 100)})
 
-(defn generate-double-sma [index] {:post [(s/valid? :genetic/double-ma %)]} {:index index :indicator :double-sma :window1 (rand-int-range 5 20) :window2 (rand-int-range 40 80)})
+(defn generate-double-sma
+  [index]
+  {:post [(s/valid? :genetic/double-ma %)]}
+  {:index index :indicator :double-sma :window1 (rand-int-range 5 20) :window2 (rand-int-range 40 80)})
 
-(defn generate-ema [index] {:post [(s/valid? :genetic/ma %)]} {:index index :indicator :ema :window (rand-int-range 10 100)})
+(defn generate-ema
+  [index]
+  {:post [(s/valid? :genetic/ma %)]}
+  {:index index :indicator :ema :window (rand-int-range 10 100)})
 
-(defn generate-double-ema [index] {:post [(s/valid? :genetic/double-ma %)]} {:index index :indicator :double-ema, :window1 (rand-int-range 5 20) :window2 (rand-int-range 40 80)})
+(defn generate-double-ema
+  [index]
+  {:post [(s/valid? :genetic/double-ma %)]}
+  {:index index :indicator :double-ema, :window1 (rand-int-range 5 20) :window2 (rand-int-range 40 80)})
 
-(defn mutate-ma [node] {:pre [(s/valid? :genetic/ma node)] :post [(s/valid? :genetic/ma %)]} (assoc node :window (rand-int-range 10 100)))
+(defn mutate-ma
+  [node]
+  {:pre [(s/valid? :genetic/ma node)] :post [(s/valid? :genetic/ma %)]}
+  (assoc node :window (rand-int-range 10 100)))
 
 (defn mutate-double-ma
   [node]
   {:pre [(s/valid? :genetic/double-ma node)] :post [(s/valid? :genetic/double-ma %)]}
-  (let [param-prob (rand)] (if (< param-prob 0.5) (assoc node :window1 (rand-int-range 5 20)) (assoc node :window2 (rand-int-range 40 80)))))
+  (let [param-prob (rand)]
+    (if (< param-prob 0.5)
+      (assoc node :window1 (rand-int-range 5 20))
+      (assoc node :window2 (rand-int-range 40 80)))))
 
-(defn generate-fisher [index] {:post [(s/valid? :genetic/fisher %)]} {:index index, :indicator :fisher, :window (rand-int-range 7 15)})
+(defn generate-fisher
+  [index]
+  {:post [(s/valid? :genetic/fisher %)]}
+  {:index index, :indicator :fisher, :window (rand-int-range 7 15)})
 
-(defn mutate-fisher [node] {:pre [(s/valid? :genetic/fisher node)] :post [(s/valid? :genetic/fisher %)]} (assoc node :window (rand-int-range 7 15)))
+(defn mutate-fisher
+  [node]
+  {:pre [(s/valid? :genetic/fisher node)] :post [(s/valid? :genetic/fisher %)]}
+  (assoc node :window (rand-int-range 7 15)))
 
-(defn generate-cci [index] {:post [(s/valid? :genetic/cci %)]} {:index index :indicator :cci :oversold (rand-int-range -80 -120) :overbought (rand-int-range 80 120) :window (rand-int-range 12 28)})
+(defn generate-cci [index]
+  {:post [(s/valid? :genetic/cci %)]}
+  {:index index :indicator :cci :oversold (rand-int-range -80 -120) :overbought (rand-int-range 80 120) :window (rand-int-range 12 28)})
 
 (defn mutate-cci
   [node]
   {:pre [(s/valid? :genetic/cci node)] :post [(s/valid? :genetic/cci %)]}
-  (let [param-prob (rand)] (condp < param-prob 0.33 (assoc node :oversold (rand-int-range -80 -120)) 0.66 (assoc node :overbought (rand-int-range 80 120)) (assoc node :window (rand-int-range 12 28)))))
+  (let [param-prob (rand)]
+    (condp < param-prob
+      0.33 (assoc node :oversold (rand-int-range -80 -120))
+      0.66 (assoc node :overbought (rand-int-range 80 120))
+      (assoc node :window (rand-int-range 12 28)))))
 
-(defn generate-stochastic-oscillator [index] {:post [(s/valid? :genetic/stoch %)]} {:index index :indicator :stoch :window (rand-int-range 8 20)})
+(defn generate-stochastic-oscillator
+  [index]
+  {:post [(s/valid? :genetic/stoch %)]} {:index index :indicator :stoch :window (rand-int-range 8 20)})
 
 (defn mutate-stochastic-oscillator
   [node]
   {:pre [(s/valid? :genetic/stoch node)] :post [(s/valid? :genetic/stoch %)]}
   (assoc node :window (rand-int-range 8 20)))
 
-(defn generate-parabolic-sar [index] {:post [(s/valid? :genetic/parabolic-sar %)]} {:index index :indicator :parabolic-sar})
+(defn generate-parabolic-sar
+  [index]
+  {:post [(s/valid? :genetic/parabolic-sar %)]}
+  {:index index :indicator :parabolic-sar})
 
-(defn generate-supertrend [index] {:post [(s/valid? :genetic/supertrend %)]} {:index index :indicator :supertrend :window (rand-int-range 8 20) :multiplier (double (/ (rand-int-range 20 40) 10))})
+(defn generate-supertrend
+  [index]
+  {:post [(s/valid? :genetic/supertrend %)]}
+  {:index index :indicator :supertrend :window (rand-int-range 8 20) :multiplier (double (/ (rand-int-range 20 40) 10))})
 
 (defn mutate-supertrend
   [node]
   {:pre [(s/valid? :genetic/supertrend node)] :post [(s/valid? :genetic/supertrend %)]}
-  (let [param-prob (rand)] (if (< param-prob 0.5)
-                             (assoc node :window (rand-int-range 8 20))
-                             (assoc node :multiplier (double (/ (rand-int-range 20 40) 10))))))
+  (let [param-prob (rand)]
+    (if (< param-prob 0.5)
+      (assoc node :window (rand-int-range 8 20))
+      (assoc node :multiplier (double (/ (rand-int-range 20 40) 10))))))
 
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 

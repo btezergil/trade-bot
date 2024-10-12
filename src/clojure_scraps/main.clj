@@ -35,7 +35,7 @@
   (let [arg (first *command-line-args*)]
     (condp = arg
       "r" (run-evolution)
-      "t" (test-individual)
+      "t" (time (test-individual))
       (log/warn "No cmdline args"))))
 
 ;(test-individual)

@@ -254,9 +254,15 @@
         elite-ratio (:elitism-ratio p/params)]
     (math/ceil (* total elite-ratio))))
 
-(defn long? "Checks whether the generated individual signals result in a overall long signal for this strategy." [tree signals] (= :long (node/signal-check tree signals :long)))
+(defn long?
+  "Checks whether the generated individual signals result in a overall long signal for this strategy."
+  [tree signals]
+  (= :long (node/signal-check tree signals :long)))
 
-(defn short? "Checks whether the generated individual signals result in a overall short signal for this strategy." [tree signals] (= :short (node/signal-check tree signals :short)))
+(defn short?
+  "Checks whether the generated individual signals result in a overall short signal for this strategy."
+  [tree signals]
+  (= :short (node/signal-check tree signals :short)))
 
 (defn scale-profit-result
   "Scales the profit result to a positive value.
@@ -335,7 +341,9 @@
                       .getBarCount
                       dec)
         entry-exit-points (backtest-strategy data genetic-sequence)
-        transactions (merge-entry-points entry-exit-points (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))]
+        transactions (merge-entry-points entry-exit-points
+                                         (datagetter/get-bar-value-at-index data max-index)
+                                         (datagetter/get-bar-close-time-at-index data max-index))]
     (calculate-scaled-profit transactions)))
 
 (defn calculate-transactions-for-monitor
@@ -345,7 +353,9 @@
         max-index (-> data
                       .getBarCount
                       dec)]
-    (merge-entry-points (backtest-strategy data genetic-sequence) (datagetter/get-bar-value-at-index data max-index) (datagetter/get-bar-close-time-at-index data max-index))))
+    (merge-entry-points (backtest-strategy data genetic-sequence)
+                        (datagetter/get-bar-value-at-index data max-index)
+                        (datagetter/get-bar-close-time-at-index data max-index))))
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
