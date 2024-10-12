@@ -13,14 +13,22 @@
            (org.ta4j.core BaseBarSeriesBuilder)))
 
 (def nasdaq-100-symbols
-  ["ADBE" "ADI" "ADSK" "AEP" "ALGN" "AMAT" "AMD" "AMGN" "ANSS" "ASML" "AVGO" "AZN" "BIIB" "BKNG" "BKR" "CDNS" "CEG" "CHTR" "CMCSA" "COST" "CPRT" "CRWD" "CSCO" "CSGP" "CSX" "CTAS" "CTSH" "DDOG" "DLTR"
-   "DXCM" "EA" "EBAY" "ENPH" "EXC" "FANG" "FAST" "FTNT" "GEHC" "GFS" "GOOGL" "HON" "IDXX" "ILMN" "INTC" "INTU" "ISRG" "JD" "KDP" "KHC" "KLAC" "LCID" "LRCX" "LULU" "MAR" "MCHP" "MDLZ" "MELI" "META"
-   "MRNA" "MRVL" "MSFT" "MU" "NFLX" "NXPI" "ODFL" "ON" "ORLY" "PANW" "PAYX" "PCAR" "PDD" "PEP" "PYPL" "QCOM" "ROST" "SGEN" "SIRI" "SNPS" "TEAM" "TMUS" "TTD" "TXN" "VRSK" "VRTX" "WBA" "WBD" "WDAY"
+  ["ADBE" "ADI" "ADSK" "AEP" "ALGN" "AMAT" "AMD" "AMGN" "ANSS" "ASML" "AVGO" "AZN" "BIIB" "BKNG" 
+   "BKR" "CDNS" "CEG" "CHTR" "CMCSA" "COST" "CPRT" "CRWD" "CSCO" "CSGP" "CSX" "CTAS" "CTSH" "DDOG" "DLTR"
+   "DXCM" "EA" "EBAY" "ENPH" "EXC" "FANG" "FAST" "FTNT" "GEHC" "GFS" "GOOGL" "HON" "IDXX" "ILMN" "INTC" 
+   "INTU" "ISRG" "JD" "KDP" "KHC" "KLAC" "LCID" "LRCX" "LULU" "MAR" "MCHP" "MDLZ" "MELI" "META"
+   "MRNA" "MRVL" "MSFT" "MU" "NFLX" "NXPI" "ODFL" "ON" "ORLY" "PANW" "PAYX" "PCAR" "PDD" "PEP" "PYPL" 
+   "QCOM" "ROST" "SGEN" "SIRI" "SNPS" "TEAM" "TMUS" "TTD" "TXN" "VRSK" "VRTX" "WBA" "WBD" "WDAY"
    "XEL" "ZM" "ZS"])
 (def team-query-params {:symbol "TEAM", :interval "1min", :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
 (def time-series-url "https://api.twelvedata.com/time_series")
-(def genetic-data-filename "eurusd-3month-1h.csv")
+(def alphavantage-query-url "https://www.alphavantage.co/query")
+(def forex-filename  "eurusd-3month-1h.csv")
+(def bist-stock-filename "SAHOL-1d.csv")
+(def genetic-data-filename forex-filename)
+
+(def default-interval 3000)
 
 (defn get-quote
   "Queries the API for data"
@@ -49,8 +57,7 @@
   ([size symbol]
    (let [response (client/get time-series-url {:query-params
                                                {"symbol" symbol
-                                                "interval" (:interval team-query-params)
-                                                "exchange" (:exchange team-query-params)
+                                                "interval" default-interval
                                                 "outputsize" size
                                                 "apikey" (:twelvedata-apikey @env)}})
          body (cheshire/parse-string (:body response) true)
@@ -65,7 +72,10 @@
              repeat)
         (rest csv-data)))
 
-(defn get-data "Data accessor function to be called by other files, gets the data and returns it in the reverse order, which can be processed by ta4j." [size] (reverse (get-time-series size)))
+(defn get-data
+  "Data accessor function to be called by other files, gets the data and returns it in the reverse order, which can be processed by ta4j."
+  [size]
+  (reverse (get-time-series size)))
 
 (defn parse-datetime-inday
   "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
@@ -77,10 +87,25 @@
   [dt]
   (ZonedDateTime/of (.atStartOfDay (LocalDate/parse dt (DateTimeFormatter/ofPattern "yyyy-MM-dd"))) (ZoneId/of "UTC")))
 
+(defn parse-tuprs-datetime-daily
+  "HELPER: Parses given datetime string in format MM/dd/yyyy."
+  [dt]
+  (ZonedDateTime/of (.atStartOfDay (LocalDate/parse dt (DateTimeFormatter/ofPattern "MM/dd/yyyy"))) (ZoneId/of "UTC")))
+
+(defn parse-sahol-datetime-daily
+  "HELPER: Parses given datetime string in format dd/MM/yyyy."
+  [dt]
+  (ZonedDateTime/of (.atStartOfDay (LocalDate/parse dt (DateTimeFormatter/ofPattern "dd/MM/yyyy"))) (ZoneId/of "UTC")))
+
 (defn parse-csv-line
   [entry]
   (let [{:keys [open high low close]} entry]
-    (assoc entry :open (Double/parseDouble open) :high (Double/parseDouble high) :low (Double/parseDouble low) :close (Double/parseDouble close) :volume 0)))
+    (assoc entry
+           :open (Double/parseDouble open)
+           :high (Double/parseDouble high)
+           :low (Double/parseDouble low)
+           :close (Double/parseDouble close)
+           :volume 0)))
 
 (defn read-csv-file
   [filename]
