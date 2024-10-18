@@ -44,9 +44,9 @@
   {:post [(s/valid? :strategy/signal %)]}
   (let [window-range (dec (:window-range p/params))
         start-index-for-range (if (pos? (- index window-range)) (- index window-range) 0)]
-    (combine-signal-list (pmap signal-check-fn (range start-index-for-range (inc index))))))
+    (combine-signal-list (map signal-check-fn (range start-index-for-range (inc index))))))
 
-(defn check-rsi-signal
+(defn check-rsi-signal-raw
   "Generates signal for RSI, signal condition is:
   long: RSI goes below oversold threshold
   short: RSI goes above overbought threshold"
@@ -61,6 +61,9 @@
           :else :no-signal)))
 ; TODO: RSI icin simdilik kullandigimizin disinda baska bir sinyal cikarma yontemi kullanabilir miyiz/kullanmali miyiz
 
+(def check-rsi-signal
+  (memoize check-rsi-signal-raw))
+
 (defn check-single-ma-signal
   "Generates signal for single moving averages, signal condition is:
   long: indicator goes above average
@@ -71,7 +74,7 @@
         (and (= direction :short) (strat/crosses-down? indicator data index)) :short
         :else :no-signal))
 
-(defn check-single-sma-signal
+(defn check-single-sma-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -79,13 +82,19 @@
         sma-indicator (strat/sma-indicator data window)]
     (check-single-ma-signal direction sma-indicator data index)))
 
-(defn check-single-ema-signal
+(def check-single-sma-signal
+  (memoize check-single-sma-signal-raw))
+
+(defn check-single-ema-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/ma node)]
    :post [(s/valid? :strategy/signal %)]}
   (let [{:keys [window]} node
         ema-indicator (strat/ema-indicator data window)]
     (check-single-ma-signal direction ema-indicator data index)))
+
+(def check-single-ema-signal
+  (memoize check-single-ema-signal-raw))
 
 (defn check-double-ma-signal
   "Generates signal for double moving averages, signal condition is:
@@ -97,7 +106,7 @@
         (and (= direction :short) (strat/indicators-cross-down? ind1 ind2 index)) :short
         :else :no-signal))
 
-(defn check-double-sma-signal
+(defn check-double-sma-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/double-ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -106,7 +115,10 @@
         sma-indicator2 (strat/sma-indicator data window2)]
     (check-double-ma-signal direction index sma-indicator1 sma-indicator2)))
 
-(defn check-double-ema-signal
+(def check-double-sma-signal
+  (memoize check-double-sma-signal-raw))
+
+(defn check-double-ema-signal-raw
   [node direction data index]
   {:pre [(s/valid? :genetic/double-ma node)]
    :post [(s/valid? :strategy/signal %)]}
@@ -115,7 +127,10 @@
         ema-indicator2 (strat/ema-indicator data window2)]
     (check-double-ma-signal direction index ema-indicator1 ema-indicator2)))
 
-(defn check-fisher-signal
+(def check-double-ema-signal
+  (memoize check-double-ema-signal-raw))
+
+(defn check-fisher-signal-raw
   "Generates signal for Fisher transform, signal condition is:
   long: Fisher transform value is above the trigger and below -1
   short: Fisher transform value is below the trigger and above 1"
@@ -135,7 +150,10 @@
 ; TODO: 3. fisher ve fibonacci retracement, geri cekilmede fib retracement'tan dondugunde fisher'i teyit olarak kullanip islem ac
 ; TODO: fisher'da threshold'lari hardcoded verdim, bunlari genetic'e parametre olarak verebiliriz
 
-(defn check-cci-signal
+(def check-fisher-signal
+  (memoize check-fisher-signal-raw))
+
+(defn check-cci-signal-raw
   "Generates signal for CCI, signal condition is:
   long: CCI goes over the oversold threshold
   short: CCI goes below the overbought threshold"
@@ -153,7 +171,10 @@
 ; TODO: CCI overbought'u yukari kirarsa al, asagi kirarsa sat (long)
 ; TODO: CCI 0'i yukari kirarsa al, asagi kirarsa sat
 
-(defn check-stoch-signal
+(def check-cci-signal
+  (memoize check-cci-signal-raw))
+
+(defn check-stoch-signal-raw
   "Generates signal for Stochastic oscillator, signal condition is:
   long: K crosses D up
   short: K crosses D down"
@@ -171,7 +192,10 @@
 ; TODO: alternatively, combine the above logic, look for crosses within oversold region for long and overbought region for short signals
 ; TODO: K threshold should be a parameter, then the found K with the D threshold should be the parameter to D
 
-(defn check-parabolic-sar-signal
+(def check-stoch-signal
+  (memoize check-stoch-signal-raw))
+
+(defn check-parabolic-sar-signal-raw
   "Generates signal for Parabolic SAR, signal condition is:
   long: Parabolic SAR goes below the price
   short: Parabolic SAR goes above the price"
@@ -183,7 +207,10 @@
           (and (= direction :short) (strat/crosses-up? parabolic-sar-indicator data index)) :short
           :else :no-signal)))
 
-(defn check-supertrend-signal
+(def check-parabolic-sar-signal
+  (memoize check-parabolic-sar-signal-raw))
+
+(defn check-supertrend-signal-raw
   "Generates signal for Supertrend, signal condition is:
   long: Supertrend goes below the price
   short: Supertrend goes above the price"
@@ -196,6 +223,9 @@
           (and (= direction :short) (strat/crosses-up? supertrend-indicator data index)) :short
           :else :no-signal)))
 ; TODO: signal generation is the same as SAR
+
+(def check-supertrend-signal
+  (memoize check-supertrend-signal-raw))
 
 (defn generate-signals
   "Generates signals on the given data index."
@@ -267,16 +297,13 @@
   "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
   [data genetic-sequence]
   (log/info "backtesting strategy")
-  (time (let [max-index (.getBarCount data)
-              history-window (:data-history-window p/params)]
+  (time (let [max-index (.getBarCount data)]
           (loop [current-position :none
                  current-index 0
                  entry-exit-points (vector)]
             (if (< current-index max-index)
-              (let [current-data (get-subseries (max 0 (- current-index history-window)) (inc current-index))
-                    window-index (min history-window current-index)
-                    long-signals (generate-signals (first genetic-sequence) :long window-index current-data)
-                    short-signals (generate-signals (last genetic-sequence) :short window-index current-data)]
+              (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
+                    short-signals (generate-signals (last genetic-sequence) :short current-index data)]
                 (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
                       (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
                       (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
