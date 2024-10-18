@@ -178,10 +178,10 @@
   [node direction data index]
   {:pre [(s/valid? :genetic/parabolic-sar node)]
    :post [(s/valid? :strategy/signal %)]}
-  (time (let [parabolic-sar-indicator (strat/parabolic-sar-indicator data)]
-          (cond (and (= direction :long) (strat/crosses-down? parabolic-sar-indicator data index)) :long
-                (and (= direction :short) (strat/crosses-up? parabolic-sar-indicator data index)) :short
-                :else :no-signal))))
+  (let [parabolic-sar-indicator (strat/parabolic-sar-indicator data)]
+    (cond (and (= direction :long) (strat/crosses-down? parabolic-sar-indicator data index)) :long
+          (and (= direction :short) (strat/crosses-up? parabolic-sar-indicator data index)) :short
+          :else :no-signal)))
 
 (defn check-supertrend-signal
   "Generates signal for Supertrend, signal condition is:
@@ -266,22 +266,23 @@
 (defn backtest-strategy
   "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
   [data genetic-sequence]
-  (let [max-index (.getBarCount data)
-        history-window (:data-history-window p/params)]
-    (loop [current-position :none
-           current-index 0
-           entry-exit-points (vector)]
-      (if (< current-index max-index)
-        (let [current-data (get-subseries (max 0 (- current-index history-window)) (inc current-index))
-              window-index (min history-window current-index)
-              long-signals (generate-signals (first genetic-sequence) :long window-index current-data)
-              short-signals (generate-signals (last genetic-sequence) :short window-index current-data)]
-          (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
-                (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
-                (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
-                (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
-                :else (recur current-position (inc current-index) entry-exit-points)))
-        entry-exit-points))))
+  (log/info "backtesting strategy")
+  (time (let [max-index (.getBarCount data)
+              history-window (:data-history-window p/params)]
+          (loop [current-position :none
+                 current-index 0
+                 entry-exit-points (vector)]
+            (if (< current-index max-index)
+              (let [current-data (get-subseries (max 0 (- current-index history-window)) (inc current-index))
+                    window-index (min history-window current-index)
+                    long-signals (generate-signals (first genetic-sequence) :long window-index current-data)
+                    short-signals (generate-signals (last genetic-sequence) :short window-index current-data)]
+                (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
+                      (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
+                      (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
+                      (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
+                      :else (recur current-position (inc current-index) entry-exit-points)))
+              entry-exit-points)))))
 
 (defn merge-to-transaction
   "Merges the given entry and exit points into a transaction."
