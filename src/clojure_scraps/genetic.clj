@@ -296,20 +296,27 @@
 (defn backtest-strategy
   "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
   [data genetic-sequence]
-  (log/info "backtesting strategy")
-  (time (let [max-index (.getBarCount data)]
-          (loop [current-position :none
-                 current-index 0
-                 entry-exit-points (vector)]
-            (if (< current-index max-index)
-              (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
-                    short-signals (generate-signals (last genetic-sequence) :short current-index data)]
-                (cond (and (long? (first genetic-sequence) long-signals) (not= current-position :long))
-                      (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
-                      (and (short? (last genetic-sequence) short-signals) (not= current-position :short))
-                      (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
-                      :else (recur current-position (inc current-index) entry-exit-points)))
-              entry-exit-points)))))
+  (let [max-index (.getBarCount data)]
+    (loop [current-position :none
+           current-index 0
+           entry-exit-points (vector)]
+      (if (< current-index max-index)
+        (condp = current-position
+          :long (let [short-signals (generate-signals (last genetic-sequence) :short current-index data)]
+                  (if (short? (last genetic-sequence) short-signals)
+                    (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
+                    (recur current-position (inc current-index) entry-exit-points)))
+          :short (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)]
+                   (if (long? (first genetic-sequence) long-signals)
+                     (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
+                     (recur current-position (inc current-index) entry-exit-points)))
+          :none (let [long-signals (generate-signals (first genetic-sequence) :long current-index data)
+                      short-signals (generate-signals (last genetic-sequence) :short current-index data)]
+                  (cond
+                    (short? (last genetic-sequence) short-signals) (recur :short (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :short)))
+                    (long? (first genetic-sequence) long-signals) (recur :long (inc current-index) (conj entry-exit-points (create-transaction-map data current-index :long)))
+                    :else (recur current-position (inc current-index) entry-exit-points))))
+        entry-exit-points))))
 
 (defn merge-to-transaction
   "Merges the given entry and exit points into a transaction."
