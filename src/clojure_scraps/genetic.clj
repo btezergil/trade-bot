@@ -367,15 +367,17 @@
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
-  []
+  [& {:keys [population-size generation-count]
+      :or {population-size (:population-size p/params)
+           generation-count (:generation-count p/params)}}]
   (let [evolution-id (str (uuid/v4))
         calculate-fitness-partial (partial calculate-fitness get-bar-series-for-experiments)
         gen-count (atom 0)]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
     (dyn/write-evolution-to-table evolution-id)
     (n/evolve-with-sequence-generator generate-sequence
-                                      (:population-size p/params)
-                                      (:generation-count p/params)
+                                      population-size
+                                      generation-count
                                       calculate-fitness-partial
                                       [(partial node/crossover calculate-fitness-partial)]
                                       [(partial node/mutation calculate-fitness-partial)]

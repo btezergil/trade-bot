@@ -5,11 +5,33 @@
 
 (oz/start-server!)
 
+(defn extract-evolution-data
+  "Given a list of evolution ids, gets the average and best fitness data and averages them."
+  [evolution-ids]
+  (let [evolution-stats (map dyn/read-evolution-stats-from-table evolution-ids)
+        evolution-count (count evolution-ids)]
+    (loop [index 0
+           data (vector)]
+      (if (>= index 100)
+        data
+        (recur (inc index) (conj data {:generation-count index
+                                       :avg-fitness (/ (->> evolution-stats
+                                                            (map #(get % index))
+                                                            (map :avg-fitness)
+                                                            (reduce +)
+                                                            double) evolution-count)
+                                       :best-fitness (/ (->> evolution-stats
+                                                             (map #(get % index))
+                                                             (map :best-fitness)
+                                                             (reduce +)
+                                                             double) evolution-count)}))))))
+
 (defn get-evolution-stat-data
-  [evolution-id]
+  "Given a list of evolution ids, gets the average and best fitness data, and draws a line graph for these two fields."
+  [evolution-ids]
   (flatten (map (fn [row] (list {:time (int (:generation-count row)) :item "average fitness" :quantity (double (:avg-fitness row))}
                                 {:time (int (:generation-count row)) :item "best fitness" :quantity (double (:best-fitness row))}))
-                (dyn/read-evolution-stats-from-table evolution-id))))
+                (extract-evolution-data evolution-ids))))
 
 (defn get-line-plot-map
   "Data should be in a map with :time, :item, and :quantity fields"
@@ -82,10 +104,11 @@
                                                                     :profiting-long profiting-long
                                                                     :profiting-short profiting-short
                                                                     :total-profit total-profit}))))))
-; TODO: yukaridaki statlari evolution-stats veya direk evolution tablosuna yazalim
-(gather-statistics "b04084c0-9b9f-4ff8-bf96-cbc6e3d4d75a")
+;(gather-statistics "95fb503c-8294-4e55-85eb-30e56131ad96")
 
 ; TODO: bir strateji icin tum entry/exit point'leri al, sonrasinda bunlari grafik uzerinde isaretle, bununla birlikte de fiyatin grafigini ciz
-
+(def evolution-ids ["95fb503c-8294-4e55-85eb-30e56131ad96" "91795a19-38f5-487b-b98a-a09841789c15" "4e2e9ed0-86b1-4de9-b7d9-29114e665c14"])
 ;; Render the plot
-(oz/view! (get-line-plot-map (get-evolution-stat-data "evolution id here")))
+(oz/view! (-> evolution-ids
+              get-evolution-stat-data
+              get-line-plot-map))

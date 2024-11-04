@@ -39,14 +39,13 @@
 (defn write-transaction-to-table
   "Records the given transaction to database"
   [strategy-id transaction]
-  (log/info "writing transaction to table")
-  (time (far/put-item faraday-client-opts
-                      (:table-name transaction-table-vars)
-                      {:id (str (uuid/v4))
-                       :strategy-id strategy-id
-                       :result (:result transaction)
-                       :position (:position transaction)
-                       :time-range (:time-range transaction)})))
+  (far/put-item faraday-client-opts
+                (:table-name transaction-table-vars)
+                {:id (str (uuid/v4))
+                 :strategy-id strategy-id
+                 :result (:result transaction)
+                 :position (:position transaction)
+                 :time-range (:time-range transaction)}))
 
 (defn read-transactions-from-table
   "Scans the transaction-v1 table for the evolution with the given id"
