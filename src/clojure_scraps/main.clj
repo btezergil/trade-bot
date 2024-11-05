@@ -9,7 +9,7 @@
             [taoensso.telemere.tools-logging :as tl]))
 
 (def telegram-bot-config
-  {:timeout 10 :sleep 10000})
+  {:timeout 100 :sleep 60000})
 
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
@@ -52,7 +52,8 @@
 
   (condp = bot-command
     "/mokoko" (log/info "come on, mokoko?")
-    "/start-experiment" (run-evolution)))
+    "/start-experiment" (future (run-evolution))
+    (log/warn "Unknown command: " bot-command)))
 
 (defn start-bot-long-polling
   "Retrieve and process chat messages from given bot and track the updates with the given update-id atom."
@@ -63,7 +64,6 @@
     (log/info "checking for chat updates.")
     (let [updates (poll-updates bot @update-id)
           messages (:result updates)]
-
       ;; Check all messages, if any, for commands/keywords.
       (doseq [msg messages]
         (let [bot-command? (= "bot_command" (-> msg
@@ -77,7 +77,6 @@
           (when bot-command?
             (log/info (format "received a bot command: %s " command))
             (execute-bot-actions command)))
-
         ;; Increment the next update-id to process.
         (reset! update-id (-> msg
                               :update_id
