@@ -20,7 +20,7 @@
 (defn generate-sequence
   "Generates a genetic sequence for individual."
   []
-  (vector (node/generate-tree) (node/generate-tree)))
+  [(node/generate-tree) (node/generate-tree)])
 
 (s/def :transaction/result double?)
 (s/def :transaction/position #{:long :short})
@@ -299,7 +299,7 @@
   (let [max-index (.getBarCount data)]
     (loop [current-position :none
            current-index 0
-           entry-exit-points (vector)]
+           entry-exit-points []]
       (if (< current-index max-index)
         (condp = current-position
           :long (let [short-signals (generate-signals (last genetic-sequence) :short current-index data)]
@@ -335,12 +335,12 @@
   "Merges transaction entry and exit points, then finds the profit of the transaction and records its time."
   [entry-points final-bar-value final-bar-end-time]
   (if-not (empty? entry-points)
-    (loop [transactions (vector)
+    (loop [transactions []
            rem-entries entry-points]
       (if (> (count rem-entries) 1)
         (recur (conj transactions (merge-to-transaction (first rem-entries) (second rem-entries))) (rest rem-entries))
         (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value, :bar-time final-bar-end-time}))))
-    (vector)))
+    []))
 
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."

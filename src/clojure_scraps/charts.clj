@@ -9,10 +9,11 @@
   "Given a list of evolution ids, gets the average and best fitness data and averages them."
   [evolution-ids]
   (let [evolution-stats (map dyn/read-evolution-stats-from-table evolution-ids)
-        evolution-count (count evolution-ids)]
+        evolution-count (count evolution-ids)
+        generation-count (count (first evolution-stats))]
     (loop [index 0
-           data (vector)]
-      (if (>= index 100)
+           data []]
+      (if (>= index generation-count)
         data
         (recur (inc index) (conj data {:generation-count index
                                        :avg-fitness (/ (->> evolution-stats
@@ -107,7 +108,7 @@
 ;(gather-statistics "95fb503c-8294-4e55-85eb-30e56131ad96")
 
 ; TODO: bir strateji icin tum entry/exit point'leri al, sonrasinda bunlari grafik uzerinde isaretle, bununla birlikte de fiyatin grafigini ciz
-(def evolution-ids ["95fb503c-8294-4e55-85eb-30e56131ad96" "91795a19-38f5-487b-b98a-a09841789c15" "4e2e9ed0-86b1-4de9-b7d9-29114e665c14"])
+(def evolution-ids ["ee65b514-a389-42f8-a5d4-28452aec29e0"])
 ;; Render the plot
 (oz/view! (-> evolution-ids
               get-evolution-stat-data

@@ -277,12 +277,15 @@
   "Genetic mutation operator for individials, performs either swap or subtree mutation on the given node defined in the individual.
   Only performs mutation on the long or the short tree."
   [fitness-func ind-list]
-  (let [ind (first ind-list)
-        seqn (:genetic-sequence ind)
-        long-node (first seqn)
-        short-node (second seqn)]
-    (log/debug "mutation node: " seqn)
-    (io/build-individual (if (< (rand) 0.5) (vector (mutate-tree long-node) short-node) (vector long-node (mutate-tree short-node))) (:parents ind) (:age ind) fitness-func)))
+  (let [mutation-prob (:mutation-probability p/params)
+        ind (first ind-list)]
+    (if (< (rand) mutation-prob)
+      (let [seqn (:genetic-sequence ind)
+            long-node (first seqn)
+            short-node (second seqn)]
+        (log/debug "mutation node: " seqn)
+        (io/build-individual (if (< (rand) 0.5) [(mutate-tree long-node) short-node] [long-node (mutate-tree short-node)]) (:parents ind) (:age ind) fitness-func))
+      ind)))
 
 (defn node-crossover
   "Genetic crossover operator for the node structure, swaps two branches of different trees."
@@ -312,21 +315,23 @@
   Only performs crossover on the long or the short tree."
   ([fitness-func ind-list] (crossover fitness-func (first ind-list) (second ind-list)))
   ([fitness-func ind1 ind2]
-   (let [seqn1 (:genetic-sequence ind1)
-         seqn2 (:genetic-sequence ind2)
-         long? (< (rand) 0.5)
-         node1 ((tree-selector long?) seqn1)
-         node2 ((tree-selector long?) seqn2)
-         crossover-result (node-crossover node1 node2)]
-     (vector
-      (io/build-individual (if long? (vector (first crossover-result) (second seqn1)) (vector (first seqn1) (first crossover-result)))
-                           (vector seqn1 seqn2)
-                           (:default-age p/params)
-                           fitness-func)
-      (io/build-individual (if long? (vector (second crossover-result) (second seqn2)) (vector (first seqn2) (second crossover-result)))
-                           (vector seqn1 seqn2)
-                           (:default-age p/params)
-                           fitness-func)))))
+   (let [crossover-prob (:crossover-probability p/params)]
+     (if (< (rand) crossover-prob)
+       (let [seqn1 (:genetic-sequence ind1)
+             seqn2 (:genetic-sequence ind2)
+             long? (< (rand) 0.5)
+             node1 ((tree-selector long?) seqn1)
+             node2 ((tree-selector long?) seqn2)
+             crossover-result (node-crossover node1 node2)]
+         [(io/build-individual (if long? [(first crossover-result) (second seqn1)] [(first seqn1) (first crossover-result)])
+                               [seqn1 seqn2]
+                               (:default-age p/params)
+                               fitness-func)
+          (io/build-individual (if long? [(second crossover-result) (second seqn2)] [(first seqn2) (second crossover-result)])
+                               [seqn1 seqn2]
+                               (:default-age p/params)
+                               fitness-func)])
+       [ind1 ind2]))))
 
 (defn index-to-keyword
   [operand]
