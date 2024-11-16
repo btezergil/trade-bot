@@ -3,9 +3,9 @@
 (def params
   {:indicator-count 5
    :window-range 5
-   :crossover-probability 0.2 ; TODO: UNUSED
+   :crossover-probability 0.5
    :crossover-propagation-probability 0.5 ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
-   :mutation-probability 0.1 ; TODO: UNUSED
+   :mutation-probability 0.2
    :flip-mutation-probability 0.25
    :population-size 100
    :rank-selection-offset 0.6 ; TODO: UNUSED
@@ -25,5 +25,6 @@
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar]
    :prune-height 2
    :default-age 0
-   :data-history-window 100})
+   :data-history-window 100
+   :fitness-offset 20000})
 

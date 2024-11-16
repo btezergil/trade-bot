@@ -13,11 +13,11 @@
            (org.ta4j.core BaseBarSeriesBuilder)))
 
 (def nasdaq-100-symbols
-  ["ADBE" "ADI" "ADSK" "AEP" "ALGN" "AMAT" "AMD" "AMGN" "ANSS" "ASML" "AVGO" "AZN" "BIIB" "BKNG" 
+  ["ADBE" "ADI" "ADSK" "AEP" "ALGN" "AMAT" "AMD" "AMGN" "ANSS" "ASML" "AVGO" "AZN" "BIIB" "BKNG"
    "BKR" "CDNS" "CEG" "CHTR" "CMCSA" "COST" "CPRT" "CRWD" "CSCO" "CSGP" "CSX" "CTAS" "CTSH" "DDOG" "DLTR"
-   "DXCM" "EA" "EBAY" "ENPH" "EXC" "FANG" "FAST" "FTNT" "GEHC" "GFS" "GOOGL" "HON" "IDXX" "ILMN" "INTC" 
+   "DXCM" "EA" "EBAY" "ENPH" "EXC" "FANG" "FAST" "FTNT" "GEHC" "GFS" "GOOGL" "HON" "IDXX" "ILMN" "INTC"
    "INTU" "ISRG" "JD" "KDP" "KHC" "KLAC" "LCID" "LRCX" "LULU" "MAR" "MCHP" "MDLZ" "MELI" "META"
-   "MRNA" "MRVL" "MSFT" "MU" "NFLX" "NXPI" "ODFL" "ON" "ORLY" "PANW" "PAYX" "PCAR" "PDD" "PEP" "PYPL" 
+   "MRNA" "MRVL" "MSFT" "MU" "NFLX" "NXPI" "ODFL" "ON" "ORLY" "PANW" "PAYX" "PCAR" "PDD" "PEP" "PYPL"
    "QCOM" "ROST" "SGEN" "SIRI" "SNPS" "TEAM" "TMUS" "TTD" "TXN" "VRSK" "VRTX" "WBA" "WBD" "WDAY"
    "XEL" "ZM" "ZS"])
 (def team-query-params {:symbol "TEAM", :interval "1min", :exchange "NASDAQ"})
@@ -25,8 +25,10 @@
 (def time-series-url "https://api.twelvedata.com/time_series")
 (def alphavantage-query-url "https://www.alphavantage.co/query")
 (def forex-filename  "eurusd-3month-1h.csv")
+(def forex-test-filename  "eurusd-45days-1h-test.csv")
 (def bist-stock-filename "SAHOL-1d.csv")
 (def genetic-data-filename forex-filename)
+(def genetic-test-data-filename forex-test-filename)
 
 (def default-interval 3000)
 
@@ -45,11 +47,11 @@
   []
   (let [response (client/get time-series-url {:query-params {"symbol" "EUR/USD"
                                                              "interval" "1h"
-                                                             "outputsize" (* 24 90)
+                                                             "outputsize" (* 24 45)
                                                              "format" "CSV"
                                                              "apikey" (:twelvedata-apikey @env)}})
         body (:body response)]
-    (spit "eurusd-3month-1h.csv" body)))
+    (spit forex-test-filename body)))
 
 (defn get-time-series
   "Queries the API for data"
@@ -152,15 +154,20 @@
 
 (defn get-bars-for-genetic
   "Reads the experiment dataset and returns it as a ta4j BarSeries."
-  []
-  (-> genetic-data-filename
-      read-csv-file
-      (get-bars :genetic)))
+  [mode]
+  (condp = mode
+    :train (-> genetic-data-filename
+               read-csv-file
+               (get-bars :genetic))
+    :test (-> genetic-test-data-filename
+              read-csv-file
+              (get-bars :genetic))
+    (log/warn "unsupported mode for get-bars-for-genetic")))
 
 (defn get-subseries-from-bar
   "Returns the subseries within the 'bars' with given start and end indices."
-  ([start end] (get-subseries-from-bar (get-bars-for-genetic) start end))
-  ([bars start end] (.getSubSeries bars start end)))
+  ([start end mode] (get-subseries-from-bar (get-bars-for-genetic mode) start end))
+  ([bars start end mode] (.getSubSeries bars start end)))
 
 (defn get-bar-value
   "Returns the bar value of the given bar."

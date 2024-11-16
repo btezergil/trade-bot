@@ -15,8 +15,6 @@
             [nature.monitors :as nmon]
             [clojure.pprint :as pp]))
 
-(defn get-subseries [start end] (datagetter/get-subseries-from-bar start end))
-(def get-bar-series-for-experiments (datagetter/get-bars-for-genetic)) ; (get-subseries 0 300)
 (defn generate-sequence
   "Generates a genetic sequence for individual."
   []
@@ -269,7 +267,7 @@
   Positive profits are given a multipler to give more incentive within the evolution.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
-  (+ total-profit 20000))
+  (+ total-profit (:fitness-offset p/params)))
 
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
@@ -339,7 +337,7 @@
            rem-entries entry-points]
       (if (> (count rem-entries) 1)
         (recur (conj transactions (merge-to-transaction (first rem-entries) (second rem-entries))) (rest rem-entries))
-        (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value, :bar-time final-bar-end-time}))))
+        (conj transactions (merge-to-transaction (first rem-entries) {:price final-bar-value :bar-time final-bar-end-time}))))
     []))
 
 (defn calculate-fitness
@@ -371,7 +369,7 @@
       :or {population-size (:population-size p/params)
            generation-count (:generation-count p/params)}}]
   (let [evolution-id (str (uuid/v4))
-        calculate-fitness-partial (partial calculate-fitness get-bar-series-for-experiments)
+        calculate-fitness-partial (partial calculate-fitness (datagetter/get-bars-for-genetic :train))
         gen-count (atom 0)]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
     (dyn/write-evolution-to-table evolution-id)
@@ -387,6 +385,6 @@
                                        :monitors [nmon/print-best-solution
                                                   mon/print-average-fitness-of-population
                                                   (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))
-                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor get-bar-series-for-experiments) population current-generation))
+                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (datagetter/get-bars-for-genetic :test)) population current-generation))
                                                   (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]})))
 

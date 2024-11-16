@@ -1,5 +1,6 @@
 (ns clojure-scraps.main
   (:require [clojure-scraps.genetic :as g]
+            [clojure-scraps.datagetter :as dg]
             [clojure.tools.logging :as log]
             [clojure.pprint :as pp]
             [clojure-scraps.bot :as tb]
@@ -23,7 +24,7 @@
   "Generates an individual and calculates its fitness for test purposes."
   []
   (let [ind (g/generate-sequence)
-        data g/get-bar-series-for-experiments]
+        data (dg/get-bars-for-genetic :train)]
     (log/info "Generated individual for test:" ind)
     (log/info "Calculated fitness:" (g/calculate-fitness data ind))))
 

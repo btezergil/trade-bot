@@ -1,9 +1,9 @@
 (ns clojure-scraps.charts
   (:require [clojure-scraps.dynamo :as dyn]
+            [clojure-scraps.params :as p]
             [oz.core :as oz]
-            [clojure.tools.logging :as log]))
-
-(oz/start-server!)
+            [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]))
 
 (defn extract-evolution-data
   "Given a list of evolution ids, gets the average and best fitness data and averages them."
@@ -105,10 +105,34 @@
                                                                     :profiting-long profiting-long
                                                                     :profiting-short profiting-short
                                                                     :total-profit total-profit}))))))
+
+(defn calculate-total-fitness-from-transactions
+  "Calculates the total fitness of the strategy by adding all transaction results belonging to it."
+  [strategy]
+  (->> strategy
+       :id
+       (dyn/read-transactions-of-strategy)
+       (map :result)
+       (reduce +)))
+
+(defn compare-training-and-test-performance
+  "Reports the training and test fitnesses of every strategy. 
+  Training fitness is on the strategy itself, while the test fitness is calculated from the transactions."
+  [evolution-id]
+  (let [strategies (dyn/read-strategies-of-evolution evolution-id)]
+    (log/info (pp/pprint (map (fn [strategy] (str "strategy-id: " (:id strategy)
+                                                  ", fitness: " (- (:fitness strategy) (:fitness-offset p/params))
+                                                  ", test fitness: " (calculate-total-fitness-from-transactions strategy)))
+                              strategies)))))
+
+;(compare-training-and-test-performance "295be010-9865-47e0-8aab-2499a97c59f2")
 ;(gather-statistics "95fb503c-8294-4e55-85eb-30e56131ad96")
 
 ; TODO: bir strateji icin tum entry/exit point'leri al, sonrasinda bunlari grafik uzerinde isaretle, bununla birlikte de fiyatin grafigini ciz
 (def evolution-ids ["ee65b514-a389-42f8-a5d4-28452aec29e0"])
+
+(oz/start-server!)
+
 ;; Render the plot
 (oz/view! (-> evolution-ids
               get-evolution-stat-data
