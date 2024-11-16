@@ -47,33 +47,28 @@
                  :position (:position transaction)
                  :time-range (:time-range transaction)}))
 
+(defn read-strategies-of-evolution
+  "Queries the strategy-v1 table for all strategies belonging to evolution-id"
+  [evolution-id]
+  (far/query faraday-client-opts
+             (:table-name strategy-table-vars)
+             {:evolution-id [:eq evolution-id]}
+             {:index (:index strategy-table-vars)}))
+
+(defn read-transactions-of-strategy
+  "Queries the transaction-v2 table for all transactions belonging to strategy-id"
+  [strategy-id]
+  (far/query faraday-client-opts
+             (:table-name transaction-table-vars)
+             {:strategy-id [:eq strategy-id]}
+             {:index (:index transaction-table-vars)}))
+
 (defn read-transactions-from-table
   "Scans the transaction-v1 table for the evolution with the given id"
   [evolution-id]
-  (let [strategy-ids (map :id (far/query faraday-client-opts
-                                         (:table-name strategy-table-vars)
-                                         {:evolution-id [:eq evolution-id]}
-                                         {:index (:index strategy-table-vars)}))]
-    (flatten (map (fn [strategy-id] (far/query faraday-client-opts
-                                               (:table-name transaction-table-vars)
-                                               {:strategy-id [:eq strategy-id]}
-                                               {:index (:index transaction-table-vars)})) strategy-ids))))
+  (let [strategy-ids (map :id (read-strategies-of-evolution evolution-id))]
+    (flatten (map read-transactions-of-strategy strategy-ids))))
 
-;(read-transactions-from-table  "b04084c0-9b9f-4ff8-bf96-cbc6e3d4d75a")
-;(far/describe-table faraday-client-opts :transaction-v2)
-
-(defn migrate-transactions
-  []
-  (loop [i 0]
-    (if (< i 500)
-      (let [items (far/scan faraday-client-opts
-                            (:table-name transaction-table-vars)
-                            {:limit 1000})]
-        (doall (map (fn [item] (far/put-item faraday-client-opts :transaction-v2 item)
-                      (far/delete-item faraday-client-opts :transaction-v1 {:id (:id item)})) items))
-        (println "i:" i)
-        (recur (inc i))))))
-;(migrate-transactions)
 (defn write-evolution-to-table
   "Records the evolution parameters to database with given id"
   [evolution-id]
@@ -101,7 +96,6 @@
                 (:table-name evolution-table-vars)
                 {(:table-key evolution-table-vars) evolution-id}))
 
-;(read-evolution-from-table   "b04084c0-9b9f-4ff8-bf96-cbc6e3d4d75a")
 (defn write-evolution-stats-to-table
   [evolution-id generation-count best-fitness avg-fitness]
   (far/put-item faraday-client-opts
@@ -116,3 +110,33 @@
   (far/query faraday-client-opts
              (:table-name evolution-stats-table-vars)
              {:evolution-id [:eq evolution-id]}))
+
+(defn delete-transaction-from-table
+  [id]
+  (far/delete-item faraday-client-opts
+                   (:table-name transaction-table-vars)
+                   {(:table-key transaction-table-vars) id}))
+
+(defn delete-strategy-from-table
+  [id]
+  (far/delete-item faraday-client-opts
+                   (:table-name strategy-table-vars)
+                   {(:table-key strategy-table-vars) id}))
+
+(defn cleanup-evolution-data
+  "Deletes all data related to this evolution-id on all tables"
+  [evolution-id]
+  (let [strategy-ids (map :id (read-strategies-of-evolution evolution-id))
+        transaction-ids (->> strategy-ids
+                             (map read-transactions-of-strategy)
+                             (flatten)
+                             (map :id))]
+    (dorun (map delete-transaction-from-table transaction-ids))
+    (dorun (map delete-strategy-from-table strategy-ids))
+    (dorun (map (fn [entry] (far/delete-item faraday-client-opts
+                                             (:table-name evolution-stats-table-vars)
+                                             {(:table-key evolution-stats-table-vars) evolution-id
+                                              :generation-count (:generation-count entry)})) (read-evolution-stats-from-table evolution-id)))
+    (far/delete-item faraday-client-opts (:table-name evolution-table-vars) {(:table-key evolution-table-vars) evolution-id})))
+
+;;(cleanup-evolution-data "33dd1cd5-14d8-4cab-861d-cb675b6ed194")
