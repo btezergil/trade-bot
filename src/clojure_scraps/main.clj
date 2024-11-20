@@ -15,10 +15,11 @@
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
   []
-  (let [out (java.io.StringWriter.)
-        evolution-result (g/start-evolution)]
-    (log/info (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out))
-    (tb/message-to-me (.toString out))))
+  (try (let [out (java.io.StringWriter.)
+             evolution-result (g/start-evolution)]
+         (log/info (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out))
+         (tb/message-to-me (.toString out)))
+       (catch Exception e (tb/message-to-me (str "Caught exception: " (.getMessage e))))))
 
 (defn test-individual
   "Generates an individual and calculates its fitness for test purposes."

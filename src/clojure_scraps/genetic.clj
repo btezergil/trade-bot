@@ -276,12 +276,36 @@
     (reduce + (map :result transactions))
     0))
 
-(defn calculate-scaled-profit
+(defn calculate-accuracy-scaled-profit-from-transactions
+  "Calculates the total profit of given transactions, but scales them according to their accuracy."
+  [transactions]
+  (if-not (empty? transactions)
+    (reduce + (map :result transactions))
+    0))
+; TODO: implement accuracy scaled profit
+
+(defn calculate-accuracy-from-transactions
+  "Calculates the total accurate count of given transactions."
+  [transactions]
+  (if-not (empty? transactions)
+    (reduce + (->> transactions
+                   (map :result)
+                   (map (fn [res] (if (> res 0) 1 0)))))
+    0))
+
+(defn calculate-profit
   "Calculates the total profit and scales it so that the result is positive."
   [transactions]
-  (-> transactions
-      calculate-profit-from-transactions
-      scale-profit-result))
+  (let [criterion (:fitness-criterion p/params)]
+    (condp = criterion
+      :profit (-> transactions
+                  calculate-profit-from-transactions
+                  scale-profit-result)
+      :accuracy (calculate-accuracy-from-transactions transactions)
+      :accuracy-scaled-profit (-> transactions
+                                  calculate-accuracy-scaled-profit-from-transactions
+                                  scale-profit-result)
+      (throw (IllegalArgumentException. "Unknown argument in calculate-profit function")))))
 
 (defn create-transaction-map
   "Creates a transaction to be added to the transaction array
@@ -350,7 +374,7 @@
         transactions (merge-entry-points entry-exit-points
                                          (datagetter/get-bar-value-at-index data max-index)
                                          (datagetter/get-bar-close-time-at-index data max-index))]
-    (calculate-scaled-profit transactions)))
+    (calculate-profit transactions)))
 
 (defn calculate-transactions-for-monitor
   "Calculates the transactions of given genetic sequence for bookkeeping."
