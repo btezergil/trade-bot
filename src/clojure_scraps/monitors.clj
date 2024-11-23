@@ -8,7 +8,7 @@
   "Calculates the average fitness of given population"
   [population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (log/info (format "Average fitness: %.4f" (/ (reduce + (map :fitness-score population)) (:population-size p/params)))))
+  (log/info (format "Average fitness: %.4f" (double (/ (reduce + (map :fitness-score population)) (:population-size p/params))))))
 
 (defn save-fitnesses-for-current-generation
   "Saves the current generation's best and average fitness into the table
@@ -17,7 +17,7 @@
   {:pre [(s/conform :genetic/individual population)]}
   (let [fitness-list (map :fitness-score population)
         popsize (:population-size p/params)
-        avg-fitness (/ (reduce + fitness-list) popsize)
+        avg-fitness (double (/ (reduce + fitness-list) popsize))
         best-fitness (apply max fitness-list)]
     (dyn/write-evolution-stats-to-table evolution-id @gen-count best-fitness avg-fitness)
     (swap! gen-count inc)))

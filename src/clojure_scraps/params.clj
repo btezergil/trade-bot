@@ -9,7 +9,7 @@
    :flip-mutation-probability 0.25
    :population-size 100
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 300
+   :generation-count 100
    :elitism-ratio 0.05
    :leverage 100
    :capital 1000
@@ -26,6 +26,6 @@
    :prune-height 2
    :default-age 0
    :data-history-window 100
-   :fitness-criterion :profit ; must be one of: [:profit, :accuracy, :accuracy-scaled-profit]
+   :fitness-criterion :accuracy-percentage ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-scaled-profit]
    :fitness-offset 20000})
 

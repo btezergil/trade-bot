@@ -19,7 +19,9 @@
              evolution-result (g/start-evolution)]
          (log/info (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out))
          (tb/message-to-me (.toString out)))
-       (catch Exception e (tb/message-to-me (str "Caught exception: " (.getMessage e))))))
+       (catch Exception e (do
+                            (tb/message-to-me (str "Caught exception: " (.getMessage e)))
+                            (throw e)))))
 
 (defn test-individual
   "Generates an individual and calculates its fitness for test purposes."

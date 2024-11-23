@@ -291,7 +291,17 @@
     (reduce + (->> transactions
                    (map :result)
                    (map (fn [res] (if (> res 0) 1 0)))))
-    0))
+    1))
+
+(defn calculate-accuracy-percentage-from-transactions
+  "Calculates the accuracy percentage of given transactions."
+  [transactions]
+  (if-not (empty? transactions)
+    (let [results (map :result transactions)
+          profiting (count (filter (fn [res] (> res 0)) results))
+          losing (count (filter (fn [res] (< res 0)) results))]
+      (double (* 100 (/ profiting (+ profiting losing)))))
+    1))
 
 (defn calculate-profit
   "Calculates the total profit and scales it so that the result is positive."
@@ -302,6 +312,7 @@
                   calculate-profit-from-transactions
                   scale-profit-result)
       :accuracy (calculate-accuracy-from-transactions transactions)
+      :accuracy-percentage (calculate-accuracy-percentage-from-transactions transactions)
       :accuracy-scaled-profit (-> transactions
                                   calculate-accuracy-scaled-profit-from-transactions
                                   scale-profit-result)
