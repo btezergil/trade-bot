@@ -54,7 +54,7 @@
                 (extract-evolution-stat-data evolution-ids))))
 
 (defn get-line-plot-map
-  "Data should be in a map with :time, :item, and :quantity fields"
+  "Data should be in a map with :time, :item, and :quantity fields."
   [data]
   {:width 1400
    :height 800
@@ -65,14 +65,14 @@
    :mark "line"})
 
 (defn get-histogram-map
-  "Data should be in a map with :time, :item, and :quantity fields"
+  "Data should be in a map with :fitness and :profit fields."
   [data]
   {:data {:values data}
    :transform [{:filter {:and [{:field "fitness" :valid true}
                                {:field "profit" :valid true}]}}]
    :width 1400
    :height 800
-   :encoding {:x {:bin {:maxbins 20} :field "fitness" :type "quantitative"}
+   :encoding {:x {:bin {:maxbins 14} :field "fitness" :type "quantitative"}
               :y {:bin {:maxbins 20} :field "profit" :type "quantitative"}}
    :layer [{:mark "rect"
             :encoding {:color {:aggregate "count" :type "quantitative"}}}
@@ -81,6 +81,21 @@
             :encoding {:text {:aggregate "count" :type "quantitative"}
                        :color {:value "black"}}}]
    :config {:view {:stroke "transparent"}}})
+
+(defn get-scatterplot-map
+  "Data should be in a map with :fitness and :profit fields."
+  [data]
+  {:data {:values data}
+   :transform [{:filter {:and [{:field "fitness" :valid true}
+                               {:field "profit" :valid true}]}}]
+   :width 1400
+   :height 800
+   :encoding {:x {:field "fitness" :type "quantitative"}
+              :y {:field "profit" :type "quantitative"}}
+   :layer [{:mark "point"}
+           {:mark "line"
+            :encoding {:y {:datum 0}
+                       :color {:value "red"}}}]})
 
 (defn gather-statistics
   "Gathers transaction-related statistics from the database."
@@ -175,7 +190,13 @@
       extract-histogram-data
       get-histogram-map))
 
+(defn scatter-plot
+  [evolution-id]
+  (-> evolution-id
+      extract-histogram-data
+      get-scatterplot-map))
+
 ;(fitness-plot ["ee65b514-a389-42f8-a5d4-28452aec29e0"])
 
 ;; Render the plot
-(oz/view! (histogram-plot "944776c3-69f8-4fa8-b0ba-ea14e83f6228"))
+(oz/view! (scatter-plot "944776c3-69f8-4fa8-b0ba-ea14e83f6228"))
