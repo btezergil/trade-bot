@@ -53,7 +53,7 @@
                                 {:time (int (:generation-count row)) :item "best fitness" :quantity (double (:best-fitness row))}))
                 (extract-evolution-stat-data evolution-ids))))
 
-(defn get-line-plot-map
+(defn get-line-plot-map-profit
   "Data should be in a map with :time, :item, and :quantity fields."
   [data]
   {:width 1400
@@ -61,6 +61,17 @@
    :data {:values data}
    :encoding {:x {:field "time" :type "quantitative"}
               :y {:field "quantity" :type "quantitative" :scale {:domain [18000 42000]}}
+              :color {:field "item" :type "nominal"}}
+   :mark "line"})
+
+(defn get-line-plot-map-accuracy
+  "Data should be in a map with :time, :item, and :quantity fields."
+  [data]
+  {:width 1400
+   :height 800
+   :data {:values data}
+   :encoding {:x {:field "time" :type "quantitative"}
+              :y {:field "quantity" :type "quantitative" :scale {:domain [0 850]}}
               :color {:field "item" :type "nominal"}}
    :mark "line"})
 
@@ -178,11 +189,17 @@
 
 (oz/start-server!)
 
-(defn fitness-plot
+(defn profit-fitness-plot
   [evolution-ids]
   (-> evolution-ids
       get-evolution-stat-data
-      get-line-plot-map))
+      get-line-plot-map-profit))
+
+(defn accuracy-fitness-plot
+  [evolution-ids]
+  (-> evolution-ids
+      get-evolution-stat-data
+      get-line-plot-map-accuracy))
 
 (defn histogram-plot
   [evolution-id]
@@ -199,4 +216,7 @@
 ;(fitness-plot ["ee65b514-a389-42f8-a5d4-28452aec29e0"])
 
 ;; Render the plot
-(oz/view! (scatter-plot "944776c3-69f8-4fa8-b0ba-ea14e83f6228"))
+(oz/view! (scatter-plot "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a"))
+(oz/view! (histogram-plot "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a"))
+(oz/view! (profit-fitness-plot ["cfea72a2-0cb8-4220-8918-0d2337335783"]))
+(oz/view! (accuracy-fitness-plot ["944776c3-69f8-4fa8-b0ba-ea14e83f6228"]))
