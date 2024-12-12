@@ -26,6 +26,9 @@
    :prune-height 2
    :default-age 0
    :data-history-window 100
-   :fitness-criterion :accuracy-percentage ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-scaled-profit]
-   :fitness-offset 20000})
+   :fitness-criterion :accuracy-profit-hybrid ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]
+   :fitness-offset 20000
+   :max-fitness-scale 25000 ; governs the profit scaling ceiling for hybrid fitness
+   :accuracy-factor 0.5 ; governs the weights of accuracy and profit in the hybrid fitness scheme
+   })
 

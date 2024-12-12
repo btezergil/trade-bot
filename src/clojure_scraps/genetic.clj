@@ -269,20 +269,50 @@
   [total-profit]
   (+ total-profit (:fitness-offset p/params)))
 
+(defn calculate-total-profit
+  "Calculates the total profit from given transactions."
+  [transactions]
+  (->> transactions
+       (map :result)
+       (reduce +)))
+
+(defn calculate-accuracy-percentage
+  "Calculates the accuracy percentage from given transactions."
+  [transactions]
+  (let [results (map :result transactions)
+        profiting (count (filter (fn [res] (> res 0)) results))
+        losing (count (filter (fn [res] (< res 0)) results))]
+    (double (* 100 (/ profiting (+ profiting losing))))))
+
+(defn normalize-profit
+  "Normalizes total profit to be within 0-100 range for hybrid fitness calculation."
+  [profit]
+  (-> profit
+      (* 100)
+      (/ (:max-fitness-scale p/params))))
+
 (defn calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
   [transactions]
   (if-not (empty? transactions)
-    (reduce + (map :result transactions))
+    (calculate-total-profit transactions)
     0))
 
-(defn calculate-accuracy-scaled-profit-from-transactions
-  "Calculates the total profit of given transactions, but scales them according to their accuracy."
+(defn calculate-accuracy-profit-hybrid-from-transactions
+  "Calculates a fitness based on profit and accuracy percentage, a maximum of 100 comes from the accuracy percentage, and a maximum of 100 comes from the total profit."
   [transactions]
   (if-not (empty? transactions)
-    (reduce + (map :result transactions))
-    0))
-; TODO: implement accuracy scaled profit
+    (let [total-profit (calculate-total-profit transactions)
+          accuracy-percentage (calculate-accuracy-percentage transactions)
+          accuracy-factor (:accuracy-factor p/params)
+          profit-scale (* 2 (- 1 accuracy-factor))
+          accuracy-scale (* 2 accuracy-factor)
+          fitness (+ (* accuracy-scale accuracy-percentage)
+                     (* profit-scale (normalize-profit total-profit)))]
+      (if (> fitness 0)
+        fitness
+        1))
+    1))
 
 (defn calculate-accuracy-from-transactions
   "Calculates the total accurate count of given transactions."
@@ -297,10 +327,7 @@
   "Calculates the accuracy percentage of given transactions."
   [transactions]
   (if-not (empty? transactions)
-    (let [results (map :result transactions)
-          profiting (count (filter (fn [res] (> res 0)) results))
-          losing (count (filter (fn [res] (< res 0)) results))]
-      (double (* 100 (/ profiting (+ profiting losing)))))
+    (calculate-accuracy-percentage transactions)
     1))
 
 (defn calculate-profit
@@ -313,9 +340,7 @@
                   scale-profit-result)
       :accuracy (calculate-accuracy-from-transactions transactions)
       :accuracy-percentage (calculate-accuracy-percentage-from-transactions transactions)
-      :accuracy-scaled-profit (-> transactions
-                                  calculate-accuracy-scaled-profit-from-transactions
-                                  scale-profit-result)
+      :accuracy-profit-hybrid (calculate-accuracy-profit-hybrid-from-transactions transactions)
       (throw (IllegalArgumentException. "Unknown argument in calculate-profit function")))))
 
 (defn create-transaction-map
