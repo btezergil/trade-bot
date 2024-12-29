@@ -17,3 +17,5 @@ Session.vim
 .clj-kondo/
 .lsp/
 .env
+.venv/
+.cpcache/
