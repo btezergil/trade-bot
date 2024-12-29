@@ -73,3 +73,47 @@ y_pred = model.predict(x_test)
 
 y_pred = scaler.inverse_transform(y_pred)
 y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+
+def calculate_total_profit(y_pred, y_test):
+    commission = 5
+    capital = 1000
+    leverage = 100
+    transactions = []
+    current_position = None
+    future_position = None
+    open_price = None
+
+    for i in range(0, len(y_pred)):
+        if i == len(y_pred) - 1:
+            if current_position != None:
+                close_price = y_test[i]
+                profit = (close_price - open_price) * (capital / open_price) * leverage
+                if current_position == "SHORT":
+                    profit = -profit
+                transactions.append(profit)
+                break
+
+        if y_pred[i + 1] > y_test[i]:
+            future_position = "LONG"
+        elif y_pred[i + 1] < y_test[i]:
+            future_position = "SHORT"
+
+        if current_position != future_position:
+            if current_position == None:
+                open_price = y_test[i + 1]
+                current_position = future_position
+            else:
+                close_price = y_test[i + 1]
+                profit = (close_price - open_price) * (capital / open_price) * leverage
+                if current_position == "SHORT":
+                    profit = -profit
+
+                transactions.append(profit)
+                open_price = y_test[i + 1]
+                current_position = future_position
+
+    return sum(transactions) - commission * len(transactions)
+
+
+total_profit = calculate_total_profit(y_pred, y_test)
