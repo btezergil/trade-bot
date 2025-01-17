@@ -19,8 +19,8 @@
   {:width 1400
    :height 800
    :data {:values data}
-   :encoding {:x {:field "time" :type "quantitative"}
-              :y {:field "quantity" :type "quantitative" :scale {:domain [0 850]}}
+   :encoding {:x {:field "generation" :type "quantitative"}
+              :y {:field "fitness" :type "quantitative"}
               :color {:field "item" :type "nominal"}}
    :mark "line"})
 
@@ -57,20 +57,49 @@
             :encoding {:y {:datum 0}
                        :color {:value "red"}}}]})
 
-; TODO: bir strateji icin tum entry/exit point'leri al, sonrasinda bunlari grafik uzerinde isaretle, bununla birlikte de fiyatin grafigini ciz
+(defn get-candlestick-map
+  "Candlestick map to be drawn by Oz."
+  [data]
+  {:data {:values data}
+   :width 12000
+   :height 1000
+   :encoding {:x {:field "date" :type "ordinal" :timeUnit "utcyearmonthdatehoursminutes" :axis {:format "%Y-%m-%dT%H:%M:%SZ" :labelAngle -45}}
+              :y {:type "quantitative" :scale {:zero false} :axis {:title "Price"}}
+              :color {:condition {:test "datum.open < datum.close"
+                                  :value "#06982d"}
+                      :value "#ae1325"}}
+   :layer [{:mark "rule"
+            :encoding {:y {:field "low"}
+                       :y2 {:field "high"}}}
+           {:mark "bar"
+            :encoding {:y {:field "open"}
+                       :y2 {:field "close"}}}
+           {:mark "rule"
+            :encoding {:x {:field "date"}
+                       :color {:value "#0d16bd"}
+                       :opacity {:condition {:test "datum.long == true"
+                                             :value 1}
+                                 :value 0}}}
+           {:mark "rule"
+            :encoding {:x {:field "date"}
+                       :color {:value "#f5b342"}
+                       :opacity {:condition {:test "datum.long == false"
+                                             :value 1}
+                                 :value 0}}}]})
+; TODO: rule cizgilerine hover'da entry point'teki fiyati ve long/short gostersin
 
 (oz/start-server!)
 
 (defn profit-fitness-plot
   [evolution-ids]
   (-> evolution-ids
-      st/get-evolution-stat-data
+      st/get-evolution-stat-data-profit
       get-line-plot-map-profit))
 
 (defn accuracy-fitness-plot
   [evolution-ids]
   (-> evolution-ids
-      st/get-evolution-stat-data
+      st/get-evolution-stat-data-accuracy
       get-line-plot-map-accuracy))
 
 (defn histogram-plot

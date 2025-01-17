@@ -1,8 +1,11 @@
 (ns clojure-scraps.stats
   (:require [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.params :as p]
+            [clojure-scraps.datagetter :as dg]
             [clojure.tools.logging :as log]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp])
+  (:import [java.time.format DateTimeFormatter]
+           (java.time ZonedDateTime)))
 
 (defn extract-evolution-stat-data
   "Given a list of evolution ids, gets the average and best fitness data and averages them."
@@ -46,7 +49,7 @@
                                         :profit (double (calculate-total-fitness-from-transactions strategy))}))
                   strategies))))
 
-(defn get-evolution-stat-data
+(defn get-evolution-stat-data-profit
   "Given a list of evolution ids, gets the average and best fitness data."
   [evolution-ids]
   (flatten (map (fn [row] (list {:generation (int (:generation-count row)) :item "average fitness" :fitness (-> row
@@ -57,6 +60,17 @@
                                                                                                              :best-fitness
                                                                                                              double
                                                                                                              (- (:fitness-offset p/params)))}))
+                (extract-evolution-stat-data evolution-ids))))
+
+(defn get-evolution-stat-data-accuracy
+  "Given a list of evolution ids, gets the average and best fitness data."
+  [evolution-ids]
+  (flatten (map (fn [row] (list {:generation (int (:generation-count row)) :item "average fitness" :fitness (-> row
+                                                                                                                :avg-fitness
+                                                                                                                double)}
+                                {:generation (int (:generation-count row)) :item "best fitness" :fitness (-> row
+                                                                                                             :best-fitness
+                                                                                                             double)}))
                 (extract-evolution-stat-data evolution-ids))))
 
 (defn report-statistics-and-save-to-db
@@ -142,6 +156,68 @@
     (log/info (pp/pprint  (str "Best strategy: " best-strat
                                ", test fitness: " (calculate-total-fitness-from-transactions  best-strat))))))
 
-(compare-training-and-test-performance "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b")
-(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
-(gather-statistics "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b")
+(defn convert-bars-to-ohlc
+  "Gets the bars and converts them to a map that can be used to draw graph in Oz."
+  [bars]
+  (map (fn [bar] {:open (-> bar
+                            .getOpenPrice
+                            .doubleValue)
+                  :high (-> bar
+                            .getHighPrice
+                            .doubleValue)
+                  :low (-> bar
+                           .getLowPrice
+                           .doubleValue)
+                  :close (-> bar
+                             .getClosePrice
+                             .doubleValue)
+                  :date (-> bar
+                            .getBeginTime
+                            (.format java.time.format.DateTimeFormatter/RFC_1123_DATE_TIME))})
+       (.getBarData bars)))
+
+(defn get-entry-data-from-transactions
+  "Gets the begin time and position direction from given transactions."
+  [transactions]
+  (map (fn [transaction] {:long (if  (= (:position transaction) "long") true false)
+                          :begin-time (-> transaction
+                                          :time-range
+                                          (subs 0 22)
+                                          (ZonedDateTime/parse DateTimeFormatter/ISO_ZONED_DATE_TIME)
+                                          (.format java.time.format.DateTimeFormatter/RFC_1123_DATE_TIME))}) transactions))
+
+(defn merge-bars-with-transactions
+  "Merges the OHLC bar data with transaction data to be shown on the graph."
+  [ohlc transactions]
+  (loop [bars ohlc
+         entry-points transactions
+         result []]
+    (if (not-empty bars)
+      (let [bar (first bars)
+            entry-point (first entry-points)]
+        (if (= (:date bar) (:begin-time entry-point))
+          (recur (rest bars)
+                 (rest entry-points)
+                 (conj result (merge bar entry-point)))
+          (recur (rest bars)
+                 entry-points
+                 (conj result bar))))
+      result)))
+
+(defn get-candlestick-data
+  "Generates the OHLC data with entry points."
+  [strategy-id]
+  (merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic :test))
+                                (-> strategy-id
+                                    dyn/read-transactions-of-strategy
+                                    get-entry-data-from-transactions)))
+
+;(compare-training-and-test-performance "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
+;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
+;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
+
+(java.time.ZonedDateTime/parse (subs (:time-range (first (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))) 0 22) java.time.format.DateTimeFormatter/ISO_ZONED_DATE_TIME) ; getting the begin bar time from transaction
+(subs (:time-range (first (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))) 23 45) ; getting the end bar time from transaction
+(get-entry-data-from-transactions (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))
+
+(merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic :test))  (get-entry-data-from-transactions (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb")))
