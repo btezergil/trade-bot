@@ -1,5 +1,6 @@
 (ns clojure-scraps.algolab
-  (:require [clojure.string :as str]
+  (:require [clojure-scraps.bot :as tb]
+            [clojure.string :as str]
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [envvar.core :as envvar :refer [env]]
@@ -45,7 +46,8 @@
         body (json/read-str (:body response) :key-fn keyword)]
     (if (:success body)
       (do (reset! token (-> body :content :token))
-          (log/info "Login to ALGOLAB succeeded, token received, please insert SMS code next."))
+          (log/info "Login to ALGOLAB succeeded, token received, please insert SMS code next.")
+          (tb/message-to-me "Please send the SMS code via /algolab-sms command."))
       (log/warn "Login to ALGOLAB failed, no token received. Response: " response))))
 
 (defn login-sms-code
@@ -61,7 +63,8 @@
         body (json/read-str (:body response) :key-fn keyword)]
     (if (:success body)
       (do (reset! checker-hash (-> body :content :hash))
-          (log/info "Login to ALGOLAB succeeded, hash received."))
+          (log/info "Login to ALGOLAB succeeded, hash received.")
+          (tb/message-to-me "Login to ALGOLAB succeeded."))
       (log/warn "Login to ALGOLAB failed, no hash received. Response: " response))))
 
 (defn session-refresh
@@ -109,11 +112,13 @@
       (print candles)
       (log/warn "Failed to get candles. Response: " response))))
 
-(login)
-(login-sms-code "259782")
-(session-refresh)
-(equity-info "ISCTR")
-(candle-data "ISCTR" :period "120")
+; TODO: emir acma fonksiyonlarini ekle ve test et
+
+;(login)
+;(login-sms-code "409455")
+;(session-refresh)
+;(equity-info "ISCTR")
+;(candle-data "ISCTR" :period "120")
 ;(reset! token "86d38669-bf87-457e-9c8c-6d4da7d5")
 ;@token
 
