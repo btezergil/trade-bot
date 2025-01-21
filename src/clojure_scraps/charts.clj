@@ -61,6 +61,7 @@
   "Candlestick map to be drawn by Oz."
   [data]
   {:data {:values data}
+   :width 2000
    :height 800
    :encoding {:x {:field "date" :type "ordinal" :timeUnit "utcyearmonthdatehoursminutes" :axis {:format "%Y-%m-%dT%H:%M:%SZ" :labelAngle -45}}
               :y {:type "quantitative" :scale {:zero false} :axis {:title "Price"}}
@@ -85,8 +86,7 @@
                       :select {:type "point"
                                :fields ["date"]
                                :nearest true
-                               :on "pointermove"
-                               :clear "pointerout"}}]
+                               :on "mouseover"}}]
             :mark "rule"
             :encoding {:tooltip [{:field "open" :type "quantitative"}
                                  {:field "high" :type "quantitative"}
@@ -98,8 +98,6 @@
                                              :param "hover"
                                              :empty false}
                                  :value 0}}}]})
-
-; TODO: rule cizgilerine hover'da entry point'teki fiyati ve long/short gostersin
 
 (oz/start-server!)
 
