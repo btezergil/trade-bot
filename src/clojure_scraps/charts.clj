@@ -61,8 +61,7 @@
   "Candlestick map to be drawn by Oz."
   [data]
   {:data {:values data}
-   :width 12000
-   :height 1000
+   :height 800
    :encoding {:x {:field "date" :type "ordinal" :timeUnit "utcyearmonthdatehoursminutes" :axis {:format "%Y-%m-%dT%H:%M:%SZ" :labelAngle -45}}
               :y {:type "quantitative" :scale {:zero false} :axis {:title "Price"}}
               :color {:condition {:test "datum.open < datum.close"
@@ -74,18 +73,32 @@
            {:mark "bar"
             :encoding {:y {:field "open"}
                        :y2 {:field "close"}}}
-           {:mark "rule"
+           {:transform [{:filter "datum.long == true"}]
+            :mark "rule"
             :encoding {:x {:field "date"}
-                       :color {:value "#0d16bd"}
-                       :opacity {:condition {:test "datum.long == true"
-                                             :value 1}
-                                 :value 0}}}
-           {:mark "rule"
+                       :color {:value "#0d16bd"}}}
+           {:transform [{:filter "datum.long == false"}]
+            :mark "rule"
             :encoding {:x {:field "date"}
-                       :color {:value "#f5b342"}
-                       :opacity {:condition {:test "datum.long == false"
-                                             :value 1}
+                       :color {:value "#f5b342"}}}
+           {:params [{:name "hover"
+                      :select {:type "point"
+                               :fields ["date"]
+                               :nearest true
+                               :on "pointermove"
+                               :clear "pointerout"}}]
+            :mark "rule"
+            :encoding {:tooltip [{:field "open" :type "quantitative"}
+                                 {:field "high" :type "quantitative"}
+                                 {:field "low" :type "quantitative"}
+                                 {:field "close" :type "quantitative"}
+                                 {:field "date" :type "ordinal" :timeUnit "utcyearmonthdatehoursminutes"}]
+                       :color {:value  "black"}
+                       :opacity {:condition {:value 0.6
+                                             :param "hover"
+                                             :empty false}
                                  :value 0}}}]})
+
 ; TODO: rule cizgilerine hover'da entry point'teki fiyati ve long/short gostersin
 
 (oz/start-server!)
@@ -115,7 +128,8 @@
       get-scatterplot-map))
 
 ;; Render the plot
+(oz/view! (get-candlestick-map (st/get-candlestick-data "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb")))
 (oz/view! (scatter-plot "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"))
 (oz/view! (histogram-plot "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"))
-(oz/view! (profit-fitness-plot ["ef89578c-ae37-43a1-a0f5-7c805d2c5e8a"]))
+(oz/view! (profit-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))
 (oz/view! (accuracy-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))

@@ -182,7 +182,7 @@
   (map (fn [transaction] {:long (if  (= (:position transaction) "long") true false)
                           :begin-time (-> transaction
                                           :time-range
-                                          (subs 0 22)
+                                          (subs 0 22) ; 0-22 for beginTime, 23-45 for endTime
                                           (ZonedDateTime/parse DateTimeFormatter/ISO_ZONED_DATE_TIME)
                                           (.format java.time.format.DateTimeFormatter/RFC_1123_DATE_TIME))}) transactions))
 
@@ -216,8 +216,3 @@
 ;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
 ;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
 
-(java.time.ZonedDateTime/parse (subs (:time-range (first (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))) 0 22) java.time.format.DateTimeFormatter/ISO_ZONED_DATE_TIME) ; getting the begin bar time from transaction
-(subs (:time-range (first (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))) 23 45) ; getting the end bar time from transaction
-(get-entry-data-from-transactions (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb"))
-
-(merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic :test))  (get-entry-data-from-transactions (dyn/read-transactions-of-strategy "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb")))
