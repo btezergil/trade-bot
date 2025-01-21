@@ -29,7 +29,9 @@
       .getProfit
       .doubleValue))
 
-(defn calculate-result "Gets the positions from a trading record and calculates the total profit/loss" [trading-record] (reduce + (map get-profit trading-record)))
+(defn calculate-result "Gets the positions from a trading record and calculates the total profit/loss"
+  [trading-record]
+  (reduce + (map get-profit trading-record)))
 
 (defn get-indicator-value
   "Returns the indicator value on the given index."
