@@ -425,14 +425,14 @@
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
-  [& {:keys [population-size generation-count]
-      :or {population-size (:population-size p/params)
-           generation-count (:generation-count p/params)}}]
+  [filenames & {:keys [population-size generation-count]
+                :or {population-size (:population-size p/params)
+                     generation-count (:generation-count p/params)}}]
   (let [evolution-id (str (uuid/v4))
-        calculate-fitness-partial (partial calculate-fitness (datagetter/get-bars-for-genetic :train))
+        calculate-fitness-partial (partial calculate-fitness (datagetter/get-bars-for-genetic filenames :train))
         gen-count (atom 0)]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
-    (dyn/write-evolution-to-table evolution-id)
+    (dyn/write-evolution-to-table evolution-id filenames)
     (n/evolve-with-sequence-generator generate-sequence
                                       population-size
                                       generation-count
@@ -445,6 +445,6 @@
                                        :monitors [nmon/print-best-solution
                                                   mon/print-average-fitness-of-population
                                                   (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))
-                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (datagetter/get-bars-for-genetic :test)) population current-generation))
+                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (datagetter/get-bars-for-genetic filenames :test)) population current-generation))
                                                   (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]})))
 

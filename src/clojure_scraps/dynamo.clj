@@ -71,12 +71,14 @@
 
 (defn write-evolution-to-table
   "Records the evolution parameters to database with given id"
-  [evolution-id]
+  [evolution-id filenames]
   (far/put-item faraday-client-opts
                 (:table-name evolution-table-vars)
                 (assoc p/params
                        :id evolution-id
-                       :timestamp (java.lang.System/currentTimeMillis))))
+                       :timestamp (java.lang.System/currentTimeMillis)
+                       :train-file (:train-file filenames)
+                       :test-file (:test-file filenames))))
 
 (defn write-evolution-final-stats-to-table
   "Records the final statistics of the evolution"
