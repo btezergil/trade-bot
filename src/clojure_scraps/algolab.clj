@@ -64,7 +64,7 @@
     (if (:success body)
       (do (reset! checker-hash (-> body :content :hash))
           (log/info "Login to ALGOLAB succeeded, hash received.")
-          (tb/message-to-me "Login to ALGOLAB succeeded."))
+          (tb/message-to-me (str "Login to ALGOLAB succeeded. Hash: " @checker-hash)))
       (log/warn "Login to ALGOLAB failed, no hash received. Response: " response))))
 
 (defn session-refresh
@@ -109,7 +109,7 @@
         body (json/read-str (:body response) :key-fn keyword)
         candles (:content body)]
     (if (:success body)
-      (print candles)
+      candles
       (log/warn "Failed to get candles. Response: " response))))
 
 ; TODO: emir acma fonksiyonlarini ekle ve test et
@@ -118,9 +118,9 @@
 ;(login-sms-code "409455")
 ;(session-refresh)
 ;(equity-info "ISCTR")
-;(candle-data "ISCTR" :period "120")
+;(def candles (candle-data "ISCTR" :period "60"))
 ;(reset! token "86d38669-bf87-457e-9c8c-6d4da7d5")
-;@token
-
+;(count candles)
+;(reset! checker-hash "eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJBdXRob3JpemF0aW9uIjoiQXV0aG9yaXplZCIsIkN1c3RvbWVyTm8iOiI5RlYraW1vV3czVTFJYXNLa3BHVkJRPT0iLCJOZXdzbGV0dGVyIjoicS9oR2ZnMXpwVS9hRkpNTFoxOWh6dz09IiwiSXNCbG9ja2VkIjoienFzMXhrcW9ZanpVM20rSUtXUTVVdz09IiwiRW1haWwiOiI0cFpySDR2c0F3Y0dIdm80ODZScnd3PT0iLCJVc2VySWQiOiJLRUI1NDkvUTdqM3NZbzdyUUpLdE93PT0iLCJEZW5pemJhbmsiOiJUcnVlIiwibmJmIjoxNzM3NDkxNTQ3LCJleHAiOjE3Mzc1Nzc5NDd9.TNMlLdqeEUqC93m4GN2c0dmIDcDzWaYJqSjspo5IdEU")
 
 
