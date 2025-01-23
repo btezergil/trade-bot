@@ -112,29 +112,29 @@
 (defn engulfing-strategy
   "Generates a strategy based on engulfing candlestick pattern"
   []
-  (let [engulfing (engulfing-indicator (datagetter/get-bars))
+  (let [engulfing (engulfing-indicator (datagetter/get-bars-from-api))
         entry (rule :BooleanIndicator engulfing)
         exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
 (defn hammer-strategy
   []
-  (let [ind (pinbar/create-hammer-indicator (datagetter/get-bars))
+  (let [ind (pinbar/create-hammer-indicator (datagetter/get-bars-from-api))
         entry (rule :BooleanIndicator ind)
         exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
-(defn run-strategy "Runs the given strategy and returns the generated positions" [strategy] (let [bsm (BarSeriesManager. (datagetter/get-bars))] (.getPositions (.run bsm strategy))))
+(defn run-strategy "Runs the given strategy and returns the generated positions" [strategy] (let [bsm (BarSeriesManager. (datagetter/get-bars-from-api))] (.getPositions (.run bsm strategy))))
 
-(defn run-rsi [oversold overbought] (let [strategy (rsi-strategy (datagetter/get-bars) 14 oversold overbought)] (run-strategy strategy)))
+(defn run-rsi [oversold overbought] (let [strategy (rsi-strategy (datagetter/get-bars-from-api) 14 oversold overbought)] (run-strategy strategy)))
 
-(def run-engulfing (run-strategy (engulfing-strategy)))
-(def run-hammer (run-strategy (hammer-strategy)))
+;(def run-engulfing (run-strategy (engulfing-strategy)))
+;(def run-hammer (run-strategy (hammer-strategy)))
 
 (defn eng-criterion
   "Uses criterion to find profit BUT NOT MATCHING THE ACTUAL RESULT, DON'T USE!!!"
   [strategy]
-  (let [criterion (crit :pnl/NetProfit) bars (datagetter/get-bars) bsm (BarSeriesManager. bars) rec (.run bsm strategy)] (.calculate criterion bars rec)))
+  (let [criterion (crit :pnl/NetProfit) bars (datagetter/get-bars-from-api) bsm (BarSeriesManager. bars) rec (.run bsm strategy)] (.calculate criterion bars rec)))
 
 #_(calculate-result run-engulfing)
 #_(calculate-result run-hammer)
