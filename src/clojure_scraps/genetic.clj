@@ -1,11 +1,11 @@
 (ns clojure-scraps.genetic
   (:require [clj-uuid :as uuid]
-            [clojure-scraps.datagetter :as datagetter]
+            [clojure-scraps.datagetter :as dg]
             [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.monitors :as mon]
             [clojure-scraps.params :as p]
             [clojure-scraps.strategy :as strat]
-            [clojure-scraps.treenode :as node]
+            [clojure-scraps.evaltree :as tree]
             [clojure-scraps.bot :as tb]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
@@ -18,7 +18,7 @@
 (defn generate-sequence
   "Generates a genetic sequence for individual."
   []
-  [(node/generate-tree) (node/generate-tree)])
+  [(tree/generate-tree) (tree/generate-tree)])
 
 (s/def :transaction/result double?)
 (s/def :transaction/position #{:long :short})
@@ -188,7 +188,6 @@
 ; TODO: stochastic oscillator signal generation would be K crosses D up -> long and K crosses D down -> short
 ; TODO: alternatively, trade overbought and oversold thresholds
 ; TODO: alternatively, combine the above logic, look for crosses within oversold region for long and overbought region for short signals
-; TODO: K threshold should be a parameter, then the found K with the D threshold should be the parameter to D
 
 (def check-stoch-signal
   (memoize check-stoch-signal-raw))
@@ -220,7 +219,7 @@
     (cond (and (= direction :long) (strat/crosses-down? supertrend-indicator data index)) :long
           (and (= direction :short) (strat/crosses-up? supertrend-indicator data index)) :short
           :else :no-signal)))
-; TODO: signal generation is the same as SAR
+; INFO: signal generation is the same as SAR
 
 (def check-supertrend-signal
   (memoize check-supertrend-signal-raw))
@@ -230,7 +229,7 @@
   [tree direction index data]
   (if (vector? tree)
     (merge (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data))
-    (let [index-keyword (node/index-to-keyword tree)]
+    (let [index-keyword (tree/index-to-keyword tree)]
       (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
         :rsi {index-keyword (check-signal-with-window index (fn [index] (check-rsi-signal tree direction data index)))}
@@ -255,12 +254,12 @@
 (defn long?
   "Checks whether the generated individual signals result in a overall long signal for this strategy."
   [tree signals]
-  (= :long (node/signal-check tree signals :long)))
+  (= :long (tree/signal-check tree signals :long)))
 
 (defn short?
   "Checks whether the generated individual signals result in a overall short signal for this strategy."
   [tree signals]
-  (= :short (node/signal-check tree signals :short)))
+  (= :short (tree/signal-check tree signals :short)))
 
 (defn scale-profit-result
   "Scales the profit result to a positive value.
@@ -347,9 +346,9 @@
   "Creates a transaction to be added to the transaction array
   Records the direction, time, and price"
   [data current-index direction]
-  {:price (datagetter/get-bar-value-at-index data current-index)
+  {:price (dg/get-bar-value-at-index data current-index)
    :position direction
-   :bar-time (datagetter/get-bar-close-time-at-index data current-index)})
+   :bar-time (dg/get-bar-close-time-at-index data current-index)})
 
 (defn backtest-strategy
   "Simulates the strategy given by the genetic-sequence on the data. Returns the final list of entry and exit points."
@@ -408,8 +407,8 @@
                       dec)
         entry-exit-points (backtest-strategy data genetic-sequence)
         transactions (merge-entry-points entry-exit-points
-                                         (datagetter/get-bar-value-at-index data max-index)
-                                         (datagetter/get-bar-close-time-at-index data max-index))]
+                                         (dg/get-bar-value-at-index data max-index)
+                                         (dg/get-bar-close-time-at-index data max-index))]
     (calculate-profit transactions)))
 
 (defn calculate-transactions-for-monitor
@@ -420,8 +419,8 @@
                       .getBarCount
                       dec)]
     (merge-entry-points (backtest-strategy data genetic-sequence)
-                        (datagetter/get-bar-value-at-index data max-index)
-                        (datagetter/get-bar-close-time-at-index data max-index))))
+                        (dg/get-bar-value-at-index data max-index)
+                        (dg/get-bar-close-time-at-index data max-index))))
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
@@ -429,7 +428,7 @@
                 :or {population-size (:population-size p/params)
                      generation-count (:generation-count p/params)}}]
   (let [evolution-id (str (uuid/v4))
-        calculate-fitness-partial (partial calculate-fitness (datagetter/get-bars-for-genetic filenames :train))
+        calculate-fitness-partial (partial calculate-fitness (dg/get-bars-for-genetic filenames :train))
         gen-count (atom 0)]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
     (dyn/write-evolution-to-table evolution-id filenames)
@@ -437,14 +436,14 @@
                                       population-size
                                       generation-count
                                       calculate-fitness-partial
-                                      [(partial node/crossover calculate-fitness-partial)]
-                                      [(partial node/mutation calculate-fitness-partial)]
+                                      [(partial tree/crossover calculate-fitness-partial)]
+                                      [(partial tree/mutation calculate-fitness-partial)]
                                       {:solutions 3
                                        :carry-over (find-elitism-ind-count)
                                        :insert-new (find-elitism-ind-count)
                                        :monitors [nmon/print-best-solution
                                                   mon/print-average-fitness-of-population
                                                   (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))
-                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (datagetter/get-bars-for-genetic filenames :test)) population current-generation))
+                                                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
                                                   (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]})))
 

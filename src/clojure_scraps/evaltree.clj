@@ -1,4 +1,4 @@
-(ns clojure-scraps.treenode
+(ns clojure-scraps.evaltree
   (:require [clojure.tools.logging :as log]
             [clojure-scraps.params :as p]
             [clojure.spec.gen.alpha :as gen]
@@ -11,6 +11,8 @@
 (def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :parabolic-sar :supertrend])
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
+
+;; Spec definitions for supported indicators
 
 (s/def :genetic/index int?)
 (s/def :genetic/indicator keyword?)
@@ -59,6 +61,8 @@
       (- min)
       rand-int
       (+ min)))
+
+;; Generation and mutation functions for supported indicators
 
 (defn generate-rsi
   [index]
@@ -157,6 +161,8 @@
       (assoc node :window (rand-int-range 8 20))
       (assoc node :multiplier (double (/ (rand-int-range 20 40) 10))))))
 
+; TODO: fibonacci is not implemented, pinbars are not working
+
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
 (defn mutate-fibonacci [node] node)
@@ -194,7 +200,7 @@
       (Math/pow height)
       int))
 
-; treenode is a three element list representing a tree node and its children
+; EvalTree is a three element list representing a tree node and its children
 ; with this structure, we can get the left child with first, right child with last, and the node itself with second.
 (defn generate-tree
   "Generates a tree with given height, recursively until leaves are reached. No parameter method uses prune-height as default. Also gives indices to operands."
@@ -207,6 +213,8 @@
    (if (> height-remaining 0)
      [(generate-tree (dec height-remaining) initial-index) (generate-operator) (generate-tree (dec height-remaining) (+ initial-index (get-right-index-for-operand (dec height-remaining))))]
      (generate-operand initial-index))))
+
+;; Mutation functions defined for EvalTree
 
 (defn perform-mutation
   "Genetic mutation operation, flips given operator or mutates given operand. Operand mutation can either be a change of parameter or replacement with a new one."
@@ -287,6 +295,8 @@
         (io/build-individual (if (< (rand) 0.5) [(mutate-tree long-node) short-node] [long-node (mutate-tree short-node)]) (:parents ind) (:age ind) fitness-func))
       ind)))
 
+;; Crossover functions defined for EvalTree
+
 (defn node-crossover
   "Genetic crossover operator for the node structure, swaps two branches of different trees."
   [node1 node2]
@@ -308,7 +318,10 @@
             :else (if (< node-probability 0.5) [[left2 mid1 right1] [left1 mid2 right2]] [[left1 mid1 right2] [left2 mid2 right1]])))
     [node2 node1]))
 
-(defn tree-selector "Helper function for crossover to return either the long tree selector (i.e. 'first' function) or the short one." [long?] (if long? first second))
+(defn tree-selector
+  "Helper function for crossover to return either the long tree selector (i.e. 'first' function) or the short one."
+  [long?]
+  (if long? first second))
 
 (defn crossover
   "Genetic crossover operator for individuals, calls the crossover for nodes defined by the genetic sequence within individuals.
@@ -333,6 +346,9 @@
                                fitness-func)])
        [ind1 ind2]))))
 
+;; Signal generation/propagation logic for EvalTree
+;; Note that these functions do not calculate indicator signals, they use the already calculated indicator signals
+
 (defn index-to-keyword
   [operand]
   (-> operand
@@ -352,7 +368,7 @@
     :no-signal))
 
 (defn signal-check
-  "Node is a eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction.
+  "Node is an eval-tree, signals is a map containing signal for every indicator, tree-type is :long or :short depending on tree direction.
   Expected signal structure is: {:0 :long/short/no-signal}."
   [node signals tree-type]
   (if (vector? node)
