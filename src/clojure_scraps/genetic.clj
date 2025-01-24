@@ -375,6 +375,26 @@
                     :else (recur current-position (inc current-index) entry-exit-points))))
         entry-exit-points))))
 
+(defn check-signal-for-last-data
+  "Generates the signals for the given strategy and returns the decision made."
+  [data strategy current-position]
+  (let [final-index (.getEndIndex data)]
+    (condp = current-position
+      :long (let [short-signals (generate-signals (last strategy) :short final-index data)]
+              (if (short? (last strategy) short-signals)
+                :short
+                current-position))
+      :short (let [long-signals (generate-signals (first strategy) :long final-index data)]
+               (if (long? (first strategy) long-signals)
+                 :long
+                 current-position))
+      :none (let [long-signals (generate-signals (first strategy) :long final-index data)
+                  short-signals (generate-signals (last strategy) :short final-index data)]
+              (cond
+                (short? (last strategy) short-signals) :short
+                (long? (first strategy) long-signals) :long
+                :else current-position)))))
+
 (defn merge-to-transaction
   "Merges the given entry and exit points into a transaction."
   [entry exit]
