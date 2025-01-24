@@ -1,5 +1,6 @@
 (ns clojure-scraps.algolab
   (:require [clojure-scraps.bot :as tb]
+            [clojure-scraps.datagetter :as dg]
             [clojure.string :as str]
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
@@ -93,6 +94,11 @@
         body (json/read-str (:body response) :key-fn keyword)]
     (print body)))
 
+(defn candles-to-bar-map
+  "Transforms the candle data received into a general format used by datagetter to generate bars."
+  [candles]
+  (map (fn [candle] (dissoc (assoc candle :datetime (str/replace (:date candle) #"T" " ")) :date)) candles))
+
 (defn candle-data
   "Period in minutes for candles, 250 candles returned"
   [equity & {:keys [period]
@@ -109,7 +115,7 @@
         body (json/read-str (:body response) :key-fn keyword)
         candles (:content body)]
     (if (:success body)
-      candles
+      (candles-to-bar-map candles)
       (log/warn "Failed to get candles. Response: " response))))
 
 ; TODO: emir acma fonksiyonlarini ekle ve test et
