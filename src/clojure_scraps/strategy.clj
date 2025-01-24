@@ -1,11 +1,8 @@
 (ns clojure-scraps.strategy
-  (:require [clojure.tools.logging :as log]
-            [clj-uuid :as uuid]
-            [clojure-scraps.aws :as aws-helper]
-            [clojure-scraps.datagetter :as dg]
+  (:require [clojure-scraps.datagetter :as dg]
             [clojure-scraps.params :as p]
-            [clojure.spec.alpha :as s]
-            [clojure-scraps.indicators.pinbar :as pinbar])
+            [clojure-scraps.indicators.pinbar :as pinbar]
+            [clojure.spec.alpha :as s])
   (:import [org.ta4j.core BaseStrategy Trade$TradeType]
            (org.ta4j.core.backtest BarSeriesManager)))
 
@@ -26,17 +23,6 @@
 (defn rule [class-key & args] (let [ctor (constructor "org.ta4j.core.rules." "Rule")] (ctor class-key args)))
 (defn crit [class-key & args] (let [ctor (constructor "org.ta4j.core.criteria." "Criterion")] (ctor class-key args)))
 (defn base-strategy [entry-rule exit-rule] (BaseStrategy. entry-rule exit-rule))
-
-(defn get-profit
-  "Returns the profit of given position as a double"
-  [position]
-  (-> position
-      .getProfit
-      .doubleValue))
-
-(defn calculate-result "Gets the positions from a trading record and calculates the total profit/loss"
-  [trading-record]
-  (reduce + (map get-profit trading-record)))
 
 ;; Helper functions for signal generation
 
@@ -316,10 +302,14 @@
 
 ;; OLD STUFF THAT WILL MOST PROBABLY BE DELETED
 
+; TODO: we are making the calculations for rules ourselves, check whether we can use the ta4j library for this
 (defn rsi-strategy
   "Generates a strategy based on RSI indicator"
   [series period oversold-thresh overbought-thresh]
-  (let [rsi (rsi-indicator series period) entry (rule :CrossedDownIndicator rsi oversold-thresh) exit (rule :CrossedUpIndicator rsi overbought-thresh)] (base-strategy entry exit)))
+  (let [rsi (rsi-indicator series period)
+        entry (rule :CrossedDownIndicator rsi oversold-thresh)
+        exit (rule :CrossedUpIndicator rsi overbought-thresh)]
+    (base-strategy entry exit)))
 
 (defn engulfing-strategy
   "Generates a strategy based on engulfing candlestick pattern"
@@ -336,29 +326,23 @@
         exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
-(defn run-strategy "Runs the given strategy and returns the generated positions" [strategy] (let [bsm (BarSeriesManager. (dg/get-bars-from-api))] (.getPositions (.run bsm strategy))))
+(defn run-strategy
+  "Runs the given strategy and returns the generated positions"
+  [strategy]
+  (let [bsm (BarSeriesManager. (dg/get-bars-from-api))]
+    (.getPositions (.run bsm strategy))))
 
-(defn run-rsi [oversold overbought] (let [strategy (rsi-strategy (dg/get-bars-from-api) 14 oversold overbought)] (run-strategy strategy)))
+(defn run-rsi
+  [oversold overbought]
+  (let [strategy (rsi-strategy (dg/get-bars-from-api) 14 oversold overbought)]
+    (run-strategy strategy)))
 
 ;(def run-engulfing (run-strategy (engulfing-strategy)))
 ;(def run-hammer (run-strategy (hammer-strategy)))
 
+; TODO: criterion does not match actual result, check what the problem is
 (defn eng-criterion
   "Uses criterion to find profit BUT NOT MATCHING THE ACTUAL RESULT, DON'T USE!!!"
   [strategy]
   (let [criterion (crit :pnl/NetProfit) bars (dg/get-bars-from-api) bsm (BarSeriesManager. bars) rec (.run bsm strategy)] (.calculate criterion bars rec)))
-
-#_(calculate-result run-engulfing)
-#_(calculate-result run-hammer)
-; TODO: hammer buy rule ile alakali bir problem olabilir, acaba bu yuzden mi hammer'da pozisyon acilmiyor?
-
-#_(map get-profit run-engulfing)
-#_(eng-criterion (engulfing-strategy))
-; TODO: calculate result ile net profit neden farkli donuyor? analiz etmek lazim, criterion mu dogru benim fonksiyon mu?
-
-#_(run-strategy (rsi-strategy))
-#_(calculate-result (run-rsi 30 70))
-; TODO: hammer ve shooting star icin candle indicator yaz, sonrasinda da bunlari temel alan stratejiler olustur
-
-; TODO: write-to-table yapisi nasil olacak, bunlara karar verip implement et"
 

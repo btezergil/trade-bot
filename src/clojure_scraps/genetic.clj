@@ -11,9 +11,7 @@
             [clojure.tools.logging :as log]
             [clojure.math :as math]
             [nature.core :as n]
-            [nature.initialization-operators :as io]
-            [nature.monitors :as nmon]
-            [clojure.pprint :as pp]))
+            [nature.monitors :as nmon]))
 
 (defn generate-sequence
   "Generates a genetic sequence for individual."
