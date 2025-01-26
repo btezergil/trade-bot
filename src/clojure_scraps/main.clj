@@ -2,11 +2,11 @@
   (:require [clojure-scraps.genetic :as g]
             [clojure-scraps.datagetter :as dg]
             [clojure-scraps.bot :as tb]
-            [clojure-scraps.algolab :as algolab]
             [clojure.tools.logging :as log]
             [clojure.pprint :as pp]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
+            [btezergil.algolab-lib :as algolab]
             [taoensso.telemere :as t]
             [taoensso.telemere.tools-logging :as tl]))
 
@@ -20,7 +20,7 @@
 (defn get-filename-from-stock
   "Gets the filename that contains CSV data for given stock. Prepend an F to the stock name for VIOP data."
   [stock]
-  (filter (fn [filename] (str/includes? filename (str "_" stock))) bist-stock-filenames))
+  (first (filter (fn [filename] (str/includes? filename (str "_" stock))) bist-stock-filenames)))
 (def bist-filenames-map (let [filename (get-filename-from-stock "SAHOL")]
                           {:train-file filename :test-file filename}))
 
