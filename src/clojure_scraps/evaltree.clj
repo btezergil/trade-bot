@@ -1,10 +1,7 @@
 (ns clojure-scraps.evaltree
-  (:require [clojure.tools.logging :as log]
-            [clojure-scraps.params :as p]
-            [clojure.spec.gen.alpha :as gen]
+  (:require [clojure-scraps.params :as p]
+            [clojure.tools.logging :as log]
             [clojure.spec.alpha :as s]
-            [clojure-scraps.indicators.pinbar :as pinbar]
-            [nature.core :as n]
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
@@ -114,12 +111,12 @@
 (defn generate-fisher
   [index]
   {:post [(s/valid? :genetic/fisher %)]}
-  {:index index, :indicator :fisher, :window (rand-int-range 7 15)})
+  {:index index, :indicator :fisher, :window (rand-int-range 10 20)})
 
 (defn mutate-fisher
   [node]
   {:pre [(s/valid? :genetic/fisher node)] :post [(s/valid? :genetic/fisher %)]}
-  (assoc node :window (rand-int-range 7 15)))
+  (assoc node :window (rand-int-range 10 20)))
 
 (defn generate-cci [index]
   {:post [(s/valid? :genetic/cci %)]}

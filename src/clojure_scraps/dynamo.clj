@@ -17,7 +17,37 @@
 (def evolution-table-vars {:table-name :evolution-v1 :table-key :id})
 (def evolution-stats-table-vars {:table-name :evolution-stats-v1 :table-key :evolution-id})
 
-(defn write-individual-to-table
+(def throughput-map {:read 10000 :write 10000})
+(defn create-tables
+  "Creates all necessary tables with indexes for initial setup."
+  []
+  (far/create-table faraday-client-opts
+                    (:table-name evolution-table-vars)
+                    [(:table-key evolution-table-vars) :s]
+                    {:throughput throughput-map})
+  (far/create-table faraday-client-opts
+                    (:table-name evolution-stats-table-vars)
+                    [(:table-key evolution-stats-table-vars) :s]
+                    {:range-keydef [:generation-count :n]
+                     :throughput throughput-map})
+  (far/create-table faraday-client-opts
+                    (:table-name strategy-table-vars)
+                    [(:table-key strategy-table-vars) :s]
+                    {:throughput throughput-map
+                     :gsindexes [{:name (:index strategy-table-vars)
+                                  :hash-keydef [:evolution-id :s]
+                                  :range-keydef [:fitness :n]
+                                  :throughput throughput-map}]})
+  (far/create-table faraday-client-opts
+                    (:table-name transaction-table-vars)
+                    [(:table-key transaction-table-vars) :s]
+                    {:throughput throughput-map
+                     :gsindexes [{:name (:index transaction-table-vars)
+                                  :hash-keydef [:strategy-id :s]
+                                  :range-keydef [:time-range :s]
+                                  :throughput throughput-map}]}))
+
+(defn write-strategy-to-table
   "Records the given genetic indivdual to database"
   [evolution-id individual]
   {:pre [s/valid? :genetic/individual individual]}
@@ -29,7 +59,7 @@
                  :fitness (:fitness-score individual)
                  :genetic-sequence (far/freeze (:genetic-sequence individual))}))
 
-(defn read-individual-from-table
+(defn read-strategy-from-table
   "Queries the strategy-v1 table for the individual with the given id"
   [strategy-id]
   (far/get-item faraday-client-opts

@@ -1,6 +1,7 @@
 (ns clojure-scraps.datagetter
   (:require [clojure-scraps.data.apigetter :as apigetter]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.data.csv :as csv]
             [clojure.tools.logging :as log])
   (:import [java.time ZoneId ZonedDateTime Duration]
@@ -19,7 +20,7 @@
 
 (defn parse-csv-line
   [entry]
-  (let [{:keys [open high low close volume] :or {volume 0}} entry]
+  (let [{:keys [open high low close volume] :or {volume "0"}} entry]
     (assoc entry
            :open (Double/parseDouble open)
            :high (Double/parseDouble high)
@@ -38,6 +39,11 @@
   "HELPER: Parses given datetime string in format yyyy-MM-dd HH:mm:ss."
   [dt]
   (ZonedDateTime/parse dt (.withZone (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (ZoneId/of "UTC"))))
+
+(defn candles-to-bar-map
+  "Transforms the candle data received into a general format used by datagetter to generate bars."
+  [candles]
+  (map (fn [candle] (dissoc (assoc candle :datetime (str/replace (:date candle) #"T" " ")) :date)) candles))
 
 (defn get-bars-from-api
   ([]
@@ -103,3 +109,4 @@
   "Returns the bar end time on the given index."
   [bars index]
   (let [bar (.getBar bars index)] (-> bar .getEndTime .toString str)))
+

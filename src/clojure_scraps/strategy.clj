@@ -6,8 +6,6 @@
   (:import [org.ta4j.core BaseStrategy Trade$TradeType]
            (org.ta4j.core.backtest BarSeriesManager)))
 
-(def table-vars {:table-name "strategy-v1" :table-key "strategyId"})
-
 (s/def :strategy/signal #{:long :short :no-signal})
 
 ;; Reflection functions to access ta4j library
@@ -118,7 +116,6 @@
   (let [window-range (dec (:window-range p/params))
         start-index-for-range (if (pos? (- index window-range)) (- index window-range) 0)]
     (combine-signal-list (map signal-check-fn (range start-index-for-range (inc index))))))
-; TODO: burada pmap kullanilabilir mi?
 
 (defn check-rsi-signal-raw
   "Generates signal for RSI, signal condition is:

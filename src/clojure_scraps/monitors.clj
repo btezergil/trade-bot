@@ -26,7 +26,7 @@
   "Monitor function for evolution that writes every individual of population to the table"
   [evolution-id population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (dorun (pmap (partial dyn/write-individual-to-table evolution-id) population)))
+  (dorun (pmap (partial dyn/write-strategy-to-table evolution-id) population)))
 
 (defn write-transactions-to-table-monitor
   "Monitor function for evolution that writes every individual of population to the table"

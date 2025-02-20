@@ -1,6 +1,5 @@
 (ns clojure-scraps.genetic
-  (:require [clj-uuid :as uuid]
-            [clojure-scraps.datagetter :as dg]
+  (:require [clojure-scraps.datagetter :as dg]
             [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.monitors :as mon]
             [clojure-scraps.params :as p]
@@ -10,6 +9,7 @@
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [clojure.math :as math]
+            [clj-uuid :as uuid]
             [nature.core :as n]
             [nature.monitors :as nmon]))
 
@@ -136,7 +136,7 @@
       :accuracy (calculate-accuracy-from-transactions transactions)
       :accuracy-percentage (calculate-accuracy-percentage-from-transactions transactions)
       :accuracy-profit-hybrid (calculate-accuracy-profit-hybrid-from-transactions transactions)
-      (throw (IllegalArgumentException. "Unknown argument in calculate-profit function")))))
+      (throw (IllegalArgumentException. "Unknown fitness function for fitness calculation")))))
 
 ;; Transaction generation functions
 
