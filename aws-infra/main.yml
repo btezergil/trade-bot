@@ -88,6 +88,7 @@ Resources:
         Image: aws/codebuild/standard:2.0
       Source:
         Type: CODEPIPELINE
+        BuildSpec: aws-infra/buildspec.yml
   DeploymentApplication:
     Type: AWS::CodeDeploy::Application
     Properties:

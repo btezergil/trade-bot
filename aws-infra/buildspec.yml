@@ -7,7 +7,8 @@ phases:
   pre_build:
     commands:
       # run 'npm install' using versions in package-lock.json
-      - npm ci
+      - cd aws-infra
+      - npm install
   build:
     commands:
       - npm run build
@@ -19,3 +20,4 @@ artifacts:
     - package.json
     - appspec.yml
     - 'node_modules/**/*'
+  base-directory: aws-infra
