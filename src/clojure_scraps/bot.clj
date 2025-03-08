@@ -5,7 +5,7 @@
 
 (def telegram-bot-config
   {:timeout 100
-   :sleep 60000})
+   :sleep 10000})
 (def trade-bot (tbot/create (:bot-id @env)))
 (def btezergil-chat-id (:btezergil-telegram-chat-id @env))
 
@@ -58,4 +58,3 @@
         (Thread/sleep (:sleep telegram-bot-config)))
       (recur))))
 
-(message-to-me "test message")

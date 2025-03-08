@@ -207,7 +207,7 @@
 (defn get-candlestick-data
   "Generates the OHLC data with entry points."
   [strategy-id]
-  (merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic :test))
+  (merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic dg/evolution-filenames-map :test))
                                 (-> strategy-id
                                     dyn/read-transactions-of-strategy
                                     get-entry-data-from-transactions)))

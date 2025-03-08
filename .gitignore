@@ -19,3 +19,5 @@ Session.vim
 .env
 .venv/
 .cpcache/
+src/clojure_scraps/work
+work/
