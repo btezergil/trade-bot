@@ -1,6 +1,7 @@
 (ns clojure-scraps.charts
   (:require [clojure-scraps.stats :as st]
-            [oz.core :as oz]))
+            [oz.core :as oz]
+            [clojure-scraps.dynamo :as dyn]))
 
 (defn get-line-plot-map-profit
   "Data should be in a map with :time, :item, and :quantity fields."
@@ -45,17 +46,23 @@
 (defn get-scatterplot-map
   "Data should be in a map with :fitness and :profit fields."
   [data]
-  {:data {:values data}
-   :transform [{:filter {:and [{:field "fitness" :valid true}
-                               {:field "profit" :valid true}]}}]
-   :width 1400
-   :height 800
-   :encoding {:x {:field "fitness" :type "quantitative"}
-              :y {:field "profit" :type "quantitative"}}
-   :layer [{:mark "point"}
-           {:mark "line"
-            :encoding {:y {:datum 0}
-                       :color {:value "red"}}}]})
+  (let [best-val (reduce (fn [d1 d2] (if (> (:fitness d1) (:fitness d2))
+                                       d1 d2)) data)]
+    {:data {:values data}
+     :transform [{:filter {:and [{:field "fitness" :valid true}
+                                 {:field "profit" :valid true}]}}]
+     :width 1400
+     :height 800
+     :encoding {:x {:field "fitness" :type "quantitative"}
+                :y {:field "profit" :type "quantitative"}}
+     :layer [{:mark "point"}
+             {:mark "line"
+              :encoding {:y {:datum 0}
+                         :color {:value "red"}}}
+             {:mark "point"
+              :encoding {:x {:datum (:fitness best-val)}
+                         :y {:datum (:profit best-val)}
+                         :color {:value "red"}}}]}))
 
 (defn get-candlestick-map
   "Candlestick map to be drawn by Oz."
@@ -125,9 +132,18 @@
       st/extract-histogram-data
       get-scatterplot-map))
 
+(defn candlestick-data-from-evolution-id
+  [evolution-id]
+  (->> evolution-id
+       dyn/read-strategies-of-evolution
+       (reduce (fn [s1 s2] (if (> (:fitness s1) (:fitness s2)) s1 s2)))
+       :id
+       st/get-candlestick-data
+       get-candlestick-map))
+
 ;; Render the plot
-(oz/view! (get-candlestick-map (st/get-candlestick-data "1b8d30c5-dd48-4ec6-8d0c-ee8f646b6aeb")))
-(oz/view! (scatter-plot "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"))
+(oz/view! (candlestick-data-from-evolution-id  "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
+(oz/view! (scatter-plot "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
 (oz/view! (histogram-plot "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"))
 (oz/view! (profit-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))
 (oz/view! (accuracy-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))
