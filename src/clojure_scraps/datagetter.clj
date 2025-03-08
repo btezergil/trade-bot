@@ -1,6 +1,7 @@
 (ns clojure-scraps.datagetter
   (:require [clojure-scraps.data.apigetter :as apigetter]
             [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [clojure.data.csv :as csv]
             [clojure.tools.logging :as log])
@@ -9,6 +10,22 @@
            (org.ta4j.core BaseBarSeriesBuilder)))
 
 (def train-split-percentage 0.7)
+
+(def forex-filename  "data/forex/eurusd-3month-1h.csv")
+(def forex-test-filename  "data/forex/eurusd-45days-1h-test.csv")
+(def forex-filenames-map {:train-file forex-filename :test-file forex-test-filename})
+(def bist-stock-filenames (map (fn [filename] (str "data/bist/" filename))
+                               (filter (fn [file] (str/ends-with? file ".csv"))
+                                       (str/split (:out (sh/sh "ls" "data/bist")) #"\n"))))
+
+(defn get-filename-from-stock
+  "Gets the filename that contains CSV data for given stock. Prepend an F to the stock name for VIOP data."
+  [stock]
+  (first (filter (fn [filename] (str/includes? filename (str "_" stock))) bist-stock-filenames)))
+(def bist-filenames-map (let [filename (get-filename-from-stock "SAHOL")]
+                          {:train-file filename :test-file filename}))
+
+(def evolution-filenames-map bist-filenames-map)
 
 (defn csv-data->maps
   [csv-data]
