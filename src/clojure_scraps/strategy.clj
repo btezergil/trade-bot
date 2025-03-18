@@ -95,7 +95,30 @@
 
 (defn supertrend-indicator "Returns a supertrend indicator with given bars" [bars period multiplier] (ind :supertrend/SuperTrend bars period multiplier))
 
-(defn engulfing-indicator "Returns an engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
+(defn bullish-engulfing-indicator "Returns a bullish engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
+
+(defn bearish-engulfing-indicator "Returns a bearish engulfing indicator" [bars] (candle-ind :BearishEngulfing bars))
+
+(defn bullish-harami-indicator "Returns a bullish harami indicator" [bars] (candle-ind :BullishHarami bars))
+
+(defn bearish-harami-indicator "Returns a bearish harami indicator" [bars] (candle-ind :BearishHarami bars))
+
+(defn hammer-indicator "Returns a hammer indicator" [bars] (candle-ind :Hammer bars))
+
+(defn hanging-man-indicator "Returns a hanging man indicator" [bars] (candle-ind :HangingMan bars))
+
+(defn inverted-hammer-indicator "Returns an inverted hammer indicator" [bars] (candle-ind :InvertedHammer bars))
+
+(defn shooting-star-indicator "Returns a shooting star indicator" [bars] (candle-ind :ShootingStar bars))
+
+(bullish-engulfing-indicator (dg/get-bars-for-genetic))
+(bearish-engulfing-indicator (dg/get-bars-for-genetic))
+(bullish-harami-indicator (dg/get-bars-for-genetic))
+(bearish-harami-indicator (dg/get-bars-for-genetic))
+;(hammer-indicator (dg/get-bars-for-genetic))
+;(hanging-man-indicator (dg/get-bars-for-genetic))
+;(inverted-hammer-indicator (dg/get-bars-for-genetic))
+;(shooting-star-indicator (dg/get-bars-for-genetic))
 
 ;; Signal generation functions
 
@@ -297,6 +320,62 @@
 (def check-supertrend-signal
   (memoize check-supertrend-signal-raw))
 
+(defn check-engulfing-long
+  [data index]
+  (let [indicator (bullish-engulfing-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :long
+      :no-signal)))
+
+(defn check-engulfing-short
+  [data index]
+  (let [indicator (bearish-engulfing-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :short
+      :no-signal)))
+
+(defn check-engulfing-signal-raw
+  "Generates signal for engulfing candlestick. Uses bullish/bearish depending on the direction parameter."
+  [node direction data index]
+  {:pre [(s/valid? :genetic/candlestick node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (if (= direction :long)
+    (check-engulfing-long data index)
+    (check-engulfing-short data index)))
+
+(def check-engulfing-signal
+  (memoize check-engulfing-signal-raw))
+
+(defn check-harami-long
+  [data index]
+  (let [indicator (bullish-harami-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :long
+      :no-signal)))
+
+(defn check-harami-short
+  [data index]
+  (let [indicator (bearish-harami-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :short
+      :no-signal)))
+
+(defn check-harami-signal-raw
+  "Generates signal for harami candlestick. Uses bullish/bearish depending on the direction parameter."
+  [node direction data index]
+  {:pre [(s/valid? :genetic/candlestick node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (if (= direction :long)
+    (check-harami-long data index)
+    (check-harami-short data index)))
+
+(def check-harami-signal
+  (memoize check-harami-signal-raw))
+
 ;; OLD STUFF THAT WILL MOST PROBABLY BE DELETED
 
 ; TODO: we are making the calculations for rules ourselves, check whether we can use the ta4j library for this
@@ -311,7 +390,7 @@
 (defn engulfing-strategy
   "Generates a strategy based on engulfing candlestick pattern"
   []
-  (let [engulfing (engulfing-indicator (dg/get-bars-from-api))
+  (let [engulfing (bullish-engulfing-indicator (dg/get-bars-from-api))
         entry (rule :BooleanIndicator engulfing)
         exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil dusunuyoruz onu kararlastir
     (base-strategy entry exit)))

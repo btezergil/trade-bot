@@ -5,7 +5,8 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :parabolic-sar :supertrend])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend])
+(def candlesticks #{:engulfing :harami :hammer :hanging-man :inverted-hammer :shooting-star})
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
 ; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
 
@@ -41,6 +42,8 @@
                                      #(= :parabolic-sar (:indicator %))))
 (s/def :genetic/supertrend (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window :genetic/multiplier])
                                   #(= :supertrend (:indicator %))))
+(s/def :genetic/candlestick (s/and (s/keys :req-un [:genetic/index :genetic/indicator])
+                                   #(contains? candlesticks (:indicator %))))
 ; TODO: candlestickler icin spec yaz
 
 (s/def :genetic/fitness-score double?)
@@ -158,13 +161,21 @@
       (assoc node :window (rand-int-range 8 20))
       (assoc node :multiplier (double (/ (rand-int-range 20 40) 10))))))
 
+(defn generate-engulfing
+  [index]
+  {:post [(s/valid? :genetic/candlestick %)]}
+  {:index index, :indicator :engulfing})
+
+(defn generate-harami
+  [index]
+  {:post [(s/valid? :genetic/candlestick %)]}
+  {:index index, :indicator :harami})
+
 ; TODO: fibonacci is not implemented, pinbars are not working
 
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
 (defn mutate-fibonacci [node] node)
-
-(defn generate-engulfing [index] {:index index, :indicator :engulfing})
 
 (defn generate-pinbar [index] {:index index, :indicator :pinbar})
 
@@ -186,7 +197,8 @@
       :parabolic-sar (generate-parabolic-sar index)
       :supertrend (generate-supertrend index)
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
-      :engulfing (generate-engulfing index) ; NOT ADDED YET
+      :engulfing (generate-engulfing index)
+      :harami (generate-harami index)
       :pinbar (generate-pinbar index) ; NOT ADDED YET
       :identity (generate-identity index))))
 
@@ -235,6 +247,7 @@
                    :supertrend (mutate-supertrend node)
                    :fibonacci (mutate-fibonacci node)
                    :engulfing (generate-operand (:index node))
+                   :harami (generate-operand (:index node))
                    :pinbar (generate-operand (:index node))
                    :identity (generate-operand (:index node)))))))
 

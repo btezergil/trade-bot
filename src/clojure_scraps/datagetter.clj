@@ -92,21 +92,23 @@
 
 (defn get-bars-for-genetic
   "Reads the experiment dataset and returns it as a ta4j BarSeries."
-  [filenames mode]
-  (let [training-file (:train-file filenames)
-        test-file (:test-file filenames)]
-    (if (not= training-file test-file)
-      (condp = mode
-        :train (get-bars-from-csv training-file)
-        :test (get-bars-from-csv test-file)
-        (log/warn "unsupported mode for get-bars-for-genetic"))
-      (let [bars (get-bars-from-csv (:train-file filenames))
-            num-of-bars (.getBarCount bars)
-            split-index (int (* train-split-percentage num-of-bars))]
-        (condp = mode
-          :train (.getSubSeries bars 0 split-index)
-          :test (.getSubSeries bars split-index (dec num-of-bars))
-          (log/warn "unsupported mode for get-bars-for-genetic"))))))
+  ([] (get-bars-for-genetic evolution-filenames-map :train))
+  ([mode] (get-bars-for-genetic evolution-filenames-map mode))
+  ([filenames mode]
+   (let [training-file (:train-file filenames)
+         test-file (:test-file filenames)]
+     (if (not= training-file test-file)
+       (condp = mode
+         :train (get-bars-from-csv training-file)
+         :test (get-bars-from-csv test-file)
+         (log/warn "unsupported mode for get-bars-for-genetic"))
+       (let [bars (get-bars-from-csv (:train-file filenames))
+             num-of-bars (.getBarCount bars)
+             split-index (int (* train-split-percentage num-of-bars))]
+         (condp = mode
+           :train (.getSubSeries bars 0 split-index)
+           :test (.getSubSeries bars split-index (dec num-of-bars))
+           (log/warn "unsupported mode for get-bars-for-genetic")))))))
 
 (defn get-bar-value
   "Returns the bar value of the given bar."
