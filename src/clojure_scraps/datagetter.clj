@@ -11,6 +11,7 @@
 
 (def train-split-percentage 0.7)
 
+(def stock-name "SAHOL")
 (def forex-filename  "data/forex/eurusd-3month-1h.csv")
 (def forex-test-filename  "data/forex/eurusd-45days-1h-test.csv")
 (def forex-filenames-map {:train-file forex-filename :test-file forex-test-filename})
@@ -22,9 +23,9 @@
   "Gets the filename that contains CSV data for given stock. Prepend an F to the stock name for VIOP data."
   [stock]
   (first (filter (fn [filename] (str/includes? filename (str "_" stock))) bist-stock-filenames)))
-(def bist-filenames-map (let [filename (get-filename-from-stock "SAHOL")]
-                          {:train-file filename :test-file filename}))
 
+(def bist-filenames-map (let [filename (get-filename-from-stock stock-name)]
+                          {:train-file filename :test-file filename}))
 (def evolution-filenames-map bist-filenames-map)
 
 (defn csv-data->maps

@@ -45,6 +45,8 @@
         :supertrend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-supertrend-signal tree direction data index)))}
         :engulfing {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-engulfing-signal tree direction data index)))}
         :harami {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-harami-signal tree direction data index)))}
+        :hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-hammer-signal tree direction data index)))}
+        :inverted-hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-inverted-hammer-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn long?

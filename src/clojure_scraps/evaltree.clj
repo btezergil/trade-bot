@@ -5,10 +5,10 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend])
-(def candlesticks #{:engulfing :harami :hammer :hanging-man :inverted-hammer :shooting-star})
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend :engulfing :harami :hammer :inverted-hammer])
+(def candlesticks #{:engulfing :harami :hammer :inverted-hammer})
+
 ; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
-; TODO: engulfing ve pinbar aslinda sinyal cikartacak seviyede hazir, ama nasil kullanacagimizdan emin olana kadar eklemeyelim
 
 ;; Spec definitions for supported indicators
 
@@ -44,7 +44,6 @@
                                   #(= :supertrend (:indicator %))))
 (s/def :genetic/candlestick (s/and (s/keys :req-un [:genetic/index :genetic/indicator])
                                    #(contains? candlesticks (:indicator %))))
-; TODO: candlestickler icin spec yaz
 
 (s/def :genetic/fitness-score double?)
 (s/def :genetic/genetic-sequence map?)
@@ -171,13 +170,21 @@
   {:post [(s/valid? :genetic/candlestick %)]}
   {:index index, :indicator :harami})
 
+(defn generate-hammer
+  [index]
+  {:post [(s/valid? :genetic/candlestick %)]}
+  {:index index, :indicator :hammer})
+
+(defn generate-inverted-hammer
+  [index]
+  {:post [(s/valid? :genetic/candlestick %)]}
+  {:index index, :indicator :inverted-hammer})
+
 ; TODO: fibonacci is not implemented, pinbars are not working
 
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
 (defn mutate-fibonacci [node] node)
-
-(defn generate-pinbar [index] {:index index, :indicator :pinbar})
 
 (defn generate-identity [index] {:index index, :indicator :identity})
 
@@ -199,7 +206,8 @@
       :fibonacci (generate-fibonacci index) ; NOT ADDED YET
       :engulfing (generate-engulfing index)
       :harami (generate-harami index)
-      :pinbar (generate-pinbar index) ; NOT ADDED YET
+      :hammer (generate-hammer index)
+      :inverted-hammer (generate-inverted-hammer index)
       :identity (generate-identity index))))
 
 (defn get-right-index-for-operand
@@ -248,6 +256,8 @@
                    :fibonacci (mutate-fibonacci node)
                    :engulfing (generate-operand (:index node))
                    :harami (generate-operand (:index node))
+                   :hammer (generate-operand (:index node))
+                   :inverted-hammer (generate-operand (:index node))
                    :pinbar (generate-operand (:index node))
                    :identity (generate-operand (:index node)))))))
 

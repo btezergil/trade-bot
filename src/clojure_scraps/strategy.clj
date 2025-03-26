@@ -376,6 +376,62 @@
 (def check-harami-signal
   (memoize check-harami-signal-raw))
 
+(defn check-hammer
+  [data index]
+  (let [indicator (hammer-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :long
+      :no-signal)))
+
+(defn check-hanging-man
+  [data index]
+  (let [indicator (hanging-man-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :short
+      :no-signal)))
+
+(defn check-hammer-signal-raw
+  "Generates signal for hammer candlestick. Uses hammer/hanging man depending on the direction parameter."
+  [node direction data index]
+  {:pre [(s/valid? :genetic/candlestick node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (if (= direction :long)
+    (check-hammer data index)
+    (check-hanging-man data index)))
+
+(def check-hammer-signal
+  (memoize check-hammer-signal-raw))
+
+(defn check-inverted-hammer
+  [data index]
+  (let [indicator (inverted-hammer-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :long
+      :no-signal)))
+
+(defn check-shooting-star
+  [data index]
+  (let [indicator (shooting-star-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :short
+      :no-signal)))
+
+(defn check-inverted-hammer-signal-raw
+  "Generates signal for inverted hammer candlestick. Uses inverted hammer/shooting star depending on the direction parameter."
+  [node direction data index]
+  {:pre [(s/valid? :genetic/candlestick node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (if (= direction :long)
+    (check-inverted-hammer data index)
+    (check-shooting-star data index)))
+
+(def check-inverted-hammer-signal
+  (memoize check-inverted-hammer-signal-raw))
+
 ;; OLD STUFF THAT WILL MOST PROBABLY BE DELETED
 
 ; TODO: we are making the calculations for rules ourselves, check whether we can use the ta4j library for this
