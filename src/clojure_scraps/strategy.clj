@@ -1,7 +1,6 @@
 (ns clojure-scraps.strategy
   (:require [clojure-scraps.datagetter :as dg]
             [clojure-scraps.params :as p]
-            [clojure-scraps.indicators.pinbar :as pinbar]
             [clojure.spec.alpha :as s])
   (:import [org.ta4j.core BaseStrategy Trade$TradeType]
            (org.ta4j.core.backtest BarSeriesManager)))
@@ -110,15 +109,6 @@
 (defn inverted-hammer-indicator "Returns an inverted hammer indicator" [bars] (candle-ind :InvertedHammer bars))
 
 (defn shooting-star-indicator "Returns a shooting star indicator" [bars] (candle-ind :ShootingStar bars))
-
-(bullish-engulfing-indicator (dg/get-bars-for-genetic))
-(bearish-engulfing-indicator (dg/get-bars-for-genetic))
-(bullish-harami-indicator (dg/get-bars-for-genetic))
-(bearish-harami-indicator (dg/get-bars-for-genetic))
-;(hammer-indicator (dg/get-bars-for-genetic))
-;(hanging-man-indicator (dg/get-bars-for-genetic))
-;(inverted-hammer-indicator (dg/get-bars-for-genetic))
-;(shooting-star-indicator (dg/get-bars-for-genetic))
 
 ;; Signal generation functions
 
@@ -449,13 +439,6 @@
   (let [engulfing (bullish-engulfing-indicator (dg/get-bars-from-api))
         entry (rule :BooleanIndicator engulfing)
         exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule nasil dusunuyoruz onu kararlastir
-    (base-strategy entry exit)))
-
-(defn hammer-strategy
-  []
-  (let [ind (pinbar/create-hammer-indicator (dg/get-bars-from-api))
-        entry (rule :BooleanIndicator ind)
-        exit (rule :WaitFor Trade$TradeType/BUY 10)] ; exit rule naisl dusunuyoruz onu kararlastir
     (base-strategy entry exit)))
 
 (defn run-strategy

@@ -180,7 +180,7 @@
   {:post [(s/valid? :genetic/candlestick %)]}
   {:index index, :indicator :inverted-hammer})
 
-; TODO: fibonacci is not implemented, pinbars are not working
+; TODO: fibonacci is not implemented
 
 (defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
 
@@ -258,7 +258,6 @@
                    :harami (generate-operand (:index node))
                    :hammer (generate-operand (:index node))
                    :inverted-hammer (generate-operand (:index node))
-                   :pinbar (generate-operand (:index node))
                    :identity (generate-operand (:index node)))))))
 
 (defn swap-mutation

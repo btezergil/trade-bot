@@ -22,7 +22,7 @@
    :trading-window 100
    :trade-threshold 0.05 ; TODO: introduce trade threshold?
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
-   :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar]
+   :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar] ; TODO: buradaki listeyi bizim dosyadaki listeden populate et
    :prune-height 2
    :default-age 0
    :data-history-window 100
