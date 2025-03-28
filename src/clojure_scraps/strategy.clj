@@ -3,6 +3,7 @@
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s])
   (:import [org.ta4j.core BaseStrategy Trade$TradeType]
+           [org.ta4j.core.indicators.pivotpoints TimeLevel FibonacciReversalIndicator$FibonacciFactor FibonacciReversalIndicator$FibReversalTyp]
            (org.ta4j.core.backtest BarSeriesManager)))
 
 (s/def :strategy/signal #{:long :short :no-signal})
@@ -17,6 +18,8 @@
       (clojure.lang.Reflector/invokeConstructor (resolve (symbol class-str)) (to-array args)))))
 (defn ind [class-key & args] (let [ctor (constructor "org.ta4j.core.indicators." "Indicator")] (ctor class-key args)))
 (defn candle-ind [class-key & args] (let [ctor (constructor "org.ta4j.core.indicators.candles." "Indicator")] (ctor class-key args)))
+(defn trend-ind [class-key & args] (let [ctor (constructor "org.ta4j.core.indicators.trend." "Indicator")] (ctor class-key args)))
+(defn pivot-ind [class-key & args] (let [ctor (constructor "org.ta4j.core.indicators.pivotpoints." "Indicator")] (ctor class-key args)))
 (defn rule [class-key & args] (let [ctor (constructor "org.ta4j.core.rules." "Rule")] (ctor class-key args)))
 (defn crit [class-key & args] (let [ctor (constructor "org.ta4j.core.criteria." "Criterion")] (ctor class-key args)))
 (defn base-strategy [entry-rule exit-rule] (BaseStrategy. entry-rule exit-rule))
@@ -109,6 +112,22 @@
 (defn inverted-hammer-indicator "Returns an inverted hammer indicator" [bars] (candle-ind :InvertedHammer bars))
 
 (defn shooting-star-indicator "Returns a shooting star indicator" [bars] (candle-ind :ShootingStar bars))
+
+(defn up-trend-indicator "Returns an up trend indicator" [bars] (trend-ind :UpTrend bars))
+
+(defn down-trend-indicator "Returns a down trend indicator" [bars] (trend-ind :DownTrend bars))
+
+(defn fibonacci-reversal-indicator "Returns a down trend indicator"
+  [bars factor typ]
+  (pivot-ind :FibonacciReversal
+             (pivot-ind :PivotPoint bars TimeLevel/WEEK)
+             (condp = factor
+               1 FibonacciReversalIndicator$FibonacciFactor/FACTOR_1
+               2 FibonacciReversalIndicator$FibonacciFactor/FACTOR_2
+               3 FibonacciReversalIndicator$FibonacciFactor/FACTOR_3)
+             (condp = typ
+               :support FibonacciReversalIndicator$FibReversalTyp/SUPPORT
+               :resistance FibonacciReversalIndicator$FibReversalTyp/RESISTANCE)))
 
 ;; Signal generation functions
 
@@ -421,6 +440,63 @@
 
 (def check-inverted-hammer-signal
   (memoize check-inverted-hammer-signal-raw))
+
+(defn check-up-trend
+  [data index]
+  (let [indicator (up-trend-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :long
+      :no-signal)))
+
+(defn check-down-trend
+  [data index]
+  (let [indicator (down-trend-indicator data)
+        value (.getValue indicator index)]
+    (if value
+      :short
+      :no-signal)))
+
+(defn check-trend-signal-raw
+  "Generates signal for trend indicator. Uses up/down trend depending on the direction parameter."
+  [node direction data index]
+  {:pre [(s/valid? :genetic/trend node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (if (= direction :long)
+    (check-up-trend data index)
+    (check-down-trend data index)))
+
+(def check-trend-signal
+  (memoize check-trend-signal-raw))
+
+(defn check-fib-long
+  [data index factor]
+  (let [indicator (fibonacci-reversal-indicator data factor :resistance)]
+    (if (crosses-down? indicator data index)
+      :long
+      :no-signal)))
+
+(defn check-fib-short
+  [data index factor]
+  (let [indicator (fibonacci-reversal-indicator data factor :support)]
+    (if (crosses-up? indicator data index)
+      :short
+      :no-signal)))
+
+(defn check-fibonacci-signal-raw
+  "Generates signal for Fibonacci reversal indicator. Uses support/resistance depending on the direction parameter.
+  long: use RESISTANCE mode to draw a downward trend and look for crossing down the value
+  short: use SUPPORT mode to draw a upward trend and look for crossing up the value"
+  [node direction data index]
+  {:pre [(s/valid? :genetic/fibonacci node)]
+   :post [(s/valid? :strategy/signal %)]}
+  (let [factor (:factor node)]
+    (if (= direction :long)
+      (check-fib-long data index factor)
+      (check-fib-short data index factor))))
+
+(def check-fibonacci-signal
+  (memoize check-fibonacci-signal-raw))
 
 ;; OLD STUFF THAT WILL MOST PROBABLY BE DELETED
 

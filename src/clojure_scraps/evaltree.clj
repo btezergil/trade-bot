@@ -5,10 +5,11 @@
             [nature.initialization-operators :as io]))
 
 (def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema :fisher :cci :stoch :supertrend :engulfing :harami :hammer :inverted-hammer])
+(def operands [:identity :rsi :sma :ema :double-sma :double-ema
+               :fisher :cci :stoch :supertrend
+               :engulfing :harami :hammer :inverted-hammer :trend])
 (def candlesticks #{:engulfing :harami :hammer :inverted-hammer})
-
-; TODO: fibonacci tarafi ilginc bir yapiya sahip, onu kullanmak icin ayri deney yapmak lazim, anlayana kadar fibonacci ekleme
+; INFO: parabolic SAR and fibonacci are available but not used since their signal generation is too slow compared to others
 
 ;; Spec definitions for supported indicators
 
@@ -26,6 +27,8 @@
   (s/and int?
          #(> % 39)
          #(< % 81)))
+(s/def :genetic/factor int?)
+
 (s/def :genetic/rsi (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/overbought :genetic/oversold :genetic/window])
                            #(= :rsi (:indicator %))))
 (s/def :genetic/ma (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window])
@@ -40,10 +43,14 @@
                              #(= :stoch (:indicator %))))
 (s/def :genetic/parabolic-sar (s/and (s/keys :req-un [:genetic/index :genetic/indicator])
                                      #(= :parabolic-sar (:indicator %))))
+(s/def :genetic/trend (s/and (s/keys :req-un [:genetic/index :genetic/indicator])
+                             #(= :trend (:indicator %))))
 (s/def :genetic/supertrend (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/window :genetic/multiplier])
                                   #(= :supertrend (:indicator %))))
 (s/def :genetic/candlestick (s/and (s/keys :req-un [:genetic/index :genetic/indicator])
                                    #(contains? candlesticks (:indicator %))))
+(s/def :genetic/fibonacci (s/and (s/keys :req-un [:genetic/index :genetic/indicator :genetic/factor])
+                                 #(= :fibonacci (:indicator %))))
 
 (s/def :genetic/fitness-score double?)
 (s/def :genetic/genetic-sequence map?)
@@ -180,11 +187,20 @@
   {:post [(s/valid? :genetic/candlestick %)]}
   {:index index, :indicator :inverted-hammer})
 
-; TODO: fibonacci is not implemented
+(defn generate-trend
+  [index]
+  {:post [(s/valid? :genetic/trend %)]}
+  {:index index, :indicator :trend})
 
-(defn generate-fibonacci [index] {:index index, :indicator :fibonacci})
+(defn generate-fibonacci
+  [index]
+  {:post [(s/valid? :genetic/fibonacci %)]}
+  {:index index, :indicator :fibonacci :factor (rand-int-range 1 3)})
 
-(defn mutate-fibonacci [node] node)
+(defn mutate-fibonacci
+  [node]
+  {:pre [(s/valid? :genetic/fibonacci node)] :post [(s/valid? :genetic/fibonacci %)]}
+  (assoc node :factor (rand-int-range 1 3)))
 
 (defn generate-identity [index] {:index index, :indicator :identity})
 
@@ -203,11 +219,12 @@
       :stoch (generate-stochastic-oscillator index)
       :parabolic-sar (generate-parabolic-sar index)
       :supertrend (generate-supertrend index)
-      :fibonacci (generate-fibonacci index) ; NOT ADDED YET
+      :fibonacci (generate-fibonacci index)
       :engulfing (generate-engulfing index)
       :harami (generate-harami index)
       :hammer (generate-hammer index)
       :inverted-hammer (generate-inverted-hammer index)
+      :trend (generate-trend index)
       :identity (generate-identity index))))
 
 (defn get-right-index-for-operand
@@ -258,6 +275,7 @@
                    :harami (generate-operand (:index node))
                    :hammer (generate-operand (:index node))
                    :inverted-hammer (generate-operand (:index node))
+                   :trend (generate-operand (:index node))
                    :identity (generate-operand (:index node)))))))
 
 (defn swap-mutation
