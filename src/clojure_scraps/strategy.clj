@@ -8,6 +8,28 @@
 
 (s/def :strategy/signal #{:long :short :no-signal})
 
+; TODO: range trading ve breakout icin manuel bi strateji modelleyip dene:
+; TODO: range trading condition'larini range high-low kaydedip al
+; TODO: breakout olursa stoploss koyarak o tarafa dogru breakout islemi ac, terse hareket olursa yeniden range trading'e gec
+; TODO: bunun icin breakout oldugunda da nasil islem yapmaliyiz kismini higher high/low ve lower high/low'da nasil davranacak onu da modelleyerek cozeriz
+; TODO: range icinde trading yaparken range tepesine direk islem atip bekleme, range tepesine degecek bir KAPANMIS mum bekle
+; TODO: range icinde range olusursa, icerideyken ne yapacagiz dusunelim sabit kalinabilir
+; TODO: iceride degilsek girmeye gerek yok, kucuk range'den breakout olunca o taraftan katilinabilir
+; TODO: range icinde mum golge attiysa ama close hala range icindeyse bunu sinyal olarak degerlendir, terse donme ihtimali yuksek
+; TODO: mid-range'de bi take-profit eklenebilir, en azindan tepeden donerse fiyat zarar etmemis olursun
+; TODO: range trading'de stoploss ve takeprofit kesindir, islem atmasan bile hedef belli
+; TODO: stoplari cok yakina koyma, bir tik daha uzaga koy (bunu da yine deneyerek bulalim)
+; TODO: ilk equal high/low gordugun anda range'dir bu diyip range trading'e girmek lazim
+; TODO: ezbere emir degil fiyatin gercekten dondugu mumdan sonra gir
+; TODO: range'in key level'larinda yani tepe/dip kisimlarinda gir, bunlar harici girme
+
+; TODO: RSI+range trading -> eger RSI range low'da pozitif uyumsuzluk yaparsa yukari hareket isareti olabilir
+; TODO: RSI ortalamasi da bu PU sirasinda yukari kirilirsa ekstra long sinyalidir
+; TODO: BB% ve stochastic de kullanilabilir indikator olarak, bunlarin hepsini dene hangisi daha iyi performans veriyor bulalim
+
+; TODO: ta4j'e three inside up ekleyelim mi?
+; TODO: bb percentage indikatoru ta4j'de var, koda range trading icin eklenebilir
+
 ;; Reflection functions to access ta4j library
 
 (defn constructor
