@@ -13,7 +13,6 @@ pom.xml.asc
 .hg/
 .idea
 Session.vim
-*.csv
 .clj-kondo/
 .lsp/
 .env
