@@ -77,11 +77,20 @@
 (defn get-bars
   "Bars should be a sequence of maps containing :open/:high/:low/:close/:volume/:datetime OR :date and :time"
   [bars]
-  (let [s (.build (BaseBarSeriesBuilder.))]
+  (let [s (.build (BaseBarSeriesBuilder.))
+        bar-builder (.barBuilder s)]
     (doseq [{:keys [datetime open high low close volume date time]} bars]
-      (if (nil? date)
-        (.addBar s (Duration/ofHours 1) (parse-datetime-inday datetime) open high low close volume)
-        (.addBar s (Duration/ofHours 1) (parse-datetime-inday (str date " " time)) open high low close volume)))
+      (.addBar s (-> bar-builder
+                     (.timePeriod (Duration/ofHours 1))
+                     (.endTime (.toInstant (if (nil? date)
+                                             (parse-datetime-inday datetime)
+                                             (parse-datetime-inday (str date " " time)))))
+                     (.openPrice open)
+                     (.highPrice high)
+                     (.lowPrice low)
+                     (.closePrice close)
+                     (.volume volume)
+                     .build)))
     s))
 
 (defn- get-bars-from-csv
@@ -93,8 +102,12 @@
 
 (defn get-bars-for-genetic
   "Reads the experiment dataset and returns it as a ta4j BarSeries."
-  ([] (get-bars-for-genetic evolution-filenames-map :train))
-  ([mode] (get-bars-for-genetic evolution-filenames-map mode))
+  ([]
+   (get-bars-for-genetic evolution-filenames-map :train))
+
+  ([mode]
+   (get-bars-for-genetic evolution-filenames-map mode))
+
   ([filenames mode]
    (let [training-file (:train-file filenames)
          test-file (:test-file filenames)]
@@ -128,5 +141,9 @@
 (defn get-bar-close-time-at-index
   "Returns the bar end time on the given index."
   [bars index]
-  (let [bar (.getBar bars index)] (-> bar .getEndTime .toString str)))
+  (let [bar (.getBar bars index)]
+    (-> bar
+        .getEndTime
+        .toString
+        str)))
 

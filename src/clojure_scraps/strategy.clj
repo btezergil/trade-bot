@@ -103,9 +103,9 @@
 
 (defn rsi-indicator "Returns an RSI indicator with given bars" [bars period] (ind :RSI (ind :helpers/ClosePrice bars) period))
 
-(defn sma-indicator "Returns a SMA indicator with given bars" [bars period] (ind :SMA (ind :helpers/ClosePrice bars) period))
+(defn sma-indicator "Returns a SMA indicator with given bars" [bars period] (ind :averages/SMA (ind :helpers/ClosePrice bars) period))
 
-(defn ema-indicator "Returns a EMA indicator with given bars" [bars period] (ind :EMA (ind :helpers/ClosePrice bars) period))
+(defn ema-indicator "Returns a EMA indicator with given bars" [bars period] (ind :averages/EMA (ind :helpers/ClosePrice bars) period))
 
 (defn fisher-indicator "Returns a Fisher indicator with given bars" [bars period] (ind :Fisher (ind :helpers/MedianPrice bars) period))
 
