@@ -1,25 +1,24 @@
 {:aliases {:dev/env {:extra-paths ["dev"]
                      :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
                      :override-deps {org.clojars.btezergil/nature {:local/root "/Users/btezergil/phd/nature"}}}}
- :deps {org.clojure/clojure {:mvn/version "1.11.3"}
+ :deps {org.clojure/clojure {:mvn/version "1.12.1"}
         org.clojure/tools.logging {:mvn/version "1.3.0"}
-        org.clojure/data.csv {:mvn/version "1.0.1"}
-        org.clojure/data.json {:mvn/version "2.5.0"}
+        org.clojure/data.csv {:mvn/version "1.1.0"}
+        org.clojure/data.json {:mvn/version "2.5.1"}
         telegrambot-lib/telegrambot-lib {:mvn/version "2.15.0"}
-        cheshire/cheshire {:mvn/version "5.11.0"}
-        org.slf4j/slf4j-api {:mvn/version "2.0.16"}
+        org.slf4j/slf4j-api {:mvn/version "2.0.17"}
         envvar/envvar {:mvn/version "1.1.2"}
-        com.cognitect.aws/api {:mvn/version "0.8.656"}
-        com.cognitect.aws/endpoints {:mvn/version "1.1.12.437"}
-        com.cognitect.aws/sns {:mvn/version "836.2.1323.0"}
-        com.cognitect.aws/lambda {:mvn/version "845.2.1359.0"}
-        com.cognitect.aws/secretsmanager {:mvn/version "845.2.1345.0"}
+        com.cognitect.aws/api {:mvn/version "0.8.741"}
+        com.cognitect.aws/endpoints {:mvn/version "871.2.31.23"}
+        com.cognitect.aws/sns {:mvn/version "871.2.30.11"}
+        com.cognitect.aws/lambda {:mvn/version "871.2.31.23"}
+        com.cognitect.aws/secretsmanager {:mvn/version "871.2.29.35"}
         com.taoensso/faraday {:mvn/version "1.12.3"}
-        com.taoensso/telemere {:mvn/version "1.0.0-beta25"}
-        com.taoensso/telemere-slf4j {:mvn/version "1.0.0-beta25"}
-        danlentz/clj-uuid {:mvn/version "0.1.9"}
-        clj-http/clj-http {:mvn/version "3.12.3"}
-        org.ta4j/ta4j-core {:mvn/version "0.17"}
+        com.taoensso/telemere {:mvn/version "1.0.1"}
+        com.taoensso/telemere-slf4j {:mvn/version "1.0.1"}
+        danlentz/clj-uuid {:mvn/version "0.2.0"}
+        clj-http/clj-http {:mvn/version "3.13.0"}
+        org.ta4j/ta4j-core {:mvn/version "0.18"}
         org.clojars.btezergil/nature {:mvn/version "1.0.1"}
         org.clojars.btezergil/algolab-lib {:mvn/version "0.1.4"}
         metasoarous/oz {:mvn/version "1.6.0-alpha36"}}

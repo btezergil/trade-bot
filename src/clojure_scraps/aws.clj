@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]
-            [cheshire.core :as cheshire]))
+            [clojure.data.json :as json]))
 
 (def shared-client-params {:region (:aws-region @env)
                            :credentials-provider (credentials/basic-credentials-provider {:access-key-id (:aws-access-key @env)
@@ -21,7 +21,7 @@
   (log/info (str sec-man))
   (let [response (aws/invoke sec-man {:op :GetSecretValue, :request {:SecretId "arn:aws:secretsmanager:eu-central-1:994976387571:secret:trade-bot-secrets-qNBE6o"}})
         secrets (:SecretString response)]
-    (cheshire/parse-string secrets true)))
+    (json/read-str secrets :key-fn keyword)))
 
 (defn send-sns
   "Sends a SNS notification"

@@ -1,7 +1,7 @@
 (ns clojure-scraps.data.apigetter
   (:require [envvar.core :as envvar :refer [env]]
             [clj-http.client :as client]
-            [cheshire.core :as cheshire]))
+            [clojure.data.json :as json]))
 
 (def team-query-params {:symbol "TEAM", :interval "1min", :exchange "NASDAQ"})
 (def quote-url "https://api.twelvedata.com/quote")
@@ -18,7 +18,7 @@
                                                "interval" (:interval team-query-params)
                                                "exchange" (:exchange team-query-params)
                                                "apikey" (:twelvedata-apikey @env)}})]
-    (cheshire/parse-string body true)))
+    (json/read body :key-fn keyword)))
 
 (defn get-forex-time-series
   "Queries the API for data"
@@ -40,6 +40,6 @@
                                                 "interval" (:interval team-query-params)
                                                 "outputsize" size
                                                 "apikey" (:twelvedata-apikey @env)}})
-         body (cheshire/parse-string (:body response) true)
+         body (json/read (:body response) :key-fn keyword)
          values (:values body)]
      values)))
