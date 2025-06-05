@@ -9,7 +9,7 @@
         cheshire/cheshire {:mvn/version "5.11.0"}
         org.slf4j/slf4j-api {:mvn/version "2.0.16"}
         envvar/envvar {:mvn/version "1.1.2"}
-        com.cognitect.aws/api {:mvn/version "0.8.656"}
+        com.cognitect.aws/api {:mvn/version "0.8.741"}
         com.cognitect.aws/endpoints {:mvn/version "1.1.12.437"}
         com.cognitect.aws/sns {:mvn/version "836.2.1323.0"}
         com.cognitect.aws/lambda {:mvn/version "845.2.1359.0"}
