@@ -196,6 +196,7 @@
   [index]
   {:post [(s/valid? :genetic/fibonacci %)]}
   {:index index, :indicator :fibonacci :factor (rand-int-range 1 3)})
+; INFO: fibonacci levels: 0.38 (FACTOR1) , 0.61 (FACTOR2) , 0.78
 
 (defn mutate-fibonacci
   [node]

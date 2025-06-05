@@ -1,5 +1,6 @@
 {:aliases {:dev/env {:extra-paths ["dev"]
-                     :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]}}
+                     :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
+                     :override-deps {org.clojars.btezergil/nature {:local/root "/Users/btezergil/phd/nature"}}}}
  :deps {org.clojure/clojure {:mvn/version "1.11.3"}
         org.clojure/tools.logging {:mvn/version "1.3.0"}
         org.clojure/data.csv {:mvn/version "1.0.1"}
@@ -19,8 +20,7 @@
         danlentz/clj-uuid {:mvn/version "0.1.9"}
         clj-http/clj-http {:mvn/version "3.12.3"}
         org.ta4j/ta4j-core {:mvn/version "0.17"}
-        ;org.clojars.btezergil/nature {:mvn/version "1.0.0"}
-        btezergil/nature {:local/root "/Users/btezergil/phd/nature"}
+        org.clojars.btezergil/nature {:mvn/version "1.0.1"}
         org.clojars.btezergil/algolab-lib {:mvn/version "0.1.4"}
         metasoarous/oz {:mvn/version "1.6.0-alpha36"}}
  :mvn/repos {"clojars" {:url "https://repo.clojars.org/"} "central" {:url "https://repo1.maven.org/maven2/"}}

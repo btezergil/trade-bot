@@ -1,8 +1,7 @@
 (ns clojure-scraps.params)
 
 (def params
-  {:indicator-count 5
-   :window-range 5
+  {:window-range 5
    :crossover-probability 0.5
    :crossover-propagation-probability 0.5 ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
    :mutation-probability 0.2
@@ -23,7 +22,7 @@
    :trade-threshold 0.05 ; TODO: introduce trade threshold?
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar] ; TODO: buradaki listeyi bizim dosyadaki listeden populate et
-   :prune-height 2
+   :prune-height 3 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100
    :fitness-criterion :accuracy-profit-hybrid ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]

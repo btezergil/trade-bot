@@ -49,7 +49,7 @@
       "/test" (log/info "received tail message:" cmdarg)
       (log/warn "Unknown command:" cmd))))
 
-(defn main
+(defn -main
   "Parses command line arguments and calls the related functions"
   []
   (setup-telemere)
@@ -63,4 +63,4 @@
 ;(test-individual)
 ;(run-evolution)
 ;*e
-(main)
+(-main)
