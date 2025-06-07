@@ -12,8 +12,10 @@
 (defn message-to-me
   "Send a message to me from Telegram"
   [message]
-  (log/info "sending message to btezergil")
-  (tbot/send-message trade-bot btezergil-chat-id message))
+  (if-not (:in-container @env)
+    (do (log/info "sending message to btezergil")
+        (tbot/send-message trade-bot btezergil-chat-id message))
+    (log/info "execution inside container, not sending Telegram messages")))
 
 (defn poll-updates
   "Long poll for recent chat messages from Telegram."
