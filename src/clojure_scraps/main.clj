@@ -51,16 +51,13 @@
 
 (defn -main
   "Parses command line arguments and calls the related functions"
-  []
+  [& args]
   (setup-telemere)
-  (let [arg (first *command-line-args*)]
+  (let [arg (first args)]
     (condp = arg
       "r" (run-evolution dg/evolution-filenames-map)
       "t" (time (test-individual))
       "b" (tb/start-bot-long-polling bot-commands-fn)
       (log/warn "No execution mode defined for the given argument:" arg))))
 
-;(test-individual)
-;(run-evolution)
-;*e
-(-main)
+;(-main)

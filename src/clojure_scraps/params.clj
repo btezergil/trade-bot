@@ -6,9 +6,9 @@
    :crossover-propagation-probability 0.5 ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
    :mutation-probability 0.2
    :flip-mutation-probability 0.25
-   :population-size 100
+   :population-size 4
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 100
+   :generation-count 2
    :elitism-ratio 0.05
    :leverage 100
    :capital 1000
