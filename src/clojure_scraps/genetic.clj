@@ -265,8 +265,8 @@
         gen-count (atom 0)
         monitors [nmon/print-best-solution
                   mon/print-average-fitness-of-population
-                  (fn [population current-generation] (mon/write-individuals-to-table-monitor evolution-id population current-generation))
-                  (fn [population current-generation] (mon/write-transactions-to-table-monitor (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
+                  (fn [population current-generation] (mon/write-individuals-to-file-monitor evolution-id population current-generation))
+                  (fn [population current-generation] (mon/write-transactions-to-file-monitor evolution-id (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
                   (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
     (dyn/write-evolution-to-table evolution-id filenames)

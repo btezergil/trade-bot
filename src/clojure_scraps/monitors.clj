@@ -2,7 +2,8 @@
   (:require [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.java.io :as io]))
 
 (defn print-average-fitness-of-population
   "Calculates the average fitness of given population"
@@ -26,10 +27,46 @@
   "Monitor function for evolution that writes every individual of population to the table"
   [evolution-id population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
+  (log/info "Writing individuals to table")
   (dorun (pmap (partial dyn/write-strategy-to-table evolution-id) population)))
 
 (defn write-transactions-to-table-monitor
   "Monitor function for evolution that writes every individual of population to the table"
   [transaction-calculator-fn population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
+  (log/info "Writing transactions to table")
   (dorun (pmap (fn [ind] (dorun (pmap (partial dyn/write-transaction-to-table (:guid ind)) (transaction-calculator-fn ind)))) population)))
+
+(defn- write-to-file
+  [filename data]
+  (spit filename data :append true))
+
+; TODO: develop the functions that write to file instead of DB in order to see whether it's faster or not
+(defn write-individuals-to-file-monitor
+  "Monitor function for evolution that writes every individual of population to a file to be written to DB later"
+  [evolution-id population current-generation]
+  {:pre [(s/conform :genetic/individual population)]}
+  (map #(write-to-file (str evolution-id "-individuals.txt") (str % "\n")) population))
+
+(defn write-transactions-to-file-monitor
+  "Monitor function for evolution that writes every transaction of population to a file to be written to DB later"
+  [evolution-id transaction-calculator-fn population current-generation]
+  {:pre [(s/conform :genetic/individual population)]}
+  (map #(write-to-file (str evolution-id "-transactions.txt") (-> %
+                                                                  transaction-calculator-fn
+                                                                  (str "\n")))
+       population))
+
+(defn read-individuals-from-file
+  "Reads the individual file written by monitor function"
+  [evolution-id]
+  (with-open [rdr (io/reader (str evolution-id "-individuals.txt"))]
+    (let [lines (line-seq rdr)]
+      (doall (map read-string lines)))))
+
+(defn read-transactions-from-file
+  "Reads the transactions file written by monitor function"
+  [evolution-id]
+  (with-open [rdr (io/reader (str evolution-id "-transactions.txt"))]
+    (let [lines (line-seq rdr)]
+      (doall (map read-string lines)))))
