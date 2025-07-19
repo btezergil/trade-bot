@@ -11,6 +11,7 @@
             [clojure.math :as math]
             [clj-uuid :as uuid]
             [nature.core :as n]
+            [envvar.core :as envvar :refer [env]]
             [nature.monitors :as nmon]))
 
 (defn generate-sequence
@@ -267,9 +268,9 @@
                   mon/print-average-fitness-of-population
                   (fn [population current-generation] (mon/write-individuals-to-file-monitor evolution-id population current-generation))
                   (fn [population current-generation] (mon/write-transactions-to-file-monitor evolution-id (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
-                  (fn [population current-generation] (mon/save-fitnesses-for-current-generation evolution-id gen-count population current-generation))]]
+                  (fn [population current-generation] (mon/save-fitnesses-to-file-for-current-generation evolution-id gen-count population current-generation))]]
     (tb/message-to-me (str "Starting evolution with id " evolution-id))
-    (dyn/write-evolution-to-table evolution-id filenames)
+    (when-not (:in-container @env) (dyn/write-evolution-to-table evolution-id filenames))
     (n/evolve-with-sequence-generator generate-sequence
                                       population-size
                                       generation-count
