@@ -3,13 +3,12 @@ FROM clojure:temurin-21-tools-deps-bullseye
 ARG TARGETPLATFORM
 ENV IN_CONTAINER=true
 
-RUN mkdir -p /app
 WORKDIR /app
 
-COPY deps.edn /app
+COPY deps.edn .
 RUN clojure -P
-COPY ./src /app/src
-COPY ./data /app/data
+COPY ./src ./src
+COPY ./data ./data
 
-COPY ./start.sh /app
+COPY ./start.sh .
 CMD ./start.sh
