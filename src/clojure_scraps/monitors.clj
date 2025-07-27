@@ -3,7 +3,8 @@
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [envvar.core :as envvar :refer [env]]))
 
 (defn print-average-fitness-of-population
   "Calculates the average fitness of given population"
@@ -41,6 +42,17 @@
   [filename data]
   (spit filename (str data "\n") :append true))
 
+(defn- generate-transactions-map
+  [strategy-id transactions]
+  {:strategy-id strategy-id
+   :transactions transactions})
+
+(defn- generate-filename
+  [evolution-id file-suffix]
+  (if (:in-container @env)
+    (str (:out-file-path @env) evolution-id file-suffix)
+    (str  evolution-id file-suffix)))
+
 (defn save-fitnesses-to-file-for-current-generation
   "Saves the current generation's best and average fitness into the table
   'gen-count' function parameter is the atom that saves the current generation count"
@@ -54,25 +66,20 @@
                   :generation-count @gen-count
                   :best-fitness best-fitness
                   :avg-fitness avg-fitness}]
-    (write-to-file (str evolution-id "-fitnesses.txt") stat-map)
+    (write-to-file (generate-filename evolution-id "-fitnesses.txt") stat-map)
     (swap! gen-count inc)))
 
 (defn write-individuals-to-file-monitor
   "Monitor function for evolution that writes every individual of population to a file to be written to DB later"
   [evolution-id population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (doall (map #(write-to-file (str evolution-id "-individuals.txt") %) population)))
-
-(defn- generate-transactions-map
-  [strategy-id transactions]
-  {:strategy-id strategy-id
-   :transactions transactions})
+  (doall (map #(write-to-file (generate-filename evolution-id "-individuals.txt") %) population)))
 
 (defn write-transactions-to-file-monitor
   "Monitor function for evolution that writes every transaction of population to a file to be written to DB later"
   [evolution-id transaction-calculator-fn population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
-  (doall (map #(write-to-file (str evolution-id "-transactions.txt") (generate-transactions-map (:guid %) (transaction-calculator-fn %))) population)))
+  (doall (map #(write-to-file (generate-filename evolution-id "-transactions.txt") (generate-transactions-map (:guid %) (transaction-calculator-fn %))) population)))
 
 (defn read-individuals-from-file
   "Reads the individual file written by monitor function"
