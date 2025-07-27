@@ -8,7 +8,7 @@
    :flip-mutation-probability 0.25
    :population-size 4
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 2
+   :generation-count 3
    :elitism-ratio 0.05
    :leverage 100
    :capital 1000
