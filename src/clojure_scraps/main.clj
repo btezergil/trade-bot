@@ -53,6 +53,7 @@
   "Parses command line arguments and calls the related functions"
   [& args]
   (setup-telemere)
+  (log/warn "Number of processors in clj: " (.availableProcessors (Runtime/getRuntime)))
   (let [arg (first args)]
     (condp = arg
       "r" (run-evolution dg/evolution-filenames-map)
