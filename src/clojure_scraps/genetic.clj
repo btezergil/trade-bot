@@ -30,7 +30,8 @@
   "Generates signals on the given data index."
   [tree direction index data]
   (if (vector? tree)
-    (merge (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data))
+    (apply merge (pvalues (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data))) ; TODO: burayi eski ve bu sekliyle bi benchmark yapalim
+    ;(merge (generate-signals (first tree) direction index data) (generate-signals (last tree) direction index data)) ; TODO: burayi eski ve bu sekliyle bi benchmark yapalim
     (let [index-keyword (tree/index-to-keyword tree)]
       (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
