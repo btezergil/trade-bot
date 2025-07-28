@@ -169,7 +169,7 @@
   {:post [(s/valid? :strategy/signal %)]}
   (let [window-range (dec (:window-range p/params))
         start-index-for-range (if (pos? (- index window-range)) (- index window-range) 0)]
-    (combine-signal-list (map signal-check-fn (range start-index-for-range (inc index))))))
+    (combine-signal-list (pmap signal-check-fn (range start-index-for-range (inc index)))))) ; TODO: burada da pmap kullanalim
 
 (defn check-rsi-signal-raw
   "Generates signal for RSI, signal condition is:
