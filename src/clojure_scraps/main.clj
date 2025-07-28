@@ -6,7 +6,8 @@
             [clojure.pprint :as pp]
             [clojure.string :as str]
             [taoensso.telemere :as t]
-            [taoensso.telemere.tools-logging :as tl]))
+            [taoensso.telemere.tools-logging :as tl])
+  (:gen-class))
 
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
