@@ -20,3 +20,4 @@ Session.vim
 .cpcache/
 src/clojure_scraps/work
 work/
+out-files/
