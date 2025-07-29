@@ -1,7 +1,7 @@
 #!/bin/bash
 
-GIT_VERSION=$(git rev-list HEAD --count)
-TARGET="clojure-scraps-0.1.${GIT_VERSION}"
+#GIT_VERSION=$(git rev-list HEAD --count)
+#TARGET="clojure-scraps-0.1.${GIT_VERSION}"
 CONTAINER_TARGET="clojure-scraps-0.1.1-container"
 
 java -jar target/"$CONTAINER_TARGET"-standalone.jar r

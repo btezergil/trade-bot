@@ -270,7 +270,10 @@
                   (fn [population current-generation] (mon/write-individuals-to-file-monitor evolution-id population current-generation))
                   (fn [population current-generation] (mon/write-transactions-to-file-monitor evolution-id (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
                   (fn [population current-generation] (mon/save-fitnesses-to-file-for-current-generation evolution-id gen-count population current-generation))]]
-    (tb/message-to-me (str "Starting evolution with id " evolution-id))
+    (let [message (str "Starting evolution with id " evolution-id)]
+      (if (:in-container @env)
+        (log/info message)
+        (tb/message-to-me message)))
     (when-not (:in-container @env) (dyn/write-evolution-to-table evolution-id filenames))
     (n/evolve-with-sequence-generator generate-sequence
                                       population-size
