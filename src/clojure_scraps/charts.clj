@@ -1,5 +1,6 @@
 (ns clojure-scraps.charts
   (:require [clojure-scraps.stats :as st]
+            [clojure-scraps.results :as res]
             [oz.core :as oz]
             [clojure-scraps.dynamo :as dyn]))
 
@@ -138,12 +139,12 @@
        dyn/read-strategies-of-evolution
        (reduce (fn [s1 s2] (if (> (:fitness s1) (:fitness s2)) s1 s2)))
        :id
-       st/get-candlestick-data
+       (st/get-candlestick-data evolution-id)
        get-candlestick-map))
 
 ;; Render the plot
 (oz/view! (candlestick-data-from-evolution-id  "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
-(oz/view! (scatter-plot "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
-(oz/view! (histogram-plot "67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"))
+(oz/view! (scatter-plot (first res/hybrid-100gen-100pop-3height-ids)))
+(oz/view! (histogram-plot (first res/hybrid-100gen-100pop-3height-ids)))
 (oz/view! (profit-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))
-(oz/view! (accuracy-fitness-plot ["67bdcb0f-0d4f-4ad7-b5ac-d47a7324de3b"]))
+(oz/view! (accuracy-fitness-plot [(first res/hybrid-100gen-100pop-3height-ids)]))

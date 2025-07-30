@@ -3,7 +3,6 @@
             [clojure-scraps.params :as p]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
-            [clojure.java.io :as io]
             [envvar.core :as envvar :refer [env]]))
 
 (defn print-average-fitness-of-population
@@ -81,16 +80,3 @@
   {:pre [(s/conform :genetic/individual population)]}
   (doall (map #(write-to-file (generate-filename evolution-id "-transactions.txt") (generate-transactions-map (:guid %) (transaction-calculator-fn %))) population)))
 
-(defn read-individuals-from-file
-  "Reads the individual file written by monitor function"
-  [evolution-id]
-  (with-open [rdr (io/reader (str evolution-id "-individuals.txt"))]
-    (let [lines (line-seq rdr)]
-      (doall (map read-string lines)))))
-
-(defn read-transactions-from-file
-  "Reads the transactions file written by monitor function"
-  [evolution-id]
-  (with-open [rdr (io/reader (str evolution-id "-transactions.txt"))]
-    (let [lines (line-seq rdr)]
-      (doall (map read-string lines)))))

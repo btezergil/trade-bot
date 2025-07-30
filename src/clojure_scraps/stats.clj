@@ -2,15 +2,67 @@
   (:require [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.params :as p]
             [clojure-scraps.datagetter :as dg]
+            [clojure-scraps.results :as res]
             [clojure.tools.logging :as log]
+            [clojure.java.io :as io]
             [clojure.pprint :as pp])
   (:import [java.time.format DateTimeFormatter]
            (java.time ZonedDateTime)))
 
+(def operation-mode :file)
+(def stat-file-folder "out-files/100pop-hybrid/100gen-3height/")
+(def fitness-criterion :accuracy-profit-hybrid)
+
+(defn read-individuals-from-file
+  "Reads the individual file written by monitor function"
+  [evolution-id]
+  (with-open [rdr (io/reader (str stat-file-folder evolution-id "-individuals.txt"))]
+    (let [lines (line-seq rdr)]
+      (doall (map read-string lines)))))
+
+(defn read-transactions-from-file
+  "Reads the transactions file written by monitor function"
+  [evolution-id]
+  (with-open [rdr (io/reader (str stat-file-folder evolution-id "-transactions.txt"))]
+    (let [lines (line-seq rdr)]
+      (doall (map read-string lines)))))
+
+(defn read-fitnesses-from-file
+  "Reads the fitnesses file written by monitor function"
+  [evolution-id]
+  (with-open [rdr (io/reader (str stat-file-folder evolution-id "-fitnesses.txt"))]
+    (let [lines (line-seq rdr)]
+      (doall (map read-string lines)))))
+
+(defn- get-evolution-stats
+  [evolution-id]
+  (condp = operation-mode
+    :db (dyn/read-evolution-stats-from-table evolution-id)
+    :file (read-fitnesses-from-file evolution-id)))
+
+(defn- get-strategies-of-evolution
+  [evolution-id]
+  (condp = operation-mode
+    :db (dyn/read-strategies-of-evolution evolution-id)
+    :file (read-individuals-from-file evolution-id)))
+
+(defn- get-transactions-of-strategy
+  [evolution-id strategy-id]
+  (condp = operation-mode
+    :db (dyn/read-transactions-of-strategy strategy-id)
+    :file (let [all-transactions (read-transactions-from-file evolution-id)]
+            (filter #(= (:strategy-id %) strategy-id) all-transactions))))
+
+(defn- get-transactions
+  [evolution-id]
+  (condp = operation-mode
+    :db (dyn/read-transactions-from-table evolution-id)
+    :file (read-transactions-from-file evolution-id)))
+
 (defn extract-evolution-stat-data
   "Given a list of evolution ids, gets the average and best fitness data and averages them."
   [evolution-ids]
-  (let [evolution-stats (map dyn/read-evolution-stats-from-table evolution-ids)
+  (let [evolution-stats (map get-evolution-stats evolution-ids)
         evolution-count (count evolution-ids)
         generation-count (count (first evolution-stats))]
     (loop [index 0
@@ -19,34 +71,33 @@
         data
         (recur (inc index) (conj data {:generation-count index
                                        :avg-fitness (/ (->> evolution-stats
-                                                            (map #(get % index))
+                                                            (map #(nth % index))
                                                             (map :avg-fitness)
                                                             (reduce +)
                                                             double) evolution-count)
                                        :best-fitness (/ (->> evolution-stats
-                                                             (map #(get % index))
+                                                             (map #(nth % index))
                                                              (map :best-fitness)
                                                              (reduce +)
                                                              double) evolution-count)}))))))
 
 (defn calculate-total-fitness-from-transactions
   "Calculates the total fitness of the strategy by adding all transaction results belonging to it."
-  [strategy]
+  [strategy evolution-id]
   (->> strategy
        :id
-       (dyn/read-transactions-of-strategy)
+       (get-transactions-of-strategy evolution-id)
        (map :result)
        (reduce +)))
 
 (defn extract-histogram-data
   "Given an evolution id, gets the fitness and profit data for its strategies."
   [evolution-id]
-  (let [strategies (dyn/read-strategies-of-evolution evolution-id)
-        fitness-criterion (:fitness-criterion (dyn/read-evolution-from-table evolution-id))]
+  (let [strategies (get-strategies-of-evolution evolution-id)]
     (flatten (map (fn [strategy] (list {:fitness (double (if (= :profit fitness-criterion)
-                                                           (- (:fitness strategy) (:fitness-offset p/params))
-                                                           (:fitness strategy)))
-                                        :profit (double (calculate-total-fitness-from-transactions strategy))}))
+                                                           (- (:fitness-score strategy) (:fitness-offset p/params))
+                                                           (:fitness-score strategy)))
+                                        :profit (double (calculate-total-fitness-from-transactions strategy evolution-id))}))
                   strategies))))
 
 (defn get-evolution-stat-data-profit
@@ -93,8 +144,8 @@
 (defn gather-statistics
   "Gathers transaction-related statistics from the database."
   [evolution-id]
-  (let [transactions (dyn/read-transactions-from-table evolution-id)
-        strategy-count (count (dyn/read-strategies-of-evolution evolution-id))]
+  (let [transactions (get-transactions evolution-id)
+        strategy-count (count (get-strategies-of-evolution evolution-id))]
     (loop [transaction-count 0
            long-transaction-count 0
            short-transaction-count 0
@@ -145,16 +196,16 @@
   Training fitness is on the strategy itself, while the test fitness is calculated from the transactions."
   [evolution-id & {:keys [all]
                    :or {all false}}]
-  (let [strategies (dyn/read-strategies-of-evolution evolution-id)
-        best-strat (reduce (fn [str1 str2] (if (> (:fitness str1) (:fitness str2)) str1 str2)) strategies)]
+  (let [strategies (get-strategies-of-evolution evolution-id)
+        best-strat (reduce (fn [str1 str2] (if (> (:fitness-score str1) (:fitness-score str2)) str1 str2)) strategies)]
     (when all (log/info (pp/pprint (map (fn [strategy] (str "strategy-id: " (:id strategy)
                                                             ", fitness: " (if (= :profit (:fitness-criterion p/params))
-                                                                            (- (:fitness strategy) (:fitness-offset p/params))
-                                                                            (:fitness strategy))
-                                                            ", test fitness: " (calculate-total-fitness-from-transactions strategy)))
+                                                                            (- (:fitness-score strategy) (:fitness-offset p/params))
+                                                                            (:fitness-score strategy))
+                                                            ", test fitness: " (calculate-total-fitness-from-transactions strategy evolution-id)))
                                         strategies))))
     (log/info (pp/pprint  (str "Best strategy: " best-strat
-                               ", test fitness: " (calculate-total-fitness-from-transactions  best-strat))))))
+                               ", test fitness: " (calculate-total-fitness-from-transactions  best-strat evolution-id))))))
 
 (defn convert-bars-to-ohlc
   "Gets the bars and converts them to a map that can be used to draw graph in Oz."
@@ -206,13 +257,14 @@
 
 (defn get-candlestick-data
   "Generates the OHLC data with entry points."
-  [strategy-id]
+  [evolution-id strategy-id]
   (merge-bars-with-transactions (convert-bars-to-ohlc (dg/get-bars-for-genetic dg/evolution-filenames-map :test))
                                 (-> strategy-id
-                                    dyn/read-transactions-of-strategy
+                                    (get-transactions-of-strategy evolution-id)
                                     get-entry-data-from-transactions)))
 
 ;(compare-training-and-test-performance "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
 ;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
 ;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
+;(:strategy-id (first (read-transactions-from-file "643c4d0f-7be8-463f-a7e2-80becfcb1703")))
 

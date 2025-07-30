@@ -17,7 +17,7 @@
 (def evolution-table-vars {:table-name :evolution-v1 :table-key :id})
 (def evolution-stats-table-vars {:table-name :evolution-stats-v1 :table-key :evolution-id})
 
-(def throughput-map {:read 10000 :write 10000})
+(def throughput-map {:read 100000 :write 100000})
 (defn create-tables
   "Creates all necessary tables with indexes for initial setup."
   []
@@ -56,7 +56,7 @@
                 {:id (:guid individual)
                  :evolution-id evolution-id
                  :age (:age individual)
-                 :fitness (:fitness-score individual)
+                 :fitness-score (:fitness-score individual)
                  :genetic-sequence (far/freeze (:genetic-sequence individual))}))
 
 (defn read-strategy-from-table
