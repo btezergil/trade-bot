@@ -8,7 +8,7 @@
    :flip-mutation-probability 0.25
    :population-size 100
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 200
+   :generation-count 400
    :elitism-ratio 0.05
    :leverage 100
    :capital 1000
@@ -22,10 +22,10 @@
    :trade-threshold 0.05 ; TODO: introduce trade threshold?
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar] ; TODO: buradaki listeyi bizim dosyadaki listeden populate et
-   :prune-height 4 ; indicator count is 2^prune-height
+   :prune-height 3 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100
-   :fitness-criterion :accuracy-profit-hybrid ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]
+   :fitness-criterion :profit ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]
    :fitness-offset 20000
    :max-fitness-scale 25000 ; governs the profit scaling ceiling for hybrid fitness
    :accuracy-factor 0.5 ; governs the weights of accuracy and profit in the hybrid fitness scheme

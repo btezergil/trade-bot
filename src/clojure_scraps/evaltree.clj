@@ -10,6 +10,7 @@
                :engulfing :harami :hammer :inverted-hammer :trend])
 (def candlesticks #{:engulfing :harami :hammer :inverted-hammer})
 ; INFO: parabolic SAR and fibonacci are available but not used since their signal generation is too slow compared to others
+; TODO: add MACD indicator
 
 ;; Spec definitions for supported indicators
 

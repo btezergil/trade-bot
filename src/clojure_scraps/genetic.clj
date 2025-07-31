@@ -76,7 +76,7 @@
   "Calculates the total profit from given transactions."
   [transactions]
   (->> transactions
-       (map :result)
+       (pmap :result)
        (reduce +)))
 
 (defn calculate-accuracy-percentage
