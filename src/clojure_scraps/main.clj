@@ -20,6 +20,13 @@
                             (tb/message-to-me (str "Caught exception: " (.getMessage e)))
                             (throw e)))))
 
+(defn run-evolution-with-futures
+  [filenames]
+  (let [res1 (future (run-evolution filenames))
+        res2 (future (run-evolution filenames))]
+    @res1
+    @res2))
+
 (defn test-individual
   "Generates an individual and calculates its fitness for test purposes."
   []
@@ -57,7 +64,7 @@
   (log/warn "Number of processors in clj: " (.availableProcessors (Runtime/getRuntime)))
   (let [arg (first args)]
     (condp = arg
-      "r" (run-evolution dg/evolution-filenames-map)
+      "r" (run-evolution-with-futures dg/evolution-filenames-map)
       "t" (time (test-individual))
       "b" (tb/start-bot-long-polling bot-commands-fn)
       (log/warn "No execution mode defined for the given argument:" arg))))
