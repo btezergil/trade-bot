@@ -34,6 +34,13 @@
     (let [lines (line-seq rdr)]
       (doall (map read-string lines)))))
 
+(defn get-strategy-to-transaction-map
+  [evolution-id]
+  (reduce #(assoc %1 (:strategy-id %2) (:transactions %2)) {} (read-transactions-from-file evolution-id)))
+
+(def get-strategy-to-transaction-map-memo
+  (memoize get-strategy-to-transaction-map))
+
 (defn- get-evolution-stats
   [evolution-id]
   (condp = operation-mode
@@ -83,22 +90,41 @@
 
 (defn calculate-total-fitness-from-transactions
   "Calculates the total fitness of the strategy by adding all transaction results belonging to it."
-  [strategy evolution-id]
-  (->> strategy
-       :id
-       (get-transactions-of-strategy evolution-id)
-       (map :result)
-       (reduce +)))
+  ([strategy evolution-id]
+   (->> strategy
+        :id
+        (get-transactions-of-strategy evolution-id)
+        (map :result)
+        (reduce +)))
+
+  ([transactions]
+   (->> transactions
+        (map :result)
+        (reduce +))))
+
+(defn generate-strategy-map-for-histogram-from-db
+  "Given a strategy, generates the map for histogram/scatter plot. This method works for data from DB."
+  ([evolution-id strategy]
+   (list {:fitness (double (if (= :profit fitness-criterion)
+                             (- (:fitness-score strategy) (:fitness-offset p/params))
+                             (:fitness-score strategy)))
+          :profit (double (calculate-total-fitness-from-transactions strategy evolution-id))})))
+
+(defn generate-strategy-map-for-histogram-from-file
+  "Given a strategy, generates the map for histogram/scatter plot. This method works for data from files."
+  [strategy-to-transaction-map strategy]
+  (list {:fitness (double (if (= :profit fitness-criterion)
+                            (- (:fitness-score strategy) (:fitness-offset p/params))
+                            (:fitness-score strategy)))
+         :profit (double (calculate-total-fitness-from-transactions (get strategy-to-transaction-map (str (:guid strategy)))))}))
 
 (defn extract-histogram-data
   "Given an evolution id, gets the fitness and profit data for its strategies."
   [evolution-id]
   (let [strategies (get-strategies-of-evolution evolution-id)]
-    (flatten (map (fn [strategy] (list {:fitness (double (if (= :profit fitness-criterion)
-                                                           (- (:fitness-score strategy) (:fitness-offset p/params))
-                                                           (:fitness-score strategy)))
-                                        :profit (double (calculate-total-fitness-from-transactions strategy evolution-id))}))
-                  strategies))))
+    (condp = operation-mode
+      :db (flatten (map #(generate-strategy-map-for-histogram-from-db evolution-id %) strategies))
+      :file (flatten (map #(generate-strategy-map-for-histogram-from-file (get-strategy-to-transaction-map-memo evolution-id) %) strategies)))))
 
 (defn get-evolution-stat-data-profit
   "Given a list of evolution ids, gets the average and best fitness data."
@@ -267,4 +293,7 @@
 ;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
 ;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
 ;(:strategy-id (first (read-transactions-from-file "643c4d0f-7be8-463f-a7e2-80becfcb1703")))
+(time (let [evolution-id (first res/hybrid-100pop-100gen-3height-ids)]
+        (extract-histogram-data evolution-id)))
+
 
