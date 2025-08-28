@@ -10,8 +10,8 @@
            (java.time ZonedDateTime)))
 
 (def operation-mode :file)
-(def stat-file-folder "out-files/100pop-hybrid/100gen-3height/")
-(def fitness-criterion :accuracy-profit-hybrid)
+(def stat-file-folder "out-files/100pop-profit/100gen-3height/")
+(def fitness-criterion :profit)
 
 (defn read-individuals-from-file
   "Reads the individual file written by monitor function"
@@ -37,9 +37,6 @@
 (defn get-strategy-to-transaction-map
   [evolution-id]
   (reduce #(assoc %1 (:strategy-id %2) (:transactions %2)) {} (read-transactions-from-file evolution-id)))
-
-(def get-strategy-to-transaction-map-memo
-  (memoize get-strategy-to-transaction-map))
 
 (defn- get-evolution-stats
   [evolution-id]
@@ -112,11 +109,11 @@
 
 (defn generate-strategy-map-for-histogram-from-file
   "Given a strategy, generates the map for histogram/scatter plot. This method works for data from files."
-  [strategy-to-transaction-map strategy]
+  [transactions strategy]
   (list {:fitness (double (if (= :profit fitness-criterion)
                             (- (:fitness-score strategy) (:fitness-offset p/params))
                             (:fitness-score strategy)))
-         :profit (double (calculate-total-fitness-from-transactions (get strategy-to-transaction-map (str (:guid strategy)))))}))
+         :profit (double (calculate-total-fitness-from-transactions transactions))}))
 
 (defn extract-histogram-data
   "Given an evolution id, gets the fitness and profit data for its strategies."
@@ -124,7 +121,8 @@
   (let [strategies (get-strategies-of-evolution evolution-id)]
     (condp = operation-mode
       :db (flatten (map #(generate-strategy-map-for-histogram-from-db evolution-id %) strategies))
-      :file (flatten (map #(generate-strategy-map-for-histogram-from-file (get-strategy-to-transaction-map-memo evolution-id) %) strategies)))))
+      :file (let [strategy-to-transaction-map (get-strategy-to-transaction-map evolution-id)]
+              (flatten (map #(generate-strategy-map-for-histogram-from-file (get strategy-to-transaction-map (str (:guid %))) %) strategies))))))
 
 (defn get-evolution-stat-data-profit
   "Given a list of evolution ids, gets the average and best fitness data."
@@ -293,7 +291,5 @@
 ;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
 ;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
 ;(:strategy-id (first (read-transactions-from-file "643c4d0f-7be8-463f-a7e2-80becfcb1703")))
-(time (let [evolution-id (first res/hybrid-100pop-100gen-3height-ids)]
-        (extract-histogram-data evolution-id)))
 
 
