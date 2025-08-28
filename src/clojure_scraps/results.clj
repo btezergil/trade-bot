@@ -15,11 +15,11 @@
    "e6bdc048-3d11-40c6-a5db-c680d780f9e5"])
 
 (def hybrid-100pop-200gen-3height-ids
-  ["5bbe089f-65ce-4694-8380-bca1926ab674"
-   "873ac8db-295e-422c-a000-5a5aae02a4e2"
-   "3d185188-a029-41d5-b0f4-03c23bc81861"
-   "d33d779a-fdf7-4483-895b-df7d99963e4c"
-   "e6bdc048-3d11-40c6-a5db-c680d780f9e5"])
+  ["3ddf9e75-15de-476d-ab96-7578d2adf6bc"
+   "91f8627d-b075-460a-920a-4dc5dd1aec8e"
+   "aae155b0-4564-443e-b5c2-842ecd761505"
+   "b7fb859b-b559-4471-a68e-2a125a750212"
+   "d24e956e-5a10-4f25-8a41-b95cf639eae4"])
 
 (def hybrid-100pop-200gen-4height-ids
   ["0b8cb1dc-7e5d-4e21-a9f2-8f4c4867feb8"
@@ -69,42 +69,28 @@
 ; 2521257-61
 (def accuracy-perc-100pop-100gen-4height-ids
   ["0f1af622-167a-4b2e-871e-f105eb411dbf"
-   "1dd623c5-a2d1-4853-b8fc-872bb078e407"
    "31bfdebc-b3e9-453d-b8c4-7ba0acff4115"
-   "607dd4d5-f3d3-4413-8e31-fc5eb3646946"
-   "bbf222ef-9b38-43e8-b182-1d7c96d96e7a"])
+   "607dd4d5-f3d3-4413-8e31-fc5eb3646946"])
 
-; 2521301-5, 25236046
+; TODO: 2521301-5, 25236046
 (def accuracy-perc-100pop-200gen-3height-ids
-  ["028471b1-36b8-400b-bbf9-82cd236eee57"
-   "3c27e8ef-0c98-48f3-ab23-9f01b26992be"
-   "66338e8f-3e87-45af-8402-8c691243ad68"
-   "c1ae022c-d6ab-4456-bc3b-b5f4cb2ff330"
+  ["3c27e8ef-0c98-48f3-ab23-9f01b26992be"
    "5c2f999d-37f7-433a-adb1-0708f8a6d176"])
 
-; 2521348-55
+; TODO: 2521348-55, 2637039-40
 (def accuracy-perc-100pop-200gen-4height-ids
-  ["89a741f9-d722-4f6b-979c-850327a3545f"
-   "8bb7e262-1264-44c2-9ea7-d5eb38f93063"
-   "8bdc8b00-d584-49aa-b069-0cc15c719756"
-   "dc4f944b-3ed8-4b5c-9c1e-32dc9ad02182"
-   "eff43ad0-0945-43ae-9690-3fe67c89e45b"])
+  ["8bb7e262-1264-44c2-9ea7-d5eb38f93063"])
 
 ; 2523395-9
 (def accuracy-perc-100pop-300gen-3height-ids
   ["6fa6b23d-e3bb-41d2-a42e-4c2cfa1d7a97"
    "7dc9426d-be76-4e45-af12-008718c6f184"
    "d652407f-bba1-4a15-8727-505bf29d1bc7"
-   "e851d2b4-1fa5-4c99-9d7c-ac76b2829f6d"
-   "f0fb2fa9-1bb4-4c05-ac87-e45f7476b8c2"])
+   "e851d2b4-1fa5-4c99-9d7c-ac76b2829f6d"])
 
-; 2523557-61
+; TODO: 2637024-6
 (def accuracy-perc-100pop-300gen-4height-ids
-  ["4d24f5cc-201b-4d5c-8021-0009edc05b9a"
-   "53edbaab-ccf2-447e-a4d4-4c246a3e0dc7"
-   "5b670d37-1d1b-4ca2-a570-335492c7f964"
-   "9fde72a7-e069-452d-9c72-2d101c58f7c8"
-   "a26b97a9-d5d6-4b18-9d7d-d333db96fdaa"])
+  [])
 
 ; 2529434-9
 (def accuracy-perc-100pop-400gen-3height-ids
@@ -190,80 +176,80 @@
 (def accuracy-100pop-400gen-4height-ids
   ["1cfb26ae-2cb2-4da9-b26c-291777c85c01"
    "8b926492-c4fd-4f85-a095-f0a54c9af5c8"
-   "empty"
-   "empty"
-   "empty"
-   "empty"])
+   "0bde8388-1907-450a-9804-2df385840248"
+   "21e375f9-8fcc-42f1-b0f2-4e2eb4cb005c"
+   "4fee6db2-9f49-4f16-abc5-7174856ca436"
+   "dd9582fb-be3c-4035-baaa-0a114b681a48"])
 
 ; 2572333-5
 (def profit-100pop-100gen-3height-ids
-  ["230bfa50-52cd-4335-97e2-0a5e7e4b4b0e"
-   "2af9786b-fd5f-4a8d-aee7-a75315b77d4f"
-   "cee4f57a-93ec-4b64-878b-26f897d26b83"
-   "d54bc6dc-21fe-4188-8885-bfb995912778"
-   "dd1ae36b-5ca4-4d6b-a0c5-e50286a27e49"
-   "ee6c6177-1b5b-41e8-afe0-97b6dc08e9a1"])
+  ["25dd0134-f6fd-4c43-a8fa-2ec1c8ec5221"
+   "6d8c083b-3f77-4475-8e8c-f02b6f1f87ae"
+   "6fabfb26-42ff-4e6c-b5bd-5f6e3888c262"
+   "902df69b-6b26-4a25-b4b9-0d42a858abb7"
+   "ac04b062-8e24-475f-b2ff-aa9993695c89"
+   "c58f86cd-801f-4530-ad31-bbfa3a8044a7"])
 
 ; 2572444-6
 (def profit-100pop-100gen-4height-ids
-  ["263e9547-e0e4-46b2-9fdc-43f8e06fd49b"
-   "32189d6f-abc6-4d00-aeef-e62cbb0d0366"
-   "60bde5ea-082f-499a-8462-2dbe3038d15f"
-   "6d854a65-81d4-4737-8aa7-262a44b96734"
-   "b5c31754-9e00-47f3-931d-2865f06c3a96"
-   "b7a953f2-c4f2-4af1-ac77-865eb530c6ab"])
+  ["6e6dd298-dcb1-4315-9757-9514d92982b2"
+   "ba902e6d-5aeb-48e4-bd6a-a533eb4d78ab"
+   "c09d0c29-5719-4499-b35b-66ee13e65672"
+   "ccd2a151-a6cd-4c31-b0a0-bc07aa419719"
+   "e6d22856-a913-4f66-b482-496239f9f987"
+   "eb873389-b410-43f7-9b0e-dcc364b73053"])
 
 ; 2572725-7, 2574116
 (def profit-100pop-200gen-3height-ids
-  ["09dd2838-3a9c-4b59-a7ec-aaa89bde70c1"
-   "2cd10809-51a8-44c3-9e9c-18dade8f8277"
-   "375dddbc-759d-43a2-956e-7fdc5d7a26b8"
-   "64191b7a-6a2e-4607-a078-1ce87f56b96c"
-   "ab2785fd-9cd5-4065-a8d3-e02043b66f58"
-   "facbbf00-f4a9-478d-a8bc-2ef952f69c35"])
+  ["3865f742-1c3c-40f9-bf75-85d646892d53"
+   "3ed0f305-9c16-42d0-a192-dd0cf5c97485"
+   "4095768a-77c3-47a7-8ef7-b0c3e57a216d"
+   "6afdc306-7811-4fc9-bba7-ca753ebbf1cd"
+   "e1c3cb83-8911-4d30-975c-6814050f8f4d"
+   "f124fd15-68df-45fd-8849-0a06e8bf43c2"])
 
 ; 2572964-6, 2578247
 (def profit-100pop-200gen-4height-ids
-  ["6dba16ac-d94e-435b-b92a-5ac7e3700cc4"
-   "72ab0801-c22e-4738-9fc4-76aa58b54a90"
-   "empty"
-   "empty"
-   "empty"
-   "empty"])
+  ["022e9443-53c9-4b35-b527-b4596fb56d25"
+   "2b23e33e-b313-41d4-aaeb-927cb9860ea9"
+   "2c60bb2f-e6ac-4d12-9db7-097e21315bf0"
+   "2f274c3d-3f0d-4ef5-8859-adae9f07ec69"
+   "533b2336-45be-4f44-84a7-7be9a32da624"
+   "fd92164c-6e1f-420f-9adf-2c1712797c55"])
 
 ; 2573151-3, 2578249
 (def profit-100pop-300gen-3height-ids
-  ["66662ac4-a7d0-4b72-9c1c-07359b02ed9b"
-   "6d127f66-995c-443b-80c4-6d185be12234"
-   "78914609-8586-4162-b689-da49d5e8866e"
-   "e73b8be6-c553-48a1-b326-9227d2fa43fe"
-   "ec626ecf-362b-417f-84ca-8a546b1487a4"
-   "f4547be5-4923-487a-a54f-5d39715cf3fb"])
+  ["03337537-17bc-4d8e-9134-539731103f7f"
+   "107cbc86-26b2-4c3e-8021-2fd37b62b8dc"
+   "7ac4fb77-de6a-493b-9046-f3a145118932"
+   "8f76c952-5d74-452f-86b0-447b12db5ced"
+   "ad27431a-a947-4b04-a2d2-0324dfe6f4da"
+   "bc918dbe-c600-4b6c-b9fc-4a98e8da10a9"])
 
-; 
+; 2578251-3
 (def profit-100pop-300gen-4height-ids
-  ["36533c77-334b-44d9-8464-3cefaffb2f3f"
-   "7cd7e41d-7827-423f-a09e-ac2043353e73"
-   "9bc3e6b7-1d88-409b-9573-39d9e94777ed"
-   "aaf2247c-e12c-402b-8e38-210983b1eb1b"
-   "cb6cfa65-39e0-4472-b5df-4fc04825e152"
-   "e458f102-acdc-42d6-af73-9ec999bdd70d"])
+  ["02fbf6df-6306-4d62-8e2a-ae44c0b51956"
+   "48759dcf-67b8-4518-a1d0-9c9187eeaa3c"
+   "6a5ae180-eaee-4381-8428-7584f2b09608"
+   "bd638365-b3de-40f4-8895-00869f25d184"
+   "c5081a8b-d706-4baf-bf27-9ecdedd534f4"
+   "f1f285d6-46c2-4934-8293-29919f9d4f93"])
 
-; 
+; 2580686-8
 (def profit-100pop-400gen-3height-ids
-  ["8665e05f-ce90-4432-a6a6-b7706359b53b"
-   "8d322e48-84e7-4c32-a3a8-1c095c5ef4ee"
-   "a0208350-43ac-4041-8aaf-ba465b2e1541"
-   "b0b5f1d2-4cd0-48a8-be26-b0b6fc2757a4"
-   "45bf5916-df02-4b0c-8584-9824bed20a70"
-   "867fbcb7-2acd-46d2-acd1-f9f7c95fdca1"])
+  ["712b0916-5feb-4388-9333-232f4694b33c"
+   "75305502-4d58-4e2c-9568-25fbf8e6677b"
+   "bc428ed1-a754-47dd-86ca-f983bd59f2fe"
+   "bdd17995-62d9-45e1-8f74-66cd0fe771c9"
+   "d166b0c7-4764-4df4-9bb1-6721dd342860"
+   "dca72cea-753e-4185-a6b6-0088c05d7693"])
 
 ; 2573336-8
 (def profit-100pop-400gen-4height-ids
-  ["1cfb26ae-2cb2-4da9-b26c-291777c85c01"
-   "8b926492-c4fd-4f85-a095-f0a54c9af5c8"
-   "empty"
-   "empty"
-   "empty"
-   "empty"])
+  ["0c270fa9-2b8c-4d48-9918-e23f5f7292b9"
+   "2114b9a2-6f67-465c-be44-51a0ec991e33"
+   "2d5c2038-136c-4181-9ab1-ad1c2c996ef7"
+   "2f274c3d-3f0d-4ef5-8859-adae9f07ec69"
+   "7f76e05d-27c8-49b0-9994-7893021fd5c8"
+   "fa887fee-ebb8-414c-b97c-8c903511e55d"])
 
