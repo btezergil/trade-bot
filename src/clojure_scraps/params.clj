@@ -8,9 +8,9 @@
    :flip-mutation-probability 0.25
    :population-size 100
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 200
+   :generation-count 300
    :elitism-ratio 0.05
-   :leverage 100
+   :leverage 10
    :capital 1000
    :commission 0.005
    :stoploss-enabled false ; TODO: introduce stoploss and take profit, but later on
@@ -22,7 +22,7 @@
    :trade-threshold 0.05 ; TODO: introduce trade threshold?
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar] ; TODO: buradaki listeyi bizim dosyadaki listeden populate et
-   :prune-height 3 ; indicator count is 2^prune-height
+   :prune-height 4 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100
    :fitness-criterion :accuracy-percentage ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]

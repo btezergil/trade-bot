@@ -72,14 +72,22 @@
    "31bfdebc-b3e9-453d-b8c4-7ba0acff4115"
    "607dd4d5-f3d3-4413-8e31-fc5eb3646946"])
 
-; TODO: 2521301-5, 25236046
+; 2521301-5, 25236046, 2637055-6
 (def accuracy-perc-100pop-200gen-3height-ids
-  ["3c27e8ef-0c98-48f3-ab23-9f01b26992be"
-   "5c2f999d-37f7-433a-adb1-0708f8a6d176"])
+  ["08e1c519-bf22-441c-996e-da574d4aa3b8"
+   "3c27e8ef-0c98-48f3-ab23-9f01b26992be"
+   "5c2f999d-37f7-433a-adb1-0708f8a6d176"
+   "875e75f5-1cd2-4214-9b5c-335c05e32dfb"
+   "bcf3d27c-ab8a-40e6-9201-739889d7db75"
+   "ee5cfd2d-2547-4b66-8d2c-3b28ba975f1c"])
 
-; TODO: 2521348-55, 2637039-40
+; 2521348-55, 2637039-40
 (def accuracy-perc-100pop-200gen-4height-ids
-  ["8bb7e262-1264-44c2-9ea7-d5eb38f93063"])
+  ["887fee0a-c38d-494b-980f-47cb635e62e8"
+   "8bb7e262-1264-44c2-9ea7-d5eb38f93063"
+   "99c1f217-b7cf-4f43-8000-90d59387dd73"
+   "dadb9236-b6e8-49c0-9b99-7ccda6c2a9cd"
+   "f17a70b6-6983-4fdf-8109-b7e755750132"])
 
 ; 2523395-9
 (def accuracy-perc-100pop-300gen-3height-ids
@@ -88,7 +96,7 @@
    "d652407f-bba1-4a15-8727-505bf29d1bc7"
    "e851d2b4-1fa5-4c99-9d7c-ac76b2829f6d"])
 
-; TODO: 2637024-6
+; TODO: 2642821-3
 (def accuracy-perc-100pop-300gen-4height-ids
   [])
 
@@ -249,7 +257,6 @@
   ["0c270fa9-2b8c-4d48-9918-e23f5f7292b9"
    "2114b9a2-6f67-465c-be44-51a0ec991e33"
    "2d5c2038-136c-4181-9ab1-ad1c2c996ef7"
-   "2f274c3d-3f0d-4ef5-8859-adae9f07ec69"
    "7f76e05d-27c8-49b0-9994-7893021fd5c8"
    "fa887fee-ebb8-414c-b97c-8c903511e55d"])
 

@@ -10,8 +10,8 @@
            (java.time ZonedDateTime)))
 
 (def operation-mode :file)
-(def stat-file-folder "out-files/100pop-profit/100gen-3height/")
-(def fitness-criterion :profit)
+(def stat-file-folder "out-files/100pop-acc-perc/200gen-4height/")
+(def fitness-criterion :accuracy-percentage)
 
 (defn read-individuals-from-file
   "Reads the individual file written by monitor function"

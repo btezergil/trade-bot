@@ -144,7 +144,7 @@
 
 ;; Render the plot
 ;(oz/view! (candlestick-data-from-evolution-id  "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
-(oz/view! (scatter-plot (nth res/profit-100pop-300gen-3height-ids 0)))
-(oz/view! (histogram-plot (nth res/profit-100pop-300gen-3height-ids 0)))
-(oz/view! (profit-fitness-plot res/profit-100pop-300gen-3height-ids))
-;(oz/view! (accuracy-fitness-plot res/accuracy-perc-100pop-100gen-3height-ids))
+(oz/view! (scatter-plot (nth res/accuracy-perc-100pop-200gen-4height-ids 0)))
+(oz/view! (histogram-plot (nth res/accuracy-perc-100pop-200gen-4height-ids 0)))
+;(oz/view! (profit-fitness-plot res/accuracy-perc-100pop-200gen-3height-ids))
+(oz/view! (accuracy-fitness-plot res/accuracy-perc-100pop-200gen-4height-ids))

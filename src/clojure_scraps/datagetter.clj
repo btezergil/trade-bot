@@ -26,7 +26,7 @@
 
 (def bist-filenames-map (let [filename (get-filename-from-stock stock-name)]
                           {:train-file filename :test-file filename}))
-(def evolution-filenames-map forex-filenames-map)
+(def evolution-filenames-map bist-filenames-map)
 
 (defn csv-data->maps
   [csv-data]
