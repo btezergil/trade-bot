@@ -122,12 +122,26 @@
       get-line-plot-map-accuracy))
 
 (defn histogram-plot
+  [evolution-ids]
+  (->> evolution-ids
+       (map st/extract-histogram-data)
+       flatten
+       get-histogram-map))
+
+(defn scatter-plot
+  [evolution-ids]
+  (->> evolution-ids
+       (map st/extract-histogram-data)
+       flatten
+       get-scatterplot-map))
+
+(defn histogram-plot-single
   [evolution-id]
   (-> evolution-id
       st/extract-histogram-data
       get-histogram-map))
 
-(defn scatter-plot
+(defn scatter-plot-single
   [evolution-id]
   (-> evolution-id
       st/extract-histogram-data
@@ -144,7 +158,7 @@
 
 ;; Render the plot
 ;(oz/view! (candlestick-data-from-evolution-id  "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
-(oz/view! (scatter-plot (nth res/accuracy-perc-100pop-200gen-4height-ids 0)))
-(oz/view! (histogram-plot (nth res/accuracy-perc-100pop-200gen-4height-ids 0)))
+;(oz/view! (scatter-plot res/accuracy-100pop-400gen-3height-ids))
+;(oz/view! (histogram-plot res/accuracy-100pop-400gen-4height-ids))
 ;(oz/view! (profit-fitness-plot res/accuracy-perc-100pop-200gen-3height-ids))
-(oz/view! (accuracy-fitness-plot res/accuracy-perc-100pop-200gen-4height-ids))
+;(oz/view! (accuracy-fitness-plot res/accuracy-perc-100pop-300gen-4height-ids))

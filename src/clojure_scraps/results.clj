@@ -96,9 +96,14 @@
    "d652407f-bba1-4a15-8727-505bf29d1bc7"
    "e851d2b4-1fa5-4c99-9d7c-ac76b2829f6d"])
 
-; TODO: 2642821-3
+; 2642821-3
 (def accuracy-perc-100pop-300gen-4height-ids
-  [])
+  ["0f2cf069-a3c2-406b-af88-3e1543f54a12"
+   "6471bf99-7519-4e16-9f77-1bf11d226e37"
+   "a92841f1-db86-4003-83d2-d81e4cf8bfbc"
+   "d702a508-f37d-4803-9f8f-4375e42992e8"
+   "ed77dd62-3661-487c-ab16-9ec888716061"
+   "f678ba62-9baa-4c46-a66d-0e128166178d"])
 
 ; 2529434-9
 (def accuracy-perc-100pop-400gen-3height-ids
