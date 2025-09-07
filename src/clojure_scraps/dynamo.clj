@@ -129,13 +129,14 @@
                 {(:table-key evolution-table-vars) evolution-id}))
 
 (defn write-evolution-stats-to-table
-  [evolution-id generation-count best-fitness avg-fitness]
+  [evolution-id generation-count best-fitness avg-fitness fitness-list]
   (far/put-item faraday-client-opts
                 (:table-name evolution-stats-table-vars)
                 {:evolution-id evolution-id
                  :generation-count generation-count
                  :best-fitness best-fitness
-                 :avg-fitness avg-fitness}))
+                 :avg-fitness avg-fitness
+                 :fitness-list fitness-list}))
 
 (defn read-evolution-stats-from-table
   [evolution-id]
