@@ -265,3 +265,11 @@
    "7f76e05d-27c8-49b0-9994-7893021fd5c8"
    "fa887fee-ebb8-414c-b97c-8c903511e55d"])
 
+(def hybrid-new-ids
+  ["18697ddc-acb7-4e6c-ae0c-6e004f9c5ccd"
+   "44f8b35e-1c92-4f07-bcce-18f6d4659fc9"
+   "a72a0205-ac0f-407a-a269-42e3ed8b717d"
+   "cccf9404-2b46-43b5-b3f1-042ecab7934a"
+   "d477d607-4d11-4195-8a82-08da22be51fb"
+   "d7ab5c37-a7ea-4f82-bba6-22598f5d3a92"])
+

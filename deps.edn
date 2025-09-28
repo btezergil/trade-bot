@@ -24,6 +24,6 @@
         org.ta4j/ta4j-core {:mvn/version "0.18"}
         org.clojars.btezergil/nature {:mvn/version "1.0.1"}
         org.clojars.btezergil/algolab-lib {:mvn/version "0.1.4"}
-        metasoarous/oz {:mvn/version "1.6.0-SNAPSHOT"}}
+        metasoarous/oz {:mvn/version "1.6.0-alpha36"}}
  :mvn/repos {"clojars" {:url "https://repo.clojars.org/"} "central" {:url "https://repo1.maven.org/maven2/"}}
  :paths ["src" "resources" "target"]}

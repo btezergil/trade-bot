@@ -10,7 +10,7 @@
            (java.time ZonedDateTime)))
 
 (def operation-mode :file)
-(def stat-file-folder "out-files/100pop-acc/400gen-4height/")
+(def stat-file-folder "out-files/new-stats/")
 (def fitness-criterion :accuracy-percentage)
 
 (defn read-individuals-from-file
@@ -63,7 +63,7 @@
     :db (dyn/read-transactions-from-table evolution-id)
     :file (read-transactions-from-file evolution-id)))
 
-(defn extract-evolution-stat-data
+(defn extract-evolution-fitness-data
   "Given a list of evolution ids, gets the average and best fitness data and averages them."
   [evolution-ids]
   (let [evolution-stats (map get-evolution-stats evolution-ids)
@@ -84,6 +84,17 @@
                                                              (map :best-fitness)
                                                              (reduce +)
                                                              double) evolution-count)}))))))
+
+(defn- process-generation-data-for-violin-plot
+  [data]
+  (let [necessary-fields (dissoc data :best-fitness :avg-fitness)]
+    (map (fn [dt] {:fitness dt :current-generation (:generation-count necessary-fields)}) (:fitness-list necessary-fields))))
+
+(defn extract-evolution-all-fitness-data
+  "Given a list of evolution ids, gets all fitness data associated with their current generation for violin plot."
+  [evolution-ids]
+  (let [evolution-stats (flatten (map get-evolution-stats evolution-ids))]
+    (flatten (map process-generation-data-for-violin-plot evolution-stats))))
 
 (defn calculate-total-fitness-from-transactions
   "Calculates the total fitness of the strategy by adding all transaction results belonging to it."
@@ -135,7 +146,7 @@
                                                                                                              :best-fitness
                                                                                                              double
                                                                                                              (- (:fitness-offset p/params)))}))
-                (extract-evolution-stat-data evolution-ids))))
+                (extract-evolution-fitness-data evolution-ids))))
 
 (defn get-evolution-stat-data-accuracy
   "Given a list of evolution ids, gets the average and best fitness data."
@@ -146,7 +157,7 @@
                                 {:generation (int (:generation-count row)) :item "best fitness" :fitness (-> row
                                                                                                              :best-fitness
                                                                                                              double)}))
-                (extract-evolution-stat-data evolution-ids))))
+                (extract-evolution-fitness-data evolution-ids))))
 
 (defn report-statistics-and-save-to-db
   "Saves the gathered statistics to database and prints them to logs."
@@ -289,7 +300,7 @@
 
 ;(compare-training-and-test-performance "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
 ;(extract-histogram-data "ef89578c-ae37-43a1-a0f5-7c805d2c5e8a")
-;(gather-statistics "f0b63ccb-d808-4b8e-9253-eba6a6c1c11b")
+
 ;(:strategy-id (first (read-transactions-from-file "643c4d0f-7be8-463f-a7e2-80becfcb1703")))
 
 
