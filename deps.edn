@@ -1,6 +1,7 @@
 {:aliases {:dev/env {:extra-paths ["dev"]
                      :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory" "-Xmx24g" "-Xms8g"]
-                     :override-deps {org.clojars.btezergil/nature {:local/root "/Users/btezergil/phd/nature"}}}
+                     ;:override-deps {org.clojars.btezergil/nature {:local/root "/Users/btezergil/phd/nature"}}
+                     }
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.6"}
                           envvar/envvar {:mvn/version "1.1.2"}}
                    :ns-default build}}

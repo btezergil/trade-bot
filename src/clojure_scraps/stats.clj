@@ -93,8 +93,11 @@
 (defn extract-evolution-all-fitness-data
   "Given a list of evolution ids, gets all fitness data associated with their current generation for violin plot."
   [evolution-ids]
-  (let [evolution-stats (flatten (map get-evolution-stats evolution-ids))]
-    (flatten (map process-generation-data-for-violin-plot evolution-stats))))
+  (->> evolution-ids
+       (map get-evolution-stats)
+       flatten
+       (map process-generation-data-for-violin-plot)
+       flatten))
 
 (defn calculate-total-fitness-from-transactions
   "Calculates the total fitness of the strategy by adding all transaction results belonging to it."

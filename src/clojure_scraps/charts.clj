@@ -65,81 +65,65 @@
                          :y {:datum (:profit best-val)}
                          :color {:value "red"}}}]}))
 
-(defn get-violinplot-map
+(defn get-violinplot-map-area
   "Data should be in a map with :fitness and :profit fields."
   [data]
-  {:data [{:name "fitnesses"
-           :values data}
-          {:name "density"
-           :source "fitnesses"
-           :transform [{:type "kde"
-                        :field "fitness"
-                        :groupby ["current-generation"]
-                        :bandwidth 0}]}
-          {:name "stats"
-           :source "fitnesses"
-           :transform [{:type "aggregate"
-                        :fields ["fitness" "fitness" "fitness"]
-                        :groupby ["current-generation"]
-                        :ops ["q1" "median" "q3"]
-                        :as ["q1" "median" "q3"]}]}]
+  {:data {:values data}
 
-   :scales [{:name "layout"
-             :type "band"
-             :range "height"
-             :domain {:data "fitnesses" :field "current-generation"}}
-            {:name "xscale"
-             :type "linear"
-             :range "width" :round true
-             :domain {:data "fitnesses" :field "fitness"}
-             :domainMin 1
-             :zero false :nice true}
-            {:name "hscale"
-             :type "linear"
-             :range [0 {:signal "plotWidth"}]
-             :domain {:data "density" :field "density"}}
-            {:name "color"
-             :type "ordinal"
-             :domain {:data "fitnesses" :field "current-generation"}
-             :range "category"}]
+   :transform [{:density "fitness"
+                :groupby ["current-generation"]
+                :extent [1 200]}]
 
-   :axes [{:orient "bottom" :scale "xscale" :zindex 1}
-          {:orient "left" :scale "layout" :tickCount 5 :zindex 1}]
+   :mark "area"
 
-   :marks [{:type "group"
-            :from {:facet {:data "density"
-                           :name "violin"
-                           :groupby "current-generation"}}
-            :encode {:enter {:yc {:scale "layout"
-                                  :field "current-generation"
-                                  :band 0.5}
-                             :height {:signal "plotWidth"}
-                             :width {:signal "width"}}}
-            :data [{:name "summary"
-                    :source "stats"
-                    :transform [{:expr "datum.current-generation == parent.current-generation"}]}]
+   :encoding {:row {:field "current-generation"}
+              :x {:field "value" :type "quantitative"}
+              :y {:field "density" :type "quantitative" :stack "zero"}}
 
-            :marks [{:type "area"
-                     :from {:data "violin"}
-                     :encode {:enter {:fill {:scale "color"
-                                             :field {:parent "current-generation"}}}
-                              :update {:x {:scale "xscale" :field "value"}
-                                       :yc {:signal "plotWidth/2"}
-                                       :height {:scale "hscale" :field "density"}}}}
-                    {:type "rect"
-                     :from {:data "summary"}
-                     :encode {:enter {:fill {:value "black"}
-                                      :height {:value 2}}
-                              :update {:x {:scale "xscale" :field "q1"}
-                                       :x2 {:scale "xscale" :field "q3"}
-                                       :yc {:signal "plotWidth/2"}}}}
-                    {:type "rect"
-                     :from {:data "summary"}
-                     :encode {:enter {:fill {:value "black"}
-                                      :width {:value 2}
-                                      :height {:value 8}}
-                              :update {:x {:scale "xscale" :field "median"}
-                                       :yc {:signal "plotWidth/2"}}}}]}]})
+   :width 800
+   :height 400})
+
+(defn get-violinplot-map-base-selfmade
+  "Data should be in a map with :fitness and :profit fields."
+  [data]
+  {:data {:values data}
+
+   :encoding {:x {:field "current-generation" :type "nominal"}}
+
+   :layer [{:mark "rule"
+            :encoding {:y {:aggregate "q1" :field "fitness" :type "quantitative"}
+                       :y2 {:aggregate "q3" :field "fitness" :type "quantitative"}}}
+           {:mark "tick"
+            :encoding {:y {:aggregate "median" :field "fitness" :type "quantitative"}}}]
+
+   :width 1400
+   :height 800})
+
+(defn get-violinplot-map
+  "Data should be in a map with :fitness and :current-generation fields.
+   Filters the initial data by removing the zero fitness elements and only takes the data for a set of generations (factors of 40)."
+  [data]
+  (let [filtered-data (->> data
+                           (filter #(->> %
+                                         :fitness
+                                         (= 1)
+                                         (not)))
+                           (filter #(-> %
+                                        :current-generation
+                                        (mod 40)
+                                        (= 0))))]
+    {:data {:values filtered-data}
+
+     :mark {:type "boxplot"
+            :extent "min-max"
+            :median {:color "red"}
+            :ticks true}
+
+     :encoding {:y {:field "fitness" :type "quantitative"}
+                :x {:field "current-generation" :type "nominal"}}
+
+     :width 1400
+     :height 600}))
 
 (defn get-candlestick-map
   "Candlestick map to be drawn by Oz."
@@ -240,7 +224,7 @@
 
 ;; Render the plot
 ;(oz/view! (candlestick-data-from-evolution-id  "4fd03e75-e552-4c65-a377-02cd4f9ccc91"))
-;(oz/view! (scatter-plot res/accuracy-100pop-400gen-3height-ids))
+;(oz/view! (scatter-plot res/hybrid-new-ids))
 ;(oz/view! (histogram-plot res/accuracy-100pop-400gen-4height-ids))
 ;(oz/view! (profit-fitness-plot res/accuracy-perc-100pop-200gen-3height-ids))
-(oz/view! (violin-plot res/hybrid-new-ids) :mode :vega)
+;(oz/view! (violin-plot res/hybrid-new-ids))
