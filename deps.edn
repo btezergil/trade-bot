@@ -21,7 +21,7 @@
         com.taoensso/telemere {:mvn/version "1.1.0"}
         com.taoensso/telemere-slf4j {:mvn/version "1.1.0"}
         danlentz/clj-uuid {:mvn/version "0.2.0"}
-        clj-http/clj-http {:mvn/version "3.13.0"}
+        clj-http/clj-http {:mvn/version "3.13.1"}
         org.ta4j/ta4j-core {:mvn/version "0.18"}
         org.clojars.btezergil/nature {:mvn/version "1.0.1"}
         org.clojars.btezergil/algolab-lib {:mvn/version "0.1.4"}
