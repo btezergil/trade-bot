@@ -135,16 +135,15 @@
 
 (defn select-fitness-fn-and-calculate
   "Calculates the total profit and scales it so that the result is positive."
-  [transactions]
-  (let [criterion (:fitness-criterion p/params)]
-    (condp = criterion
-      :profit (-> transactions
-                  calculate-profit-from-transactions
-                  scale-profit-result)
-      :accuracy (calculate-accuracy-from-transactions transactions)
-      :accuracy-percentage (calculate-accuracy-percentage-from-transactions transactions)
-      :accuracy-profit-hybrid (calculate-accuracy-profit-hybrid-from-transactions transactions)
-      (throw (IllegalArgumentException. "Unknown fitness function for fitness calculation")))))
+  [transactions criterion]
+  (condp = criterion
+    :profit (-> transactions
+                calculate-profit-from-transactions
+                scale-profit-result)
+    :accuracy (calculate-accuracy-from-transactions transactions)
+    :accuracy-percentage (calculate-accuracy-percentage-from-transactions transactions)
+    :accuracy-profit-hybrid (calculate-accuracy-profit-hybrid-from-transactions transactions)
+    (throw (IllegalArgumentException. "Unknown fitness function for fitness calculation"))))
 
 ;; Transaction generation functions
 
@@ -229,7 +228,7 @@
 
 (defn calculate-fitness
   "Calculates the fitness of given genetic sequence."
-  [data genetic-sequence]
+  [data criterion genetic-sequence]
   (let [max-index (-> data
                       .getBarCount
                       dec)
@@ -237,7 +236,7 @@
         transactions (merge-entry-points entry-exit-points
                                          (dg/get-bar-value-at-index data max-index)
                                          (dg/get-bar-close-time-at-index data max-index))]
-    (select-fitness-fn-and-calculate transactions)))
+    (select-fitness-fn-and-calculate transactions criterion)))
 
 (defn calculate-transactions-for-monitor
   "Calculates the transactions of given genetic sequence for bookkeeping."
@@ -259,21 +258,22 @@
 
 (defn start-evolution
   "Starts evolution, this method calls the nature library with the necessary params."
-  [filenames & {:keys [population-size generation-count]
-                :or {population-size (:population-size p/params)
-                     generation-count (:generation-count p/params)}}]
-  (let [evolution-id (str (uuid/v4))
-        calculate-fitness-partial (partial calculate-fitness (dg/get-bars-for-genetic filenames :train))
+  [filenames & {:as opts}]
+  (let [population-size (if (contains? opts :pop-size) (:pop-size opts) (:population-size p/params))
+        generation-count (if (contains? opts :gen-cnt) (:gen-cnt opts) (:generation-count p/params))
+        fitness-criterion (if (contains? opts :fitness-crit) (:fitness-crit opts) (:fitness-criterion p/params))
+        evolution-id (str (uuid/v4))
+        message (str "Starting evolution with id " evolution-id)
+        calculate-fitness-partial (partial calculate-fitness (dg/get-bars-for-genetic filenames :train) fitness-criterion)
         gen-count (atom 0)
         monitors [nmon/print-best-solution
                   mon/print-average-fitness-of-population
                   (fn [population current-generation] (mon/write-individuals-to-file-monitor evolution-id population current-generation))
                   (fn [population current-generation] (mon/write-transactions-to-file-monitor evolution-id (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
                   (fn [population current-generation] (mon/save-fitnesses-to-file-for-current-generation evolution-id gen-count population current-generation))]]
-    (let [message (str "Starting evolution with id " evolution-id)]
-      (if (:in-container @env)
-        (log/info message)
-        (tb/message-to-me message)))
+    (if (:in-container @env)
+      (log/info message)
+      (tb/message-to-me message))
     (when-not (:in-container @env) (dyn/write-evolution-to-table evolution-id filenames))
     (n/evolve-with-sequence-generator generate-sequence
                                       population-size

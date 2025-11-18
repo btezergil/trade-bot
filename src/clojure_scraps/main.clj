@@ -9,21 +9,24 @@
             [taoensso.telemere.tools-logging :as tl])
   (:gen-class))
 
+(def allowed-params #{:pop-size :gen-cnt :fitness-crit})
+
 (defn run-evolution
   "Initial runner function, calls the accessor function to start evolution."
-  [filenames]
-  (try (let [out (java.io.StringWriter.)
-             evolution-result (g/start-evolution filenames)]
-         (log/info (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out))
-         (tb/message-to-me (.toString out)))
-       (catch Exception e (do
-                            (tb/message-to-me (str "Caught exception: " (.getMessage e)))
-                            (throw e)))))
+  ([filenames] (run-evolution filenames nil))
+  ([filenames opt-args]
+   (try (let [out (java.io.StringWriter.)
+              evolution-result (g/start-evolution filenames opt-args)]
+          (log/info (pp/pprint (map (fn [res] (dissoc res :parents)) evolution-result) out))
+          (tb/message-to-me (.toString out)))
+        (catch Exception e (do
+                             (tb/message-to-me (str "Caught exception: " (.getMessage e)))
+                             (throw e))))))
 
 (defn run-evolution-with-futures
-  [filenames]
-  (let [res1 (future (run-evolution filenames))
-        res2 (future (run-evolution filenames))]
+  [filenames opt-args]
+  (let [res1 (future (run-evolution filenames opt-args))
+        res2 (future (run-evolution filenames opt-args))]
     @res1
     @res2))
 
@@ -33,13 +36,14 @@
   (let [ind (g/generate-sequence)
         data (dg/get-bars-for-genetic dg/forex-filenames-map :train)]
     (log/info "Generated individual for test:" ind)
-    (log/info "Calculated fitness:" (g/calculate-fitness data ind))))
+    (log/info "Calculated fitness:" (g/calculate-fitness data :profit ind))))
 
 (defn setup-telemere
   "Telemere-related setup"
   []
   (tl/tools-logging->telemere!)
-  (t/streams->telemere!))
+  (t/streams->telemere!)
+  (t/check-interop))
 
 (defn get-botcmd-arg
   "Gets the received command and returns the argument given to the command."
@@ -57,16 +61,29 @@
       "/test" (log/info "received tail message:" cmdarg)
       (log/warn "Unknown command:" cmd))))
 
+(defn- parse-arg
+  [argmap arg]
+  (let [argpair (str/split arg #"=")
+        k (keyword (first argpair))
+        v (second argpair)]
+    (if (contains? allowed-params k)
+      (if (= k :fitness-crit)
+        (assoc argmap k (keyword v))
+        (assoc argmap k (Integer/parseInt v)))
+      argmap)))
+
 (defn -main
   "Parses command line arguments and calls the related functions"
   [& args]
   (setup-telemere)
-  (log/warn "Number of processors in clj: " (.availableProcessors (Runtime/getRuntime)))
-  (let [arg (first args)]
+  (log/info "Number of processors in clj: " (.availableProcessors (Runtime/getRuntime)))
+  (let [arg (first args)
+        opt-args (reduce parse-arg {} (rest args))]
+    (log/info "Accepted optional arguments: " opt-args)
     (condp = arg
-      "r" (run-evolution-with-futures dg/evolution-filenames-map)
+      "r" (run-evolution-with-futures dg/evolution-filenames-map opt-args)
       "t" (time (test-individual))
       "b" (tb/start-bot-long-polling bot-commands-fn)
-      (log/warn "No execution mode defined for the given argument:" arg))))
+      (log/error "No execution mode defined for the given argument:" arg))))
 
 ;(-main)
