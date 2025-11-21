@@ -4,15 +4,8 @@
             [clojure.spec.alpha :as s]
             [nature.initialization-operators :as io]))
 
-(def operators [:and :or])
-(def operands [:identity :rsi :sma :ema :double-sma :double-ema
-               :fisher :cci :stoch :supertrend
-               :engulfing :harami :hammer :inverted-hammer :trend])
-(def candlesticks #{:engulfing :harami :hammer :inverted-hammer})
-; INFO: parabolic SAR and fibonacci are available but not used since their signal generation is too slow compared to others
-; TODO: add MACD indicator
-
 ;; Spec definitions for supported indicators
+(def candlesticks #{:engulfing :harami :hammer :inverted-hammer})
 
 (s/def :genetic/index int?)
 (s/def :genetic/indicator keyword?)
@@ -58,7 +51,7 @@
 (s/def :genetic/individual (s/keys :req-un [:genetic/fitness-score :genetic/genetic-sequence]))
 (s/def :genetic/population (s/coll-of :genetic/individual))
 
-(defn generate-operator "Generates a random operator, taken from the operators list." [] (rand-nth operators))
+(defn generate-operator "Generates a random operator, taken from the operators list." [] (rand-nth [:and :or]))
 
 (defn rand-int-range
   "rand-int with minimum value, inclusive min, inclusive max"
@@ -209,7 +202,7 @@
 (defn generate-operand
   "Generates a random operand, taken from the operands list."
   [index]
-  (let [operand (rand-nth operands)]
+  (let [operand (rand-nth (:indicators p/params))]
     (condp = operand
       :sma (generate-sma index)
       :ema (generate-ema index)
@@ -222,11 +215,11 @@
       :parabolic-sar (generate-parabolic-sar index)
       :supertrend (generate-supertrend index)
       :fibonacci (generate-fibonacci index)
+      :trend (generate-trend index)
       :engulfing (generate-engulfing index)
       :harami (generate-harami index)
       :hammer (generate-hammer index)
       :inverted-hammer (generate-inverted-hammer index)
-      :trend (generate-trend index)
       :identity (generate-identity index))))
 
 (defn get-right-index-for-operand
@@ -273,11 +266,11 @@
                    :parabolic-sar (generate-operand (:index node))
                    :supertrend (mutate-supertrend node)
                    :fibonacci (mutate-fibonacci node)
+                   :trend (generate-operand (:index node))
                    :engulfing (generate-operand (:index node))
                    :harami (generate-operand (:index node))
                    :hammer (generate-operand (:index node))
                    :inverted-hammer (generate-operand (:index node))
-                   :trend (generate-operand (:index node))
                    :identity (generate-operand (:index node)))))))
 
 (defn swap-mutation
