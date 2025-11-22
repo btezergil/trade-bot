@@ -147,3 +147,26 @@
         .toString
         str)))
 
+(defn get-bar-stats
+  "Compiles statistics about the given bars. 
+  Statistics include the number of green/red bars, average daily increase/decrease, start/end price and date."
+  [bars]
+  (let [num-of-bars (.getBarCount bars)]
+    (log/info "Start date: " (get-bar-close-time-at-index bars 0) ", starting price: " (get-bar-value-at-index bars 0))
+    (log/info "End date: " (get-bar-close-time-at-index bars (dec num-of-bars)) ", ending price: " (get-bar-value-at-index bars (dec num-of-bars)))
+    (loop [index 0
+           num-bullish 0
+           num-bearish 0
+           total-bullish-change 0
+           total-bearish-change 0]
+      (if (< index num-of-bars)
+        (let [bar (.getBar bars index)
+              open (-> bar .getOpenPrice .doubleValue)
+              close (-> bar .getClosePrice .doubleValue)]
+          (if (.isBullish bar)
+            (recur (inc index) (inc num-bullish) num-bearish (+ total-bullish-change (- close open)) total-bearish-change)
+            (recur (inc index) num-bullish (inc num-bearish) total-bullish-change (+ total-bearish-change (- close open)))))
+        (do
+          (log/info "Bullish bars: " num-bullish ", average change of bullish bars: " total-bullish-change)
+          (log/info "Bearish bars: " num-bearish ", average change of bearish bars: " total-bearish-change))))))
+

@@ -2,7 +2,6 @@
   (:require [clojure-scraps.dynamo :as dyn]
             [clojure-scraps.params :as p]
             [clojure-scraps.datagetter :as dg]
-            [clojure-scraps.results :as res]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [clojure.pprint :as pp])
@@ -10,7 +9,7 @@
            (java.time ZonedDateTime)))
 
 (def operation-mode :file)
-(def stat-file-folder "out-files/new-stats/")
+(def stat-file-folder "out-files/400gen/3height/hybrid/")
 (def fitness-criterion :accuracy-percentage)
 
 (defn read-individuals-from-file
