@@ -59,7 +59,7 @@
 (defn save-fitnesses-to-file-for-current-generation
   "Saves the current generation's best and average fitness into the table
   'gen-count' function parameter is the atom that saves the current generation count"
-  [evolution-id gen-count population current-generation]
+  [evolution-id population current-generation]
   {:pre [(s/conform :genetic/individual population)]}
   (let [fitness-list (map :fitness-score population)
         popsize (:population-size p/params)
