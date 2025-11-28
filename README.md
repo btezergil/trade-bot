@@ -4,7 +4,9 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+Run command for main function as entrypoint: clj -M -m clojure-scraps.main r/t/b PARAMS
+Docker local build command: docker buildx build -t btezergil/clj-scraps-app:latest -f Dockerfile .
+Docker local run command: docker run -d --name btezergil-trade-bot -it btezergil/clj-scraps-app:latest sh
 
 ## License
 

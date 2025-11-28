@@ -22,7 +22,7 @@
    :trade-threshold 0.05 ; TODO: introduce trade threshold?
    :accuracy-profit-ratio 0.01 ; TODO: what is this even?
    :indicators [:rsi :sma :ema :fisher :fibonacci :engulfing :pinbar] ; TODO: buradaki listeyi bizim dosyadaki listeden populate et
-   :prune-height 4 ; indicator count is 2^prune-height
+   :prune-height 3 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100
    :fitness-criterion :accuracy-percentage ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]

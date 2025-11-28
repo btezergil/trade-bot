@@ -12,4 +12,4 @@ COPY ./data ./data
 RUN clojure -T:build uber
 
 COPY ./start.sh .
-CMD ./start.sh
+ENTRYPOINT ["./start.sh"]
