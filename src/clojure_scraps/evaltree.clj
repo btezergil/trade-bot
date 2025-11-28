@@ -251,31 +251,29 @@
   (log/debug "perform-mutation node: " node)
   (condp = node-type
     :operator (if (= :and node) :or :and)
-    :operand (let [flip-probability (rand)]
-               (if (< flip-probability (:flip-mutation-probability p/params))
-                 (generate-operand (:index node))
-                 (condp = (:indicator node)
-                   :sma (mutate-ma node)
-                   :ema (mutate-ma node)
-                   :rsi (mutate-rsi node)
-                   :double-sma (mutate-double-ma node)
-                   :double-ema (mutate-double-ma node)
-                   :fisher (mutate-fisher node)
-                   :cci (mutate-cci node)
-                   :stoch (mutate-stochastic-oscillator node)
-                   :parabolic-sar (generate-operand (:index node))
-                   :supertrend (mutate-supertrend node)
-                   :fibonacci (mutate-fibonacci node)
-                   :trend (generate-operand (:index node))
-                   :engulfing (generate-operand (:index node))
-                   :harami (generate-operand (:index node))
-                   :hammer (generate-operand (:index node))
-                   :inverted-hammer (generate-operand (:index node))
-                   :identity (generate-operand (:index node)))))))
+    :operand (condp = (:indicator node)
+               :sma (mutate-ma node)
+               :ema (mutate-ma node)
+               :rsi (mutate-rsi node)
+               :double-sma (mutate-double-ma node)
+               :double-ema (mutate-double-ma node)
+               :fisher (mutate-fisher node)
+               :cci (mutate-cci node)
+               :stoch (mutate-stochastic-oscillator node)
+               :parabolic-sar (generate-operand (:index node))
+               :supertrend (mutate-supertrend node)
+               :fibonacci (mutate-fibonacci node)
+               :trend (generate-operand (:index node))
+               :engulfing (generate-operand (:index node))
+               :harami (generate-operand (:index node))
+               :hammer (generate-operand (:index node))
+               :inverted-hammer (generate-operand (:index node))
+               :identity (generate-operand (:index node)))))
 
 (defn swap-mutation
   "Swap mutation operation is the simpler genetic mutation operator that can act on the tree.
-   Basically, one node is selected to undergo mutation, which changes its value to a new random one."
+   Basically, one node is selected to undergo mutation, which changes its value to a new random one.
+   If a leaf node is reached, mutates a single parameter of the indicator, or replaces the indicator if it does not have any parameters."
   [node]
   (log/debug "swap node: " node)
   (if (vector? node)
@@ -302,29 +300,32 @@
   ([node height]
    (log/debug "subtree node: " node)
    (if (vector? node)
-     (let [propagation-probability (rand)
+     (let [propagate? (rand)
            node-probability (rand)
            left (first node)
            mid (second node)
            right (last node)]
-       (cond (< propagation-probability 0.5) (if (< node-probability 0.5) [(subtree-mutation left (dec height)) mid right] [left mid (subtree-mutation right (dec height))])
-             :else (if (< node-probability 0.5) [(generate-tree (dec height) (find-initial-index left)) mid right] [left mid (generate-tree (dec height) (find-initial-index right))])))
-     (perform-mutation :operand node))))
-
-(defn mutate-tree "Performs mutation on the given tree." [node] (if (< (rand) 0.5) (swap-mutation node) (subtree-mutation node)))
+       (if (< propagate? 0.5)
+         (if (< node-probability 0.5)
+           [(subtree-mutation left (dec height)) mid right]
+           [left mid (subtree-mutation right (dec height))])
+         (if (< node-probability 0.5)
+           [(generate-tree (dec height) (find-initial-index left)) mid right]
+           [left mid (generate-tree (dec height) (find-initial-index right))])))
+     (generate-operand (:index node)))))
 
 (defn mutation
   "Genetic mutation operator for individials, performs either swap or subtree mutation on the given node defined in the individual.
   Only performs mutation on the long or the short tree."
   [fitness-func ind-list]
-  (let [mutation-prob (:mutation-probability p/params)
-        ind (first ind-list)]
-    (if (< (rand) mutation-prob)
+  (let [ind (first ind-list)]
+    (if (< (rand) (:mutation-probability p/params))
       (let [seqn (:genetic-sequence ind)
             long-node (first seqn)
-            short-node (second seqn)]
+            short-node (second seqn)
+            mutation-fn (if (< (rand) 0.5) swap-mutation subtree-mutation)]
         (log/debug "mutation node: " seqn)
-        (io/build-individual (if (< (rand) 0.5) [(mutate-tree long-node) short-node] [long-node (mutate-tree short-node)]) (:parents ind) (:age ind) fitness-func))
+        (io/build-individual (if (< (rand) 0.5) [(mutation-fn long-node) short-node] [long-node (mutation-fn short-node)]) (:parents ind) (:age ind) fitness-func))
       ind)))
 
 ;; Crossover functions defined for EvalTree
@@ -335,7 +336,7 @@
   (log/debug "before node1: " node1)
   (log/debug "before node2: " node2)
   (if (vector? node1)
-    (let [propagation-probability (:crossover-propagation-probability p/params)
+    (let [propagate? (rand)
           node-probability (rand)
           left1 (first node1)
           mid1 (second node1)
@@ -343,11 +344,15 @@
           left2 (first node2)
           mid2 (second node2)
           right2 (last node2)]
-      (cond (< propagation-probability 0.5)
-            (if (< node-probability 0.5)
-              (let [crossover-result (node-crossover left1 left2) new-left1 (first crossover-result) new-left2 (second crossover-result)] [[new-left1 mid1 right1] [new-left2 mid2 right2]])
-              (let [crossover-result (node-crossover right1 right2) new-right1 (first crossover-result) new-right2 (second crossover-result)] [[left1 mid1 new-right1] [left2 mid2 new-right2]]))
-            :else (if (< node-probability 0.5) [[left2 mid1 right1] [left1 mid2 right2]] [[left1 mid1 right2] [left2 mid2 right1]])))
+      (if (< propagate? (:crossover-propagation-probability p/params))
+        (if (< node-probability 0.5)
+          (let [crossover-result (node-crossover left1 left2)]
+            [[(first crossover-result) mid1 right1] [(second crossover-result) mid2 right2]])
+          (let [crossover-result (node-crossover right1 right2)]
+            [[left1 mid1 (first crossover-result)] [left2 mid2 (second crossover-result)]]))
+        (if (< node-probability 0.5)
+          [[left2 mid1 right1] [left1 mid2 right2]]
+          [[left1 mid1 right2] [left2 mid2 right1]])))
     [node2 node1]))
 
 (defn tree-selector
@@ -360,23 +365,22 @@
   Only performs crossover on the long or the short tree."
   ([fitness-func ind-list] (crossover fitness-func (first ind-list) (second ind-list)))
   ([fitness-func ind1 ind2]
-   (let [crossover-prob (:crossover-probability p/params)]
-     (if (< (rand) crossover-prob)
-       (let [seqn1 (:genetic-sequence ind1)
-             seqn2 (:genetic-sequence ind2)
-             long? (< (rand) 0.5)
-             node1 ((tree-selector long?) seqn1)
-             node2 ((tree-selector long?) seqn2)
-             crossover-result (node-crossover node1 node2)]
-         [(io/build-individual (if long? [(first crossover-result) (second seqn1)] [(first seqn1) (first crossover-result)])
-                               [seqn1 seqn2]
-                               (:default-age p/params)
-                               fitness-func)
-          (io/build-individual (if long? [(second crossover-result) (second seqn2)] [(first seqn2) (second crossover-result)])
-                               [seqn1 seqn2]
-                               (:default-age p/params)
-                               fitness-func)])
-       [ind1 ind2]))))
+   (if (< (rand) (:crossover-probability p/params))
+     (let [long? (< (rand) 0.5)
+           seqn1 (:genetic-sequence ind1)
+           seqn2 (:genetic-sequence ind2)
+           node1 ((tree-selector long?) seqn1)
+           node2 ((tree-selector long?) seqn2)
+           crossover-result (node-crossover node1 node2)]
+       [(io/build-individual (if long? [(first crossover-result) (second seqn1)] [(first seqn1) (first crossover-result)])
+                             [seqn1 seqn2]
+                             (:default-age p/params)
+                             fitness-func)
+        (io/build-individual (if long? [(second crossover-result) (second seqn2)] [(first seqn2) (second crossover-result)])
+                             [seqn1 seqn2]
+                             (:default-age p/params)
+                             fitness-func)])
+     [ind1 ind2])))
 
 ;; Signal generation/propagation logic for EvalTree
 ;; Note that these functions do not calculate indicator signals, they use the already calculated indicator signals

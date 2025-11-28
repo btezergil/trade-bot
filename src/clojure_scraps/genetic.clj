@@ -265,12 +265,11 @@
         evolution-id (str (uuid/v4))
         message (str "Starting evolution with id " evolution-id)
         calculate-fitness-partial (partial calculate-fitness (dg/get-bars-for-genetic filenames :train) fitness-criterion)
-        gen-count (atom 0)
         monitors [nmon/print-best-solution
                   mon/print-average-fitness-of-population
                   (fn [population current-generation] (mon/write-individuals-to-file-monitor evolution-id population current-generation))
                   (fn [population current-generation] (mon/write-transactions-to-file-monitor evolution-id (partial calculate-transactions-for-monitor (dg/get-bars-for-genetic filenames :test)) population current-generation))
-                  (fn [population current-generation] (mon/save-fitnesses-to-file-for-current-generation evolution-id gen-count population current-generation))]]
+                  (fn [population current-generation] (mon/save-fitnesses-to-file-for-current-generation evolution-id population current-generation))]]
     (if (:in-container @env)
       (log/info message)
       (tb/message-to-me message))
