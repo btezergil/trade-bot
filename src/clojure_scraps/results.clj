@@ -328,3 +328,9 @@
 ; 6height experiments: -> 100gen goremiyorlar
 ; 3315338 -> 200gen 100pop acc-perc -> bitemedi
 ; 3315155 -> 300gen 100pop acc-perc -> bitemedi
+
+; 5height experiments:
+; 3324800 -> 400gen profit -> patates
+; 3324799 -> 400gen acc -> patates
+; 3324801 -> 400gen acc-perc -> patates
+; 3324798 -> 400gen hybrid -> patates
