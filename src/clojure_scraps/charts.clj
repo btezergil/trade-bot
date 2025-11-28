@@ -83,14 +83,14 @@
    :width 800
    :height 400})
 
-(defn get-violinplot-map-base-selfmade
+(defn get-violinplot-map
   "Data should be in a map with :fitness and :profit fields."
   [data]
   (let [filtered-data (->> data
                            (filter #(->> %
                                          :fitness
                                          (= 1)
-                                         (not)))
+                                         not))
                            (filter #(-> %
                                         :current-generation
                                         (mod 40)
@@ -102,25 +102,16 @@
      :layer [{:mark {:type "bar" :width {:band 0.2}}
               :encoding {:y {:aggregate "q1" :field "fitness" :type "quantitative"}
                          :y2 {:aggregate "q3" :field "fitness" :type "quantitative"}}}
-             {:mark "tick"
-              :encoding {:y {:aggregate "median" :field "fitness" :type "quantitative"}
-                         :color {:value "blue"}}}
-             {:transform [{:aggregate [{:op "mean" :field "fitness" :as "mean"}
-                                       {:op "stdev" :field "fitness" :as "stdev"}]
-                           :groupby ["current-generation"]}
-                          {:calculate "datum.mean-datum.stdev"
-                           :as "lower"}
-                          {:calculate "datum.mean+datum.stdev"
-                           :as "upper"}]
-              :mark "rule"
-              :encoding {:y {:field "lower" :type "quantitative"}
-                         :y2 {:field "upper" :type "quantitative"}
-                         :color {:value "red"}}}]
+             {:mark {:type "tick" :thickness 3}
+              :encoding {:y {:aggregate "mean" :field "fitness" :type "quantitative"}
+                         :color {:value "red"}}}
+             {:mark {:type "errorbar" :extent "stdev" :rule {:strokeWidth 2}}
+              :encoding {:y {:field "fitness" :type "quantitative"}}}]
 
      :width 1400
      :height 800}))
 
-(defn get-violinplot-map
+(defn get-violinplot-map-boxplot
   "Data should be in a map with :fitness and :current-generation fields.
    Filters the initial data by removing the zero fitness elements and only takes the data for a set of generations (factors of 40)."
   [data]
@@ -220,7 +211,7 @@
   [evolution-ids]
   (-> evolution-ids
       st/extract-evolution-all-fitness-data
-      get-violinplot-map-base-selfmade))
+      get-violinplot-map))
 
 (defn histogram-plot-single
   [evolution-id]
