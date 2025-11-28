@@ -111,13 +111,22 @@
 
 (defn cci-indicator "Returns a CCI indicator with given bars" [bars period] (ind :CCI bars period))
 
-(defn stochastic-oscillator-indicator-k "Returns a stochastic oscillator indicator K with given bars" [bars period] (ind :StochasticOscillatorK bars period))
+(defn stochastic-oscillator-indicator-k
+  "Returns a stochastic oscillator indicator K with given bars"
+  [bars period]
+  (ind :StochasticOscillatorK bars period))
 
-(defn stochastic-oscillator-indicator-d "Returns a stochastic oscillator indicator D with given bars" [stochK] (ind :StochasticOscillatorD stochK))
+(defn stochastic-oscillator-indicator-d
+  "Returns a stochastic oscillator indicator D with given bars"
+  [stochK]
+  (ind :StochasticOscillatorD stochK))
 
 (defn parabolic-sar-indicator "Returns a parabolic SAR indicator with given bars" [bars] (ind :ParabolicSar bars))
 
-(defn supertrend-indicator "Returns a supertrend indicator with given bars" [bars period multiplier] (ind :supertrend/SuperTrend bars period multiplier))
+(defn supertrend-indicator
+  "Returns a supertrend indicator with given bars"
+  [bars period multiplier]
+  (ind :supertrend/SuperTrend bars period multiplier))
 
 (defn bullish-engulfing-indicator "Returns a bullish engulfing indicator" [bars] (candle-ind :BullishEngulfing bars))
 
@@ -557,5 +566,9 @@
 (defn eng-criterion
   "Uses criterion to find profit BUT NOT MATCHING THE ACTUAL RESULT, DON'T USE!!!"
   [strategy]
-  (let [criterion (crit :pnl/NetProfit) bars (dg/get-bars-from-api) bsm (BarSeriesManager. bars) rec (.run bsm strategy)] (.calculate criterion bars rec)))
+  (let [criterion (crit :pnl/NetProfit)
+        bars (dg/get-bars-from-api)
+        bsm (BarSeriesManager. bars)
+        rec (.run bsm strategy)]
+    (.calculate criterion bars rec)))
 

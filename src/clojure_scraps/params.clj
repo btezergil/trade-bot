@@ -24,7 +24,6 @@
                 :fisher :cci :stoch :supertrend
                 :engulfing :harami :hammer :inverted-hammer :trend]
 ; INFO: parabolic SAR and fibonacci are available but not used since their signal generation is too slow compared to others
-; TODO: add MACD indicator
    :prune-height 5 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100

@@ -9,7 +9,7 @@
            (java.time ZonedDateTime)))
 
 (def operation-mode :file)
-(def stat-file-folder "out-files/400gen/3height/hybrid/")
+(def stat-file-folder "out-files/400gen/profit/")
 (def fitness-criterion :accuracy-percentage)
 
 (defn read-individuals-from-file

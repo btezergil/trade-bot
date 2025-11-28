@@ -295,7 +295,7 @@
 
 ; 3304284 -> 400gen profit 4height
 (def profit-ids
-  {:path "out-files/400gen/3height/profit/"
+  {:path "out-files/400gen/profit/"
    :ids ["c33c13ba-b7bd-4e03-9aa6-415aecba2699"
          "a6c0bf7f-ff17-43e7-808f-0f03c391fa67"]})
 
@@ -318,3 +318,13 @@
          "c86971d5-af69-4f73-bfb8-9405a9dbe0f1"]})
 
 ; cores -> 55 (3312763), 110 (3312764)
+
+; 5height experiments: -> 200gen goruyorlar, 300'e dogru buyuk tikanmalar var
+; 3315431 -> 400gen profit -> patates
+; 3315433 -> 400gen acc -> patates
+; 3315430 -> 400gen acc-perc -> patates
+; 3315435 -> 400gen hybrid -> patates
+
+; 6height experiments: -> 100gen goremiyorlar
+; 3315338 -> 200gen 100pop acc-perc -> bitemedi
+; 3315155 -> 300gen 100pop acc-perc -> bitemedi
