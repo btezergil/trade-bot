@@ -35,22 +35,22 @@
     (let [index-keyword (tree/index-to-keyword tree)]
       (log/debug "Generating signal for " tree)
       (condp = (:indicator tree)
-        :rsi {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-rsi-signal-raw tree direction data index)))}
-        :sma {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-single-sma-signal-raw tree direction data index)))}
-        :ema {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-single-ema-signal-raw tree direction data index)))}
-        :double-sma {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-double-sma-signal-raw tree direction data index)))}
-        :double-ema {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-double-ema-signal-raw tree direction data index)))}
-        :fisher {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-fisher-signal-raw tree direction data index)))}
-        :cci {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-cci-signal-raw tree direction data index)))}
-        :stoch {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-stoch-signal-raw tree direction data index)))}
-        :parabolic-sar {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-parabolic-sar-signal-raw tree direction data index)))}
-        :supertrend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-supertrend-signal-raw tree direction data index)))}
-        :fibonacci {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-fibonacci-signal-raw tree direction data index)))}
-        :engulfing {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-engulfing-signal-raw tree direction data index)))}
-        :harami {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-harami-signal-raw tree direction data index)))}
-        :hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-hammer-signal-raw tree direction data index)))}
-        :inverted-hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-inverted-hammer-signal-raw tree direction data index)))}
-        :trend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-trend-signal-raw tree direction data index)))}
+        :rsi {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-rsi-signal tree direction data index)))}
+        :sma {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-single-sma-signal tree direction data index)))}
+        :ema {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-single-ema-signal tree direction data index)))}
+        :double-sma {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-double-sma-signal tree direction data index)))}
+        :double-ema {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-double-ema-signal tree direction data index)))}
+        :fisher {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-fisher-signal tree direction data index)))}
+        :cci {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-cci-signal tree direction data index)))}
+        :stoch {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-stoch-signal tree direction data index)))}
+        :parabolic-sar {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-parabolic-sar-signal tree direction data index)))}
+        :supertrend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-supertrend-signal tree direction data index)))}
+        :fibonacci {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-fibonacci-signal tree direction data index)))}
+        :engulfing {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-engulfing-signal tree direction data index)))}
+        :harami {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-harami-signal tree direction data index)))}
+        :hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-hammer-signal tree direction data index)))}
+        :inverted-hammer {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-inverted-hammer-signal tree direction data index)))}
+        :trend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-trend-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
 (defn long?

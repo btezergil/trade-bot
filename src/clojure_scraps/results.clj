@@ -330,7 +330,13 @@
 ; 3315155 -> 300gen 100pop acc-perc -> bitemedi
 
 ; 5height experiments:
-; 3324800 -> 400gen profit -> patates
-; 3324799 -> 400gen acc -> patates
-; 3324801 -> 400gen acc-perc -> patates
-; 3324798 -> 400gen hybrid -> patates
+; 3324800 -> 400gen profit ->
+; 3324799 -> 400gen acc ->
+; 3324801 -> 400gen acc-perc ->
+; 3324798 -> 400gen hybrid ->
+
+; 5height experiments no memoize: -> 8 saatte 4 generation cozdu kesin memoize lazim
+; 3324827 -> 400gen profit ->
+; 3324828 -> 400gen acc ->
+; 3324826 -> 400gen acc-perc ->
+; 3324829 -> 400gen hybrid ->
