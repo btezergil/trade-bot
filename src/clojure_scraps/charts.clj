@@ -239,4 +239,4 @@
 ;(oz/view! (scatter-plot res/hybrid-new-ids))
 ;(oz/view! (histogram-plot res/accuracy-100pop-400gen-4height-ids))
 ;(oz/view! (profit-fitness-plot res/accuracy-perc-100pop-200gen-3height-ids))
-;(oz/view! (violin-plot res/hybrid-new-ids))
+;(oz/view! (violin-plot (:ids res/profit-ids)))

@@ -53,33 +53,33 @@
         :trend {index-keyword (strat/check-signal-with-window index (fn [index] (strat/check-trend-signal tree direction data index)))}
         :identity {index-keyword :identity}))))
 
-(defn long?
+(defn- long?
   "Checks whether the generated individual signals result in a overall long signal for this strategy."
   [tree signals]
   (= :long (tree/signal-check tree signals :long)))
 
-(defn short?
+(defn- short?
   "Checks whether the generated individual signals result in a overall short signal for this strategy."
   [tree signals]
   (= :short (tree/signal-check tree signals :short)))
 
 ;; Fitness calculation functions
 
-(defn scale-profit-result
+(defn- scale-profit-result
   "Scales the profit result to a positive value.
   Positive profits are given a multipler to give more incentive within the evolution.
   Profit value needs to be positive since it is used for weighted selection."
   [total-profit]
   (+ total-profit (:fitness-offset p/params)))
 
-(defn calculate-total-profit
+(defn- calculate-total-profit
   "Calculates the total profit from given transactions."
   [transactions]
   (->> transactions
        (pmap :result)
        (reduce +)))
 
-(defn calculate-accuracy-percentage
+(defn- calculate-accuracy-percentage
   "Calculates the accuracy percentage from given transactions."
   [transactions]
   (let [results (map :result transactions)
@@ -87,21 +87,21 @@
         losing (count (filter (fn [res] (< res 0)) results))]
     (double (* 100 (/ profiting (+ profiting losing))))))
 
-(defn normalize-profit
+(defn- normalize-profit
   "Normalizes total profit to be within 0-100 range for hybrid fitness calculation."
   [profit]
   (-> profit
       (* 100)
       (/ (:max-fitness-scale p/params))))
 
-(defn calculate-profit-from-transactions
+(defn- calculate-profit-from-transactions
   "Calculates the total profit of given transactions."
   [transactions]
   (if-not (empty? transactions)
     (calculate-total-profit transactions)
     0))
 
-(defn calculate-accuracy-profit-hybrid-from-transactions
+(defn- calculate-accuracy-profit-hybrid-from-transactions
   "Calculates a fitness based on profit and accuracy percentage, a maximum of 100 comes from the accuracy percentage, and a maximum of 100 comes from the total profit."
   [transactions]
   (if-not (empty? transactions)
@@ -117,7 +117,7 @@
         1))
     1))
 
-(defn calculate-accuracy-from-transactions
+(defn- calculate-accuracy-from-transactions
   "Calculates the total accurate count of given transactions."
   [transactions]
   (if-not (empty? transactions)
@@ -126,17 +126,17 @@
                    (map (fn [res] (if (> res 0) 1 0)))))
     1))
 
-(defn calculate-accuracy-percentage-from-transactions
+(defn- calculate-accuracy-percentage-from-transactions
   "Calculates the accuracy percentage of given transactions."
   [transactions]
   (if-not (empty? transactions)
     (calculate-accuracy-percentage transactions)
     1))
 
-(defn select-fitness-fn-and-calculate
+(defn- select-fitness-fn-and-calculate
   "Calculates the total profit and scales it so that the result is positive."
-  [transactions criterion]
-  (condp = criterion
+  [transactions fitness-fn]
+  (condp = fitness-fn
     :profit (-> transactions
                 calculate-profit-from-transactions
                 scale-profit-result)
@@ -147,7 +147,7 @@
 
 ;; Transaction generation functions
 
-(defn create-transaction-map
+(defn- create-transaction-map
   "Creates a transaction to be added to the transaction array
   Records the direction, time, and price"
   [data current-index direction]
@@ -155,7 +155,7 @@
    :position direction
    :bar-time (dg/get-bar-close-time-at-index data current-index)})
 
-(defn merge-to-transaction
+(defn- merge-to-transaction
   "Merges the given entry and exit points into a transaction."
   [entry exit]
   {:post [(s/valid? :genetic/transaction %)]}
@@ -168,7 +168,7 @@
      :result (if (= position :long) result (- result))
      :time-range (str (:bar-time entry) "-" (:bar-time exit))}))
 
-(defn merge-entry-points
+(defn- merge-entry-points
   "Merges transaction entry and exit points, then finds the profit of the transaction and records its time."
   [entry-points final-bar-value final-bar-end-time]
   (if-not (empty? entry-points)
@@ -249,7 +249,7 @@
                         (dg/get-bar-value-at-index data max-index)
                         (dg/get-bar-close-time-at-index data max-index))))
 
-(defn find-elitism-ind-count
+(defn- find-elitism-ind-count
   "Calculates the elite individual count from parameters for evolution."
   []
   (let [total (:population-size p/params)
