@@ -15,7 +15,7 @@
         com.cognitect.aws/api {:mvn/version "0.8.741"}
         com.cognitect.aws/endpoints {:mvn/version "871.2.31.23"}
         com.cognitect.aws/sns {:mvn/version "871.2.30.11"}
-        com.cognitect.aws/lambda {:mvn/version "871.2.31.23"}
+        com.cognitect.aws/lambda {:mvn/version "871.2.39.3"}
         com.cognitect.aws/secretsmanager {:mvn/version "871.2.29.35"}
         com.taoensso/faraday {:mvn/version "1.12.3"}
         com.taoensso/telemere {:mvn/version "1.1.0"}
