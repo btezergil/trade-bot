@@ -5,9 +5,9 @@
    :crossover-probability 0.5
    :crossover-propagation-probability 0.5 ; TODO: this governs how deep/shallow the crossover goes, try different experiments with this
    :mutation-probability 0.2
-   :population-size 20
+   :population-size 100
    :rank-selection-offset 0.6 ; TODO: UNUSED
-   :generation-count 50
+   :generation-count 400
    :elitism-ratio 0.05
    :leverage 10
    :capital 1000
@@ -25,7 +25,7 @@
                 :engulfing :harami :hammer :inverted-hammer :trend]
 ; INFO: parabolic SAR and fibonacci are available but not used since their signal generation is too slow compared to others
 ; TODO: add MACD indicator
-   :prune-height 6 ; indicator count is 2^prune-height
+   :prune-height 5 ; indicator count is 2^prune-height
    :default-age 0
    :data-history-window 100
    :fitness-criterion :accuracy-percentage ; must be one of: [:profit, :accuracy, :accuracy-percentage :accuracy-profit-hybrid]
