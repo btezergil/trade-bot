@@ -265,11 +265,43 @@
    "7f76e05d-27c8-49b0-9994-7893021fd5c8"
    "fa887fee-ebb8-414c-b97c-8c903511e55d"])
 
-(def hybrid-new-ids
-  ["18697ddc-acb7-4e6c-ae0c-6e004f9c5ccd"
-   "44f8b35e-1c92-4f07-bcce-18f6d4659fc9"
-   "a72a0205-ac0f-407a-a269-42e3ed8b717d"
-   "cccf9404-2b46-43b5-b3f1-042ecab7934a"
-   "d477d607-4d11-4195-8a82-08da22be51fb"
-   "d7ab5c37-a7ea-4f82-bba6-22598f5d3a92"])
+; 3304620 -> 400gen profit 3height
+(def height3-profit-ids
+  ["7a89c1f9-bd13-4eba-abc0-efccfd8572f2"
+   "81d403b5-cef0-4c97-8157-6a168e1815ec"])
+
+; 3304625 -> 400gen accuracy 3height
+(def height3-acc-ids
+  ["1c1e1955-20e3-4475-beac-c91fce4a04e6"
+   "934c6ef6-25d8-4e54-9723-6ee25a73ca2f"])
+
+; 3304626 -> 400gen accuracy-percentage 3height
+(def height3-acc-perc-ids
+  ["a2ebf273-2504-4d64-b30d-eabbff7d351a"
+   "57957dc1-8560-4412-b739-0282294ab495"])
+
+; 3304535 -> 400gen accuracy-profit-hybrid 3height
+(def height3-hybrid-ids
+  ["24102fe8-fc3a-4f94-8feb-38e86fd32c2e"
+   "440f2cf1-590d-4614-95eb-eea441a600cc"])
+
+; 3304284 -> 400gen profit 4height
+(def profit-ids
+  ["c33c13ba-b7bd-4e03-9aa6-415aecba2699"
+   "a6c0bf7f-ff17-43e7-808f-0f03c391fa67"])
+
+; 3304307 -> 400gen accuracy 4height
+(def acc-ids
+  ["03055539-f313-424f-af3b-fab4529c03f3"
+   "650b1d41-9839-4dc1-943d-7c940a5013dd"])
+
+; 3304308 -> 400gen accuracy-percentage 4height
+(def acc-perc-ids
+  ["bc18080e-2f45-4111-b46b-123de0231297"
+   "19d5d1b0-0179-420d-bbe5-84b5ec1e5894"])
+
+; 3304309 -> 400gen accuracy-profit-hybrid 4height
+(def hybrid-ids
+  ["a30b6744-7347-4147-85ef-5d9375c3885a"
+   "c86971d5-af69-4f73-bfb8-9405a9dbe0f1"])
 
